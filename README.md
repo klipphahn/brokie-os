@@ -75,3 +75,22 @@ Adds Brand DNA, Design Library preview uploads, AI Studio collection planning, a
 ## v1.2 Shopify Sync
 
 Uses Shopify client credentials to obtain a short-lived access token and display products from the Admin GraphQL API.
+
+## v1.3 Live AI Product Studio
+
+The AI Studio now calls OpenAI from a server-only route, creates structured merch copy, generates transparent PNG artwork, and uploads the result to the public Supabase `artwork` bucket when Supabase credentials are configured.
+
+Required Vercel variable:
+
+```text
+OPENAI_API_KEY
+```
+
+Optional model overrides:
+
+```text
+OPENAI_TEXT_MODEL=gpt-5.4-mini
+OPENAI_IMAGE_MODEL=gpt-image-2
+```
+
+The API key is never sent to browser code. Image generation incurs OpenAI API usage charges.
