@@ -94,3 +94,7 @@ OPENAI_IMAGE_MODEL=gpt-image-2
 ```
 
 The API key is never sent to browser code. Image generation incurs OpenAI API usage charges.
+
+## v1.3.1 Transparency compatibility fix
+
+AI Studio now attempts native transparent output first. If the configured image model rejects transparent backgrounds, it automatically regenerates on pure black and removes that background server-side with `sharp`, producing a transparent PNG before Supabase upload.

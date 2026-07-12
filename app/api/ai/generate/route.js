@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import sharp from "sharp";
 
 const BRAND_RULES = `
 Brand: The Brokie.
@@ -8,24 +9,16 @@ Voice: confident, gritty, focused, loyal, self-aware; never corny or fake-luxury
 Visual language: premium streetwear, matte black, spray orange, crown yellow, distressed ink and restrained graffiti texture.
 Approved ideas include: We Don't Need Money To Be Dangerous; Broke Today. Building Forever; Built Different; Backed By Loyalty.
 Mascot: crowned spray-paint face with X eyes and a sad dripping mouth. Do not turn it into a happy face and do not add a nose.
-Artwork must read clearly on apparel, use a transparent background, avoid photorealistic garment mockups, and avoid tiny illegible text.
+Artwork must read clearly on apparel, avoid photorealistic garment mockups, and avoid tiny illegible text.
 `;
 
 const schema = {
   type: "object",
   additionalProperties: false,
   required: [
-    "collection_name",
-    "concept_name",
-    "headline",
-    "product_title",
-    "product_description",
-    "seo_title",
-    "meta_description",
-    "tags",
-    "retail_price",
-    "art_direction",
-    "image_prompt"
+    "collection_name", "concept_name", "headline", "product_title",
+    "product_description", "seo_title", "meta_description", "tags",
+    "retail_price", "art_direction", "image_prompt"
   ],
   properties: {
     collection_name: { type: "string" },
@@ -78,10 +71,7 @@ async function createConcept(apiKey, prompt, productType) {
         },
         {
           role: "user",
-          content: [{
-            type: "input_text",
-            text: `Product type: ${productType}. User direction: ${prompt}`
-          }]
+          content: [{ type: "input_text", text: `Product type: ${productType}. User direction: ${prompt}` }]
         }
       ],
       text: {
@@ -97,23 +87,22 @@ async function createConcept(apiKey, prompt, productType) {
   });
 
   const payload = await response.json();
-  if (!response.ok) {
-    throw new Error(payload?.error?.message || "OpenAI concept generation failed.");
-  }
-
+  if (!response.ok) throw new Error(payload?.error?.message || "OpenAI concept generation failed.");
   const text = extractOutputText(payload);
   if (!text) throw new Error("OpenAI returned no concept text.");
   return JSON.parse(text);
 }
 
-async function createArtwork(apiKey, concept) {
-  const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
-  const finalPrompt = `${BRAND_RULES}\n
-Create print-ready apparel artwork only—not a shirt mockup and not a brand guideline sheet.
-Concept headline: ${concept.headline}
-Art direction: ${concept.art_direction}
-Detailed request: ${concept.image_prompt}
-Use a transparent background. Center the art with generous clear space. Keep wording exact and minimal. High contrast, screen-print friendly.`;
+async function requestImage(apiKey, model, prompt, nativeTransparency) {
+  const body = {
+    model,
+    prompt,
+    size: "1024x1024",
+    quality: "medium",
+    output_format: "png"
+  };
+
+  if (nativeTransparency) body.background = "transparent";
 
   const response = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
@@ -121,25 +110,88 @@ Use a transparent background. Center the art with generous clear space. Keep wor
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({
-      model,
-      prompt: finalPrompt,
-      size: "1024x1024",
-      quality: "medium",
-      background: "transparent",
-      output_format: "png"
-    }),
+    body: JSON.stringify(body),
     cache: "no-store"
   });
 
   const payload = await response.json();
+  return { response, payload };
+}
+
+async function removeBlackBackground(base64) {
+  const input = Buffer.from(base64, "base64");
+  const { data, info } = await sharp(input)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  for (let index = 0; index < data.length; index += 4) {
+    const red = data[index];
+    const green = data[index + 1];
+    const blue = data[index + 2];
+    const brightest = Math.max(red, green, blue);
+
+    // Pure and near-black pixels become transparent. The soft transition
+    // keeps distressed spray edges from developing a visible black halo.
+    if (brightest <= 24) {
+      data[index + 3] = 0;
+    } else if (brightest < 72) {
+      data[index + 3] = Math.round(((brightest - 24) / 48) * data[index + 3]);
+    }
+  }
+
+  return sharp(data, {
+    raw: {
+      width: info.width,
+      height: info.height,
+      channels: 4
+    }
+  })
+    .png()
+    .toBuffer();
+}
+
+async function createArtwork(apiKey, concept) {
+  const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
+  const commonPrompt = `${BRAND_RULES}\n
+Create print-ready apparel artwork only—not a shirt mockup and not a brand guideline sheet.
+Concept headline: ${concept.headline}
+Art direction: ${concept.art_direction}
+Detailed request: ${concept.image_prompt}
+Center the art with generous clear space. Keep wording exact and minimal. High contrast and screen-print friendly.`;
+
+  // Prefer true alpha output when the selected model supports it.
+  const nativePrompt = `${commonPrompt}\nThe canvas outside the artwork must be transparent.`;
+  let { response, payload } = await requestImage(apiKey, model, nativePrompt, true);
+
+  if (response.ok) {
+    const base64 = payload?.data?.[0]?.b64_json;
+    if (!base64) throw new Error("OpenAI returned no image data.");
+    return { base64, transparencyMode: "native" };
+  }
+
+  const firstError = payload?.error?.message || "OpenAI artwork generation failed.";
+  const transparencyUnsupported = /transparent|background.*not supported|not supported.*background/i.test(firstError);
+
+  if (!transparencyUnsupported) throw new Error(firstError);
+
+  // Fallback for models without native transparency: generate against exact
+  // black, then turn black pixels into alpha locally before storage/preview.
+  const fallbackPrompt = `${commonPrompt}\nUse a perfectly uniform solid #000000 black background with no texture, lighting, shadow, vignette, gradient, border, or objects outside the artwork. Do not use black inside the foreground artwork.`;
+  ({ response, payload } = await requestImage(apiKey, model, fallbackPrompt, false));
+
   if (!response.ok) {
-    throw new Error(payload?.error?.message || "OpenAI artwork generation failed.");
+    throw new Error(payload?.error?.message || "OpenAI fallback artwork generation failed.");
   }
 
   const base64 = payload?.data?.[0]?.b64_json;
-  if (!base64) throw new Error("OpenAI returned no image data.");
-  return base64;
+  if (!base64) throw new Error("OpenAI returned no fallback image data.");
+
+  const transparentPng = await removeBlackBackground(base64);
+  return {
+    base64: transparentPng.toString("base64"),
+    transparencyMode: "black-key fallback"
+  };
 }
 
 async function saveArtwork(base64, concept, originalPrompt) {
@@ -200,16 +252,17 @@ export async function POST(request) {
     }
 
     const concept = await createConcept(apiKey, prompt, productType);
-    const base64 = await createArtwork(apiKey, concept);
-    const saved = await saveArtwork(base64, concept, prompt);
+    const artwork = await createArtwork(apiKey, concept);
+    const saved = await saveArtwork(artwork.base64, concept, prompt);
 
     return NextResponse.json({
       ok: true,
       concept,
       image: {
-        dataUrl: `data:image/png;base64,${base64}`,
+        dataUrl: `data:image/png;base64,${artwork.base64}`,
         publicUrl: saved.publicUrl,
-        savedToSupabase: saved.saved
+        savedToSupabase: saved.saved,
+        transparencyMode: artwork.transparencyMode
       }
     });
   } catch (error) {

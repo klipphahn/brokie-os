@@ -123,7 +123,7 @@ export default function AiStudio() {
             <div className="generationState">
               <LoaderCircle className="spin" size={34} />
               <strong>Building with Brand DNA…</strong>
-              <span>Writing the product plan, generating transparent artwork, and saving it to your library.</span>
+              <span>Writing the product plan, generating print-ready artwork, removing the background, and saving it to your library.</span>
             </div>
           ) : result ? (
             <>
@@ -175,7 +175,7 @@ export default function AiStudio() {
             <div className="emptyOutput">
               <Sparkles size={32} />
               <strong>Your first generated product will appear here.</strong>
-              <span>The result includes transparent artwork, title, description, SEO copy, tags, and pricing.</span>
+              <span>The result includes a transparent print-ready PNG, title, description, SEO copy, tags, and pricing.</span>
             </div>
           )}
         </div>
