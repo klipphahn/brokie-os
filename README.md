@@ -1,17 +1,21 @@
-# Brokie OS — Founders Collection Builder
+# Brokie OS v1
 
-This build adds a focused bulk product workflow for the first five Brokie products:
+A clean Next.js App Router project for The Brokie brand.
 
-1. We Don't Need Money Heavyweight Tee
-2. Dangerous Statement Hoodie
-3. Built Different Heavyweight Tee
-4. Backed by Loyalty Tee
-5. Brokie Mascot Embroidered Hat
+## Why this build is different
 
-## Install
+- JavaScript instead of TypeScript, eliminating the prior TypeScript build failure
+- Minimal pinned dependencies
+- Printful connection test
+- Printful synced-product dry-run and creation route
+- Shopify Admin GraphQL connection test
+- Supabase connection test and starter schema
+- Founders Collection product builder
+- Vercel-ready configuration
+
+## Local setup
 
 ```bash
-cd ~/Downloads/brokie-os-founders-builder
 npm install
 cp .env.example .env.local
 npm run dev
@@ -19,31 +23,45 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-## Configure Printful
+## Production build check
 
-Add to `.env.local`:
+Always run this before pushing:
 
-```text
-PRINTFUL_TOKEN=your_token
-PRINTFUL_STORE_ID=your_store_id
+```bash
+npm run build
 ```
 
-Your token needs permission to write synced products.
+## Vercel variables
 
-## Use it safely
+Add these in Vercel → Project Settings → Environment Variables:
 
-1. Select only the manifesto tee.
-2. Enter one real Printful catalog variant ID.
-3. Enter a public HTTPS front artwork URL.
-4. Add the back artwork URL when the product uses a back print.
-5. Click **Dry Test** and inspect the payload.
-6. Click **Create in Printful** only after the dry test succeeds.
-7. Verify the product in Printful and Shopify before creating the other products.
+```text
+PRINTFUL_TOKEN
+PRINTFUL_STORE_ID
+SHOPIFY_STORE_DOMAIN
+SHOPIFY_ADMIN_ACCESS_TOKEN
+SHOPIFY_API_VERSION
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+```
 
-## Important
+Only Printful is required for the Printful builder. Shopify and Supabase can be connected afterward.
 
-- The included logo images are visual brand assets, not guaranteed print-ready transparent artwork.
-- Printful must be able to retrieve your artwork from a public HTTPS URL.
-- Exact Printful variant IDs depend on the blank product, size, color, and fulfillment region.
-- Hat files may require embroidery-specific artwork and digitization.
-- Product creation uses Printful's synced-product endpoint. Printful currently documents sync-product management in its legacy API, while v2 product sync management is not yet available.
+## Supabase setup
+
+Run `supabase/schema.sql` in the Supabase SQL Editor.
+
+## Printful safety workflow
+
+1. Select only the first tee.
+2. Use one valid Printful catalog variant ID.
+3. Supply public HTTPS artwork URLs.
+4. Run Dry Test.
+5. Inspect the payload.
+6. Create the Printful product.
+7. Verify it appears correctly in Printful and Shopify before creating more products.
+
+## GitHub replacement workflow
+
+This project is intended to replace the files in the existing `brokie-os` repository. Preserve your local `.env.local`, but never commit it.

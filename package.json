@@ -1,23 +1,21 @@
 {
-  "name": "brokie-os-founders-builder",
-  "version": "0.3.0",
+  "name": "brokie-os",
+  "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start"
   },
   "dependencies": {
-    "lucide-react": "latest",
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "zod": "latest"
-  },
-  "devDependencies": {
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "typescript": "7.0.2"
+    "@supabase/supabase-js": "2.52.1",
+    "lucide-react": "0.468.0",
+    "next": "16.2.10",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "zod": "4.0.17"
   }
 }

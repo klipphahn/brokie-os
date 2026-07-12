@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const productSchema = z.object({
-  id: z.string(),
+  id: z.string().min(1),
   title: z.string().min(2),
   price: z.string().regex(/^\d+(\.\d{1,2})?$/),
   variantIds: z.array(z.number().int().positive()).min(1),
@@ -11,15 +11,13 @@ const productSchema = z.object({
 });
 
 const requestSchema = z.object({
-  dryRun: z.boolean().default(true),
+  dryRun: z.boolean(),
   products: z.array(productSchema).min(1).max(10)
 });
 
-function payload(product: z.infer<typeof productSchema>) {
+function createPayload(product) {
   return {
-    sync_product: {
-      name: product.title
-    },
+    sync_product: { name: product.title },
     sync_variants: product.variantIds.map((variantId, index) => ({
       variant_id: variantId,
       retail_price: product.price,
@@ -32,27 +30,32 @@ function payload(product: z.infer<typeof productSchema>) {
   };
 }
 
-export async function POST(request: Request) {
-  const parsed = requestSchema.safeParse(await request.json());
+export async function POST(request) {
+  const body = await request.json();
+  const parsed = requestSchema.safeParse(body);
+
   if (!parsed.success) {
-    return NextResponse.json({
-      ok: false,
-      message: "Every selected product needs at least one valid variant ID and a public front artwork URL.",
-      issues: parsed.error.flatten()
-    }, { status: 400 });
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Each selected product needs at least one variant ID and a public front artwork URL.",
+        issues: parsed.error.flatten()
+      },
+      { status: 400 }
+    );
   }
 
-  const prepared = parsed.data.products.map(product => ({
+  const prepared = parsed.data.products.map((product) => ({
     id: product.id,
     title: product.title,
-    payload: payload(product)
+    payload: createPayload(product)
   }));
 
   if (parsed.data.dryRun) {
     return NextResponse.json({
       ok: true,
       mode: "dry-run",
-      message: `${prepared.length} product payload(s) validated. Nothing was sent to Printful.`,
+      message: `${prepared.length} payload(s) validated. Nothing was sent to Printful.`,
       products: prepared
     });
   }
@@ -61,14 +64,13 @@ export async function POST(request: Request) {
   const storeId = process.env.PRINTFUL_STORE_ID;
 
   if (!token) {
-    return NextResponse.json({
-      ok: false,
-      message: "PRINTFUL_TOKEN is missing from .env.local.",
-      products: prepared
-    }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, message: "PRINTFUL_TOKEN is missing.", products: prepared },
+      { status: 400 }
+    );
   }
 
-  const headers: Record<string, string> = {
+  const headers = {
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json"
   };
@@ -83,13 +85,13 @@ export async function POST(request: Request) {
         body: JSON.stringify(item.payload),
         cache: "no-store"
       });
-      const body = await response.json();
+      const data = await response.json();
       results.push({
         id: item.id,
         title: item.title,
         ok: response.ok,
         status: response.status,
-        result: body
+        data
       });
     } catch (error) {
       results.push({
@@ -97,16 +99,19 @@ export async function POST(request: Request) {
         title: item.title,
         ok: false,
         status: 0,
-        result: { error: String(error) }
+        data: { error: error.message }
       });
     }
   }
 
-  const successful = results.filter(result => result.ok).length;
-  return NextResponse.json({
-    ok: successful === results.length,
-    mode: "live",
-    message: `${successful}/${results.length} products created successfully.`,
-    results
-  }, { status: successful ? 200 : 400 });
+  const successful = results.filter((result) => result.ok).length;
+  return NextResponse.json(
+    {
+      ok: successful === results.length,
+      mode: "live",
+      message: `${successful}/${results.length} products created successfully.`,
+      results
+    },
+    { status: successful ? 200 : 400 }
+  );
 }
