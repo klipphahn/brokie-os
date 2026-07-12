@@ -10,6 +10,7 @@ import {
   Send,
   ShoppingBag
 } from "lucide-react";
+import LogoutButton from "@/components/logout-button";
 
 const links = [
   ["Dashboard", Gauge, "#dashboard"],
@@ -42,6 +43,8 @@ export default function Sidebar() {
           </a>
         ))}
       </nav>
+
+      <LogoutButton />
 
       <div className="sideFooter">
         <strong>WE DON'T NEED MONEY</strong>

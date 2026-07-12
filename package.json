@@ -11,12 +11,13 @@
     "start": "next start"
   },
   "dependencies": {
-    "@supabase/supabase-js": "2.52.1",
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.110.2",
     "lucide-react": "0.468.0",
     "next": "16.2.10",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "zod": "4.0.17",
-    "sharp": "0.34.5"
+    "sharp": "0.34.5",
+    "zod": "4.0.17"
   }
 }

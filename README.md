@@ -98,3 +98,21 @@ The API key is never sent to browser code. Image generation incurs OpenAI API us
 ## v1.3.1 Transparency compatibility fix
 
 AI Studio now attempts native transparent output first. If the configured image model rejects transparent backgrounds, it automatically regenerates on pure black and removes that background server-side with `sharp`, producing a transparent PNG before Supabase upload.
+
+## v1.4 Admin Authentication
+
+Brokie OS is now protected with Supabase email/password authentication.
+
+### Required setup
+
+1. In Supabase, open **Authentication → Users → Add user**.
+2. Create the administrator with the same email as `ADMIN_EMAIL`.
+3. Set a strong password and mark the email as confirmed.
+4. In Supabase **Authentication → Providers → Email**, disable public sign-ups if this is a private admin application.
+5. Add this Vercel variable and redeploy:
+
+```text
+ADMIN_EMAIL=klipphahn@gmail.com
+```
+
+The proxy protects the dashboard and API routes, including AI generation. Unauthenticated API requests receive HTTP 401 instead of spending OpenAI tokens.
