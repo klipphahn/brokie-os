@@ -116,3 +116,8 @@ ADMIN_EMAIL=klipphahn@gmail.com
 ```
 
 The proxy protects the dashboard and API routes, including AI generation. Unauthenticated API requests receive HTTP 401 instead of spending OpenAI tokens.
+
+
+## v1.5 Foundry + Library Stabilization
+
+Adds Foundry, visible generation stages, persistent Design Library 2.0, favorites/search/delete, and an activity log. Run `supabase/migrations/003_foundry_activity.sql` before deploying.

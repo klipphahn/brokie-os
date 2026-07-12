@@ -194,7 +194,7 @@ Center the art with generous clear space. Keep wording exact and minimal. High c
   };
 }
 
-async function saveArtwork(base64, concept, originalPrompt) {
+async function saveArtwork(base64, concept, originalPrompt, productType) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return { publicUrl: null, saved: false };
@@ -220,12 +220,24 @@ async function saveArtwork(base64, concept, originalPrompt) {
     name: concept.concept_name,
     front_artwork_url: publicUrl,
     thumbnail_url: publicUrl,
-    status: "generated"
-  });
+    status: "generated",
+    prompt: originalPrompt,
+    product_type: productType,
+    concept,
+    updated_at: new Date().toISOString()
+  }).select().single();
 
   if (insertError) {
     console.warn("Artwork uploaded but design record was not inserted:", insertError.message);
   }
+
+  await supabase.from("activity_logs").insert({
+    action: "ai_generation",
+    title: `Generated ${concept.concept_name}`,
+    detail: `${productType} · ${concept.collection_name}`,
+    status: "success",
+    metadata: { publicUrl, concept, prompt: originalPrompt }
+  });
 
   return { publicUrl, saved: true, path: filename, prompt: originalPrompt };
 }
@@ -253,7 +265,7 @@ export async function POST(request) {
 
     const concept = await createConcept(apiKey, prompt, productType);
     const artwork = await createArtwork(apiKey, concept);
-    const saved = await saveArtwork(artwork.base64, concept, prompt);
+    const saved = await saveArtwork(artwork.base64, concept, prompt, productType);
 
     return NextResponse.json({
       ok: true,

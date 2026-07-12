@@ -11,6 +11,7 @@ import BrandDnaPanel from "@/components/brand-dna-panel";
 import DesignLibrary from "@/components/design-library";
 import AiStudio from "@/components/ai-studio";
 import PublishCenter from "@/components/publish-center";
+import ActivityLog from "@/components/activity-log";
 import ShopifyManager from "@/components/shopify-manager";
 import { foundersProducts } from "@/lib/founders";
 
@@ -48,6 +49,7 @@ export default function HomePage() {
         <ShopifyManager />
         <FoundersBuilder />
         <PublishCenter />
+        <ActivityLog />
 
         <section className="panel" id="products">
           <div className="panelHead">

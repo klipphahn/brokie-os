@@ -16,11 +16,12 @@ const links = [
   ["Dashboard", Gauge, "#dashboard"],
   ["Brand DNA", Fingerprint, "#brand-dna"],
   ["Design Library", Images, "#designs"],
-  ["AI Studio", BrainCircuit, "#ai"],
+  ["Foundry", BrainCircuit, "#ai"],
   ["Shopify Sync", ShoppingBag, "#shopify-manager"],
   ["Collection Builder", PackagePlus, "#builder"],
   ["Publish Center", Send, "#publish"],
   ["Products", ShoppingBag, "#products"],
+  ["Activity", PlugZap, "#activity"],
   ["Integrations", PlugZap, "#integrations"]
 ];
 
