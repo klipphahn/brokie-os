@@ -178,3 +178,29 @@ textarea {
   .assetGrid{grid-template-columns:1fr}
   .swatches{grid-template-columns:repeat(3,1fr)}
 }
+
+.shopifyStats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.shopifyStats article{background:var(--panel2);border:1px solid var(--line);padding:14px;border-radius:11px}
+.shopifyStats strong{display:block;font-size:25px}
+.shopifyStats span{color:#888;font-size:11px}
+.productToolbar{display:flex;align-items:center;gap:9px;background:#0d0d0d;border:1px solid #343434;border-radius:10px;padding:0 12px;margin-bottom:14px}
+.productToolbar input{border:0;background:transparent}
+.managerNotice{padding:12px 14px;border-radius:9px;margin-bottom:13px}
+.managerNotice.error{color:#ffabab;border:1px solid #733232;background:#2b1111}
+.shopifyProductGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.shopifyProductCard{overflow:hidden;background:var(--panel2);border:1px solid var(--line);border-radius:12px}
+.shopifyImage{aspect-ratio:4/3;display:grid;place-items:center;overflow:hidden;background:#0d0d0d;color:#555}
+.shopifyImage img{width:100%;height:100%;object-fit:contain}
+.shopifyProductBody{padding:14px}
+.shopifyProductMeta{display:flex;justify-content:space-between;color:#777;font-size:10px;text-transform:uppercase;font-weight:900}
+.statusPill{border-radius:999px;padding:5px 7px;background:#2a2a2a}
+.statusPill.active{color:#83e7a1;background:#15321e}
+.statusPill.draft{color:#ffc17a;background:#36230d}
+.shopifyProductBody h3{margin:10px 0 6px;font-size:15px}
+.shopifyProductBody p{color:#888;font-size:12px}
+.shopifyProductBody a{display:inline-flex;gap:6px;align-items:center;color:var(--orange);font-size:12px;font-weight:900;text-decoration:none}
+.managerEmpty{min-height:180px;display:grid;place-items:center;align-content:center;gap:9px;color:#777}
+.spin{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:1100px){.shopifyProductGrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.shopifyStats{grid-template-columns:repeat(2,1fr)}.shopifyProductGrid{grid-template-columns:1fr}}

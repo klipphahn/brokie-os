@@ -70,3 +70,8 @@ This project is intended to replace the files in the existing `brokie-os` reposi
 ## v1.1 Premium update
 
 Adds Brand DNA, Design Library preview uploads, AI Studio collection planning, and Publish Center.
+
+
+## v1.2 Shopify Sync
+
+Uses Shopify client credentials to obtain a short-lived access token and display products from the Admin GraphQL API.

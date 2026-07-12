@@ -1,42 +1,30 @@
 import { NextResponse } from "next/server";
+import { shopifyGraphQL } from "@/lib/shopify";
 
 export async function POST() {
-  const domain = process.env.SHOPIFY_STORE_DOMAIN;
-  const token = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
-  const version = process.env.SHOPIFY_API_VERSION || "2026-07";
+  try {
+    const data = await shopifyGraphQL(`
+      query {
+        shop {
+          name
+          myshopifyDomain
+          email
+          plan { displayName }
+        }
+        productsCount(limit: null) { count }
+      }
+    `);
 
-  if (!domain || !token) {
+    return NextResponse.json({
+      ok: true,
+      message: `Shopify connected to ${data.shop.name}.`,
+      shop: data.shop,
+      productCount: data.productsCount.count
+    });
+  } catch (error) {
     return NextResponse.json(
-      { error: "Shopify domain or Admin API token is missing." },
+      { ok: false, error: error.message },
       { status: 400 }
     );
   }
-
-  const response = await fetch(
-    `https://${domain}/admin/api/${version}/graphql.json`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Shopify-Access-Token": token
-      },
-      body: JSON.stringify({
-        query: "query ShopIdentity { shop { name myshopifyDomain } }"
-      }),
-      cache: "no-store"
-    }
-  );
-
-  const data = await response.json();
-  if (!response.ok || data.errors) {
-    return NextResponse.json(
-      { error: "Shopify connection failed.", details: data },
-      { status: response.status || 400 }
-    );
-  }
-
-  return NextResponse.json({
-    message: `Shopify connected to ${data.data.shop.name}.`,
-    shop: data.data.shop
-  });
 }
