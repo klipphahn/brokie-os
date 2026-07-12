@@ -7,6 +7,10 @@ import {
 import Sidebar from "@/components/sidebar";
 import FoundersBuilder from "@/components/founders-builder";
 import IntegrationCard from "@/components/integration-card";
+import BrandDnaPanel from "@/components/brand-dna-panel";
+import DesignLibrary from "@/components/design-library";
+import AiStudio from "@/components/ai-studio";
+import PublishCenter from "@/components/publish-center";
 import { foundersProducts } from "@/lib/founders";
 
 export default function HomePage() {
@@ -20,8 +24,8 @@ export default function HomePage() {
             <span className="eyebrow">THE BROKIE OPERATING SYSTEM</span>
             <h1>Build the brand.</h1>
             <p>
-              Manage designs, create Printful products, connect Shopify, and
-              prepare Founders Collection 001.
+              One command center for artwork, collections, Printful products,
+              Shopify drafts, and thebrokie.com/merch.
             </p>
           </div>
           <div className="heroStatement">
@@ -34,10 +38,14 @@ export default function HomePage() {
           <article><FileImage /><div><strong>5</strong><span>Starter designs</span></div></article>
           <article><ShoppingBag /><div><strong>{foundersProducts.length}</strong><span>Draft products</span></div></article>
           <article><PackageCheck /><div><strong>0</strong><span>Published</span></div></article>
-          <article><Boxes /><div><strong>1</strong><span>Collection</span></div></article>
+          <article><Boxes /><div><strong>1</strong><span>Active collection</span></div></article>
         </section>
 
+        <BrandDnaPanel />
+        <DesignLibrary />
+        <AiStudio />
         <FoundersBuilder />
+        <PublishCenter />
 
         <section className="panel" id="products">
           <div className="panelHead">

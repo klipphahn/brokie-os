@@ -65,3 +65,8 @@ Run `supabase/schema.sql` in the Supabase SQL Editor.
 ## GitHub replacement workflow
 
 This project is intended to replace the files in the existing `brokie-os` repository. Preserve your local `.env.local`, but never commit it.
+
+
+## v1.1 Premium update
+
+Adds Brand DNA, Design Library preview uploads, AI Studio collection planning, and Publish Center.

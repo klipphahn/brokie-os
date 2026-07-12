@@ -1,21 +1,25 @@
 "use client";
 
 import {
+  BrainCircuit,
+  Fingerprint,
   Gauge,
   Images,
   PackagePlus,
   PlugZap,
-  ShoppingBag,
-  Sparkles
+  Send,
+  ShoppingBag
 } from "lucide-react";
 
 const links = [
   ["Dashboard", Gauge, "#dashboard"],
-  ["Founders Builder", PackagePlus, "#builder"],
+  ["Brand DNA", Fingerprint, "#brand-dna"],
   ["Design Library", Images, "#designs"],
+  ["AI Studio", BrainCircuit, "#ai"],
+  ["Collection Builder", PackagePlus, "#builder"],
+  ["Publish Center", Send, "#publish"],
   ["Products", ShoppingBag, "#products"],
-  ["Integrations", PlugZap, "#integrations"],
-  ["AI Studio", Sparkles, "#ai"]
+  ["Integrations", PlugZap, "#integrations"]
 ];
 
 export default function Sidebar() {
