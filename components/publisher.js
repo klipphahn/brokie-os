@@ -75,6 +75,13 @@ export default function Publisher() {
     defaultColor: "Black",
     defaultSize: "M"
   });
+  const [catalog, setCatalog] = useState(null);
+  const [catalogWorking, setCatalogWorking] =
+    useState(false);
+  const [merchOptions, setMerchOptions] = useState({
+    colors: ["Black"],
+    sizes: ["S", "M", "L", "XL", "2XL", "3XL"]
+  });
   const [publication, setPublication] = useState(null);
   const [publicationError, setPublicationError] =
     useState("");
@@ -128,10 +135,79 @@ export default function Publisher() {
     }
   }
 
+  async function loadCatalog() {
+    setCatalogWorking(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        `/api/printful/catalog?blankName=${encodeURIComponent(
+          printfulForm.blankName
+        )}`,
+        { cache: "no-store" }
+      );
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(
+          data.error || "Printful options could not be loaded."
+        );
+      }
+
+      setCatalog(data);
+      const availableColors = new Set(
+        data.colors.map((color) => color.name)
+      );
+      const nextColors = merchOptions.colors.filter((color) =>
+        availableColors.has(color)
+      );
+      setMerchOptions((value) => ({
+        colors: nextColors.length
+          ? nextColors
+          : data.colors.slice(0, 1).map((color) => color.name),
+        sizes: value.sizes.filter((size) =>
+          data.sizes.includes(size)
+        )
+      }));
+    } catch (catalogError) {
+      setCatalog(null);
+      setError(catalogError.message);
+    } finally {
+      setCatalogWorking(false);
+    }
+  }
+
   useEffect(() => {
     load();
     checkPublication();
+    loadCatalog();
   }, []);
+
+  function toggleMerchOption(type, value) {
+    setMerchOptions((currentOptions) => {
+      const selected = currentOptions[type].includes(value);
+      return {
+        ...currentOptions,
+        [type]: selected
+          ? currentOptions[type].filter((item) => item !== value)
+          : [...currentOptions[type], value]
+      };
+    });
+  }
+
+  const selectedVariantOptions = useMemo(() => {
+    if (!catalog?.colors?.length) return [];
+
+    return catalog.colors
+      .filter((color) =>
+        merchOptions.colors.includes(color.name)
+      )
+      .flatMap((color) =>
+        color.sizes
+          .filter((size) => merchOptions.sizes.includes(size))
+          .map((size) => ({ color: color.name, size }))
+      );
+  }, [catalog, merchOptions]);
 
   async function loadPrintful(item) {
     if (!item?.product?.id) {
@@ -698,6 +774,84 @@ export default function Publisher() {
                   </label>
                 </div>
 
+                <div className="merchOptionBuilder">
+                  <div className="merchOptionHead">
+                    <span>
+                      <strong>Shirt colors and sizes</strong>
+                      <small>
+                        Pulled live from the selected Printful blank
+                      </small>
+                    </span>
+                    <button
+                      className="secondary"
+                      onClick={loadCatalog}
+                      disabled={catalogWorking}
+                    >
+                      <RefreshCw
+                        size={15}
+                        className={catalogWorking ? "spin" : ""}
+                      />
+                      {catalogWorking ? "Loading…" : "Refresh options"}
+                    </button>
+                  </div>
+
+                  {catalog?.colors?.length > 0 && (
+                    <>
+                      <div className="merchOptionLabel">Colors</div>
+                      <div className="merchOptionGrid colors">
+                        {catalog.colors.map((color) => {
+                          const active = merchOptions.colors.includes(
+                            color.name
+                          );
+                          return (
+                            <button
+                              type="button"
+                              key={color.name}
+                              className={active ? "active" : ""}
+                              onClick={() =>
+                                toggleMerchOption("colors", color.name)
+                              }
+                            >
+                              <i
+                                style={{
+                                  background: color.hex || "#777"
+                                }}
+                              />
+                              {color.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="merchOptionLabel">Sizes</div>
+                      <div className="merchOptionGrid sizes">
+                        {catalog.sizes.map((size) => (
+                          <button
+                            type="button"
+                            key={size}
+                            className={
+                              merchOptions.sizes.includes(size)
+                                ? "active"
+                                : ""
+                            }
+                            onClick={() =>
+                              toggleMerchOption("sizes", size)
+                            }
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="merchVariantSummary">
+                        {selectedVariantOptions.length} valid Printful
+                        variant{selectedVariantOptions.length === 1 ? "" : "s"}
+                        selected
+                      </div>
+                    </>
+                  )}
+                </div>
+
                 {printful?.error && (
                   <div className="printfulBridgeError">
                     {printful.error}
@@ -779,17 +933,24 @@ export default function Publisher() {
                 <div className="printfulBridgeActions">
                   <button
                     className="secondary"
-                    onClick={() => act("set_apparel_variants")}
+                    onClick={() =>
+                      act("set_apparel_variants", {
+                        colors: merchOptions.colors,
+                        sizes: merchOptions.sizes,
+                        variantOptions: selectedVariantOptions
+                      })
+                    }
                     disabled={
                       !!working ||
                       !!printfulWorking ||
-                      !current.product?.shopify_product_id
+                      !current.product?.shopify_product_id ||
+                      selectedVariantOptions.length < 1
                     }
                   >
                     <ShoppingBag size={16} />
                     {working === "set_apparel_variants"
                       ? "Adding sizes…"
-                      : "Add Black sizes S–3XL"}
+                      : `Apply ${selectedVariantOptions.length} color/size options`}
                   </button>
 
                   <button

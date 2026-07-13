@@ -184,6 +184,31 @@ const DEFAULT_APPAREL_SIZES = [
   "3XL"
 ];
 
+const DEFAULT_APPAREL_COLORS = ["Black"];
+
+function cleanApparelOptions(values, fallback) {
+  const cleaned = Array.isArray(values)
+    ? [...new Set(values.map((value) => String(value).trim()))]
+        .filter(Boolean)
+    : [];
+
+  return cleaned.length ? cleaned : fallback;
+}
+
+function cleanVariantOptions(values) {
+  if (!Array.isArray(values)) return [];
+
+  const unique = new Map();
+  for (const value of values) {
+    const color = String(value?.color || "").trim();
+    const size = String(value?.size || "").trim();
+    if (!color || !size) continue;
+    unique.set(`${color}\u0000${size}`, { color, size });
+  }
+
+  return [...unique.values()];
+}
+
 function ensureNoErrors(payload, key) {
   const errors = payload?.[key]?.userErrors || [];
   if (errors.length) {
@@ -364,6 +389,32 @@ async function setShopifyApparelVariants(
   }
 
   const price = review.price.toFixed(2);
+  let colors = cleanApparelOptions(
+    review.colors,
+    DEFAULT_APPAREL_COLORS
+  );
+  let sizes = cleanApparelOptions(
+    review.sizes,
+    DEFAULT_APPAREL_SIZES
+  );
+  const requestedCombinations = cleanVariantOptions(
+    review.variantOptions
+  );
+  const combinations = requestedCombinations.length
+    ? requestedCombinations
+    : colors.flatMap((color) =>
+        sizes.map((size) => ({ color, size }))
+      );
+
+  colors = [...new Set(combinations.map(({ color }) => color))];
+  sizes = [...new Set(combinations.map(({ size }) => size))];
+
+  if (combinations.length > 100) {
+    throw new Error(
+      "Shopify supports up to 100 variants here. Select fewer color and size combinations."
+    );
+  }
+
   const result = await shopifyGraphQL(SET_APPAREL_VARIANTS, {
     identifier: { id: productRecord.shopify_product_id },
     input: {
@@ -371,22 +422,22 @@ async function setShopifyApparelVariants(
         {
           name: "Color",
           position: 1,
-          values: [{ name: "Black" }]
+          values: colors.map((color) => ({ name: color }))
         },
         {
           name: "Size",
           position: 2,
-          values: DEFAULT_APPAREL_SIZES.map((size) => ({
+          values: sizes.map((size) => ({
             name: size
           }))
         }
       ],
-      variants: DEFAULT_APPAREL_SIZES.map((size, index) => ({
+      variants: combinations.map(({ color, size }, index) => ({
         position: index + 1,
         price,
         inventoryPolicy: "CONTINUE",
         optionValues: [
-          { optionName: "Color", name: "Black" },
+          { optionName: "Color", name: color },
           { optionName: "Size", name: size }
         ]
       }))
@@ -396,9 +447,9 @@ async function setShopifyApparelVariants(
   ensureNoErrors(result, "productSet");
 
   const variants = result.productSet?.product?.variants?.nodes || [];
-  if (variants.length !== DEFAULT_APPAREL_SIZES.length) {
+  if (variants.length !== combinations.length) {
     throw new Error(
-      `Shopify returned ${variants.length} variants; expected ${DEFAULT_APPAREL_SIZES.length}.`
+      `Shopify returned ${variants.length} variants; expected ${combinations.length}.`
     );
   }
 
@@ -438,13 +489,13 @@ async function setShopifyApparelVariants(
     supabase,
     "shopify_variants",
     `Added sizes to ${review.title}`,
-    `Black · ${DEFAULT_APPAREL_SIZES.join(", ")} · $${price}`,
+    `${colors.join(", ")} · ${sizes.join(", ")} · $${price}`,
     "success",
     {
       productId: productRecord.id,
       shopifyProductId: productRecord.shopify_product_id,
-      sizes: DEFAULT_APPAREL_SIZES,
-      color: "Black",
+      sizes,
+      colors,
       price
     }
   );
@@ -689,7 +740,18 @@ export async function POST(request) {
       metaDescription: String(
         body.metaDescription || defaults.metaDescription
       ).trim(),
-      artworkUrl: defaults.artworkUrl
+      artworkUrl: defaults.artworkUrl,
+      colors: cleanApparelOptions(
+        body.colors,
+        DEFAULT_APPAREL_COLORS
+      ),
+      sizes: cleanApparelOptions(
+        body.sizes,
+        DEFAULT_APPAREL_SIZES
+      ),
+      variantOptions: cleanVariantOptions(
+        body.variantOptions
+      )
     };
 
     if (!review.title) throw new Error("Product title is required.");
@@ -785,7 +847,7 @@ export async function POST(request) {
       return NextResponse.json({
         ok: true,
         message:
-          "Added Black sizes S–3XL in Shopify. Printful must now import and configure all six variants.",
+          `Added ${configured.variants.length} Shopify variants. Printful must now import and configure every selected color and size.`,
         product: configured.product,
         variants: configured.variants
       });
