@@ -243,6 +243,9 @@ export default function Publisher() {
             .map((value) => value.trim())
             .filter(Boolean);
           if (parts.length < 2) return null;
+          if (/^default title$/i.test(parts[parts.length - 1])) {
+            return null;
+          }
           return {
             color: parts[parts.length - 2],
             size: parts[parts.length - 1]
