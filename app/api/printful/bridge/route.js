@@ -313,16 +313,21 @@ export async function POST(request) {
     }
 
     if (action === "configure") {
-      const artworkUrl =
+      const frontArtworkUrl =
         body.artworkUrl ||
         product.designs?.front_artwork_url ||
         product.designs?.thumbnail_url;
+      const backArtworkUrl =
+        body.backArtworkUrl ||
+        product.designs?.back_artwork_url ||
+        null;
 
       const configured =
         await autoConfigurePrintful({
           shopifyProductId:
             product.shopify_product_id,
-          artworkUrl,
+          frontArtworkUrl,
+          backArtworkUrl,
           retailPrice:
             product.retail_price || body.retailPrice,
           blankName:

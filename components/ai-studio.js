@@ -25,7 +25,8 @@ const labels = [
   "Reading creative direction",
   "Applying Brand DNA",
   "Writing product concepts",
-  "Generating artwork",
+  "Generating front + back artwork",
+  "Building shirt mockups",
   "Saving approved assets"
 ];
 
@@ -128,13 +129,14 @@ export default function AiStudio() {
     }
   }
 
-  function download(result) {
-    if (!result?.image?.dataUrl) return;
+  function downloadAsset(result, side) {
+    const asset = result?.artwork?.[side];
+    if (!asset?.dataUrl) return;
     const link = document.createElement("a");
-    link.href = result.image.dataUrl;
+    link.href = asset.dataUrl;
     link.download = `${result.concept.concept_name
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")}.png`;
+      .replace(/[^a-z0-9]+/g, "-")}-${side}-print.png`;
     link.click();
   }
 
@@ -277,8 +279,9 @@ export default function AiStudio() {
           </button>
 
           <p className="aiCostNote">
-            Each variation creates one concept and one image. Start with two,
-            then generate more only when the direction is promising.
+            Each variation creates coordinated front and back print files plus
+            two shirt mockups. Start with one, then explore more when the
+            direction is promising.
           </p>
 
           {error && <div className="managerNotice error">{error}</div>}
@@ -308,10 +311,10 @@ export default function AiStudio() {
                     type="button"
                     className={`conceptThumb ${selected === index ? "selectedThumb" : ""}`}
                     onClick={() => setSelected(index)}
-                    key={result.image.publicUrl || index}
+                    key={result.mockups?.back?.publicUrl || result.image.publicUrl || index}
                   >
                     <img
-                      src={result.image.dataUrl}
+                      src={result.mockups?.back?.dataUrl || result.image.dataUrl}
                       alt={result.concept.concept_name}
                     />
                     <span>{result.concept.headline}</span>
@@ -322,11 +325,21 @@ export default function AiStudio() {
 
               {current && (
                 <article className="selectedConcept">
-                  <div className="selectedArtwork">
-                    <img
-                      src={current.image.dataUrl}
-                      alt={current.concept.concept_name}
-                    />
+                  <div className="selectedArtwork mockupPair">
+                    <figure>
+                      <img
+                        src={current.mockups?.front?.dataUrl || current.image.dataUrl}
+                        alt={`${current.concept.concept_name} front`}
+                      />
+                      <figcaption>FRONT</figcaption>
+                    </figure>
+                    <figure>
+                      <img
+                        src={current.mockups?.back?.dataUrl || current.image.dataUrl}
+                        alt={`${current.concept.concept_name} back`}
+                      />
+                      <figcaption>BACK</figcaption>
+                    </figure>
                   </div>
 
                   <div className="selectedCopy">
@@ -377,16 +390,19 @@ export default function AiStudio() {
                     </div>
 
                     <div className="generatedActions">
-                      <button onClick={() => download(current)}>
-                        <Download size={16} /> Download PNG
+                      <button onClick={() => downloadAsset(current, "front")}>
+                        <Download size={16} /> Front print PNG
                       </button>
-                      {current.image.publicUrl && (
+                      <button onClick={() => downloadAsset(current, "back")}>
+                        <Download size={16} /> Back print PNG
+                      </button>
+                      {current.artwork?.back?.publicUrl && (
                         <a
-                          href={current.image.publicUrl}
+                          href={current.artwork.back.publicUrl}
                           target="_blank"
                           rel="noreferrer"
                         >
-                          Public artwork URL <ExternalLink size={14} />
+                          Back artwork URL <ExternalLink size={14} />
                         </a>
                       )}
                     </div>

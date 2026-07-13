@@ -169,7 +169,7 @@ export async function POST(request) {
           : ["#080808", "#FF4F00", "#FFC107", "#FFFFFF"],
         base_prompt: String(body.basePrompt || "").trim(),
         requested_count: count,
-        estimated_image_requests: count,
+        estimated_image_requests: count * 2,
         auto_publish: Boolean(body.autoPublish),
         status: "queued"
       };

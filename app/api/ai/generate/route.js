@@ -26,7 +26,10 @@ const schema = {
     "tags",
     "retail_price",
     "art_direction",
-    "image_prompt"
+    "front_art_direction",
+    "back_art_direction",
+    "front_image_prompt",
+    "back_image_prompt"
   ],
   properties: {
     collection_name: { type: "string" },
@@ -44,7 +47,10 @@ const schema = {
     },
     retail_price: { type: "number", minimum: 20, maximum: 150 },
     art_direction: { type: "string" },
-    image_prompt: { type: "string" }
+    front_art_direction: { type: "string" },
+    back_art_direction: { type: "string" },
+    front_image_prompt: { type: "string" },
+    back_image_prompt: { type: "string" }
   }
 };
 
@@ -91,6 +97,9 @@ async function createConcept(apiKey, direction, variationIndex, priorNames) {
               type: "input_text",
               text: `${BRAND_RULES}
 Create one commercially usable merch concept.
+Design it as a coordinated two-sided garment. The front must be a restrained
+left-chest mark. The back must be the primary graphic and may use the exact
+headline. The two sides must share symbols, texture, palette, and visual DNA.
 This is variation ${variationIndex + 1}. It must feel meaningfully different from the other variations.
 ${uniqueness}`
             }
@@ -201,8 +210,15 @@ async function removeBlackBackground(base64) {
     .toBuffer();
 }
 
-async function createArtwork(apiKey, concept, direction) {
+async function createArtwork(apiKey, concept, direction, side) {
   const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
+  const isFront = side === "front";
+  const sideDirection = isFront
+    ? concept.front_art_direction
+    : concept.back_art_direction;
+  const sidePrompt = isFront
+    ? concept.front_image_prompt
+    : concept.back_image_prompt;
   const commonPrompt = `${BRAND_RULES}
 Create print-ready apparel artwork only—not a shirt mockup or presentation sheet.
 Product: ${direction.productType}
@@ -211,10 +227,15 @@ Visual style: ${direction.style}
 Mood: ${direction.mood}
 Placement intent: ${direction.placement}
 Approved palette: ${direction.colors.join(", ")}
+Garment side: ${isFront ? "FRONT LEFT-CHEST PRINT" : "BACK LARGE PRINT"}
 Concept headline: ${concept.headline}
-Art direction: ${concept.art_direction}
-Detailed request: ${concept.image_prompt}
-Center the artwork with generous clear space. Keep wording exact and minimal. High contrast and screen-print friendly.`;
+Overall art direction: ${concept.art_direction}
+Side-specific direction: ${sideDirection}
+Detailed request: ${sidePrompt}
+${isFront
+  ? "Create a compact emblem suitable for a 3.5 inch left-chest print. Do not create the large back composition on this side."
+  : "Create the main large back graphic. Use the headline exactly if text is requested. Do not add a garment, model, room, or product mockup."}
+Center the isolated artwork with generous clear space. Keep wording exact and minimal. High contrast and screen-print friendly.`;
 
   let { response, payload } = await requestImage(
     apiKey,
@@ -267,39 +288,103 @@ Do not use black inside the foreground artwork.`,
   };
 }
 
-async function saveArtwork(base64, concept, direction, variationIndex) {
+async function createShirtMockup(artworkBase64, side) {
+  const width = 1200;
+  const height = 1400;
+  const isFront = side === "front";
+  const shirt = Buffer.from(`
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="shirt" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#242424"/>
+          <stop offset="0.5" stop-color="#080808"/>
+          <stop offset="1" stop-color="#191919"/>
+        </linearGradient>
+        <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+          <feDropShadow dx="0" dy="30" stdDeviation="28" flood-color="#000" flood-opacity=".55"/>
+        </filter>
+      </defs>
+      <rect width="1200" height="1400" fill="#111111"/>
+      <path filter="url(#shadow)" fill="url(#shirt)" stroke="#343434" stroke-width="3"
+        d="M395 205 L245 275 L78 470 L245 590 L335 485 L335 1240 Q600 1320 865 1240 L865 485 L955 590 L1122 470 L955 275 L805 205 Q745 250 600 250 Q455 250 395 205 Z"/>
+      ${isFront
+        ? '<path d="M500 215 Q600 330 700 215" fill="#111" stroke="#3a3a3a" stroke-width="12"/>'
+        : '<path d="M505 220 Q600 285 695 220" fill="none" stroke="#3a3a3a" stroke-width="10"/>'}
+    </svg>`);
+
+  const artSize = isFront
+    ? { width: 210, height: 210 }
+    : { width: 560, height: 650 };
+  const art = await sharp(Buffer.from(artworkBase64, "base64"))
+    .resize(artSize.width, artSize.height, {
+      fit: "inside",
+      withoutEnlargement: false
+    })
+    .png()
+    .toBuffer();
+  const meta = await sharp(art).metadata();
+  const left = isFront
+    ? Math.round(690 - (meta.width || artSize.width) / 2)
+    : Math.round((width - (meta.width || artSize.width)) / 2);
+  const top = isFront ? 430 : 380;
+
+  return sharp(shirt)
+    .composite([{ input: art, left, top }])
+    .png()
+    .toBuffer();
+}
+
+async function saveArtwork(assets, concept, direction, variationIndex) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!url || !key) return { publicUrl: null, saved: false };
+  if (!url || !key) return { saved: false, urls: {} };
 
   const supabase = createClient(url, key, {
     auth: { persistSession: false }
   });
 
-  const filename = `ai/${Date.now()}-${variationIndex + 1}-${slugify(
+  const stem = `ai/${Date.now()}-${variationIndex + 1}-${slugify(
     concept.concept_name
-  )}.png`;
+  )}`;
 
-  const bytes = Buffer.from(base64, "base64");
+  async function upload(name, bytes) {
+    const path = `${stem}-${name}.png`;
+    const { error } = await supabase.storage
+      .from("artwork")
+      .upload(path, bytes, {
+        contentType: "image/png",
+        cacheControl: "3600",
+        upsert: false
+      });
+    if (error) throw error;
+    const { data } = supabase.storage.from("artwork").getPublicUrl(path);
+    return { path, publicUrl: data.publicUrl };
+  }
 
-  const { error: uploadError } = await supabase.storage
-    .from("artwork")
-    .upload(filename, bytes, {
-      contentType: "image/png",
-      cacheControl: "3600",
-      upsert: false
-    });
+  const [frontArtwork, backArtwork, frontMockup, backMockup] =
+    await Promise.all([
+      upload("front-print", Buffer.from(assets.front.base64, "base64")),
+      upload("back-print", Buffer.from(assets.back.base64, "base64")),
+      upload("front-mockup", assets.frontMockup),
+      upload("back-mockup", assets.backMockup)
+    ]);
 
-  if (uploadError) throw uploadError;
-
-  const { data } = supabase.storage.from("artwork").getPublicUrl(filename);
-  const publicUrl = data.publicUrl;
+  const urls = {
+    frontArtwork: frontArtwork.publicUrl,
+    backArtwork: backArtwork.publicUrl,
+    frontMockup: frontMockup.publicUrl,
+    backMockup: backMockup.publicUrl
+  };
 
   const metadata = {
     ...direction,
     variationIndex,
-    concept
+    concept,
+    mockups: {
+      front: urls.frontMockup,
+      back: urls.backMockup
+    }
   };
 
   const { data: insertedDesign, error: insertError } =
@@ -307,8 +392,9 @@ async function saveArtwork(base64, concept, direction, variationIndex) {
       .from("designs")
       .insert({
         name: concept.concept_name,
-        front_artwork_url: publicUrl,
-        thumbnail_url: publicUrl,
+        front_artwork_url: urls.frontArtwork,
+        back_artwork_url: urls.backArtwork,
+        thumbnail_url: urls.backMockup,
         status: "generated",
         prompt: direction.prompt,
         product_type: direction.productType,
@@ -338,10 +424,20 @@ async function saveArtwork(base64, concept, direction, variationIndex) {
       variationIndex + 1
     }`,
     status: "success",
-    metadata: { publicUrl, ...metadata }
+    metadata: { ...urls, ...metadata }
   });
 
-  return { publicUrl, saved: true, path: filename, designId: insertedDesign?.id || null };
+  return {
+    saved: true,
+    urls,
+    paths: {
+      frontArtwork: frontArtwork.path,
+      backArtwork: backArtwork.path,
+      frontMockup: frontMockup.path,
+      backMockup: backMockup.path
+    },
+    designId: insertedDesign?.id || null
+  };
 }
 
 export async function POST(request) {
@@ -403,22 +499,55 @@ export async function POST(request) {
 
       priorNames.push(concept.concept_name);
 
-      const artwork = await createArtwork(apiKey, concept, direction);
+      const [front, back] = await Promise.all([
+        createArtwork(apiKey, concept, direction, "front"),
+        createArtwork(apiKey, concept, direction, "back")
+      ]);
+      const [frontMockup, backMockup] = await Promise.all([
+        createShirtMockup(front.base64, "front"),
+        createShirtMockup(back.base64, "back")
+      ]);
       const saved = await saveArtwork(
-        artwork.base64,
+        { front, back, frontMockup, backMockup },
         concept,
         direction,
         index
       );
 
+      const frontMockupDataUrl = `data:image/png;base64,${frontMockup.toString("base64")}`;
+      const backMockupDataUrl = `data:image/png;base64,${backMockup.toString("base64")}`;
+
       results.push({
         concept,
+        artwork: {
+          front: {
+            dataUrl: `data:image/png;base64,${front.base64}`,
+            publicUrl: saved.urls?.frontArtwork || null,
+            transparencyMode: front.transparencyMode
+          },
+          back: {
+            dataUrl: `data:image/png;base64,${back.base64}`,
+            publicUrl: saved.urls?.backArtwork || null,
+            transparencyMode: back.transparencyMode
+          }
+        },
+        mockups: {
+          front: {
+            dataUrl: frontMockupDataUrl,
+            publicUrl: saved.urls?.frontMockup || null
+          },
+          back: {
+            dataUrl: backMockupDataUrl,
+            publicUrl: saved.urls?.backMockup || null
+          }
+        },
+        // Backwards-compatible primary image for older Factory clients.
         image: {
-          dataUrl: `data:image/png;base64,${artwork.base64}`,
-          publicUrl: saved.publicUrl,
+          dataUrl: backMockupDataUrl,
+          publicUrl: saved.urls?.backArtwork || null,
           savedToSupabase: saved.saved,
           designId: saved.designId,
-          transparencyMode: artwork.transparencyMode
+          transparencyMode: back.transparencyMode
         }
       });
     }

@@ -1,6 +1,18 @@
-# Brokie OS v1
+# Brokie OS v2.4
 
 A clean Next.js App Router project for The Brokie brand.
+
+## Two-sided apparel generation
+
+Foundry now creates a coordinated four-asset product set for every concept:
+
+- transparent front print artwork;
+- transparent back print artwork;
+- front shirt mockup;
+- back shirt mockup.
+
+The shirt mockups are review images only. The clean front and back PNG files are
+stored separately and sent to Printful for their matching print placements.
 
 ## Why this build is different
 
@@ -141,7 +153,7 @@ Every variation is saved separately to the existing Supabase Design Library and 
 
 ### Cost control
 
-Each variation uses one text concept request and one image-generation request. Start with two variations and only use four when the direction is worth exploring.
+Each variation uses one text concept request and two image-generation requests—one front and one back. The two shirt mockups are composed locally and do not add image-generation requests. Start with one variation and only use more when the direction is worth exploring.
 
 
 ## v1.7 Publisher

@@ -256,7 +256,10 @@ export default function DesignFactory() {
             designId: result?.image?.designId || null,
             collectionId: currentRun.collection_id,
             conceptName: result?.concept?.concept_name || null,
-            artworkUrl: result?.image?.publicUrl || null
+            artworkUrl:
+              result?.mockups?.back?.publicUrl ||
+              result?.image?.publicUrl ||
+              null
           });
 
           window.dispatchEvent(
@@ -469,9 +472,11 @@ export default function DesignFactory() {
             <AlertTriangle size={17} />
             <span>
               This run will make approximately{" "}
-              <strong>{form.count} image requests</strong> and{" "}
+              <strong>{form.count * 2} image requests</strong> and{" "}
               <strong>{form.count} concept requests</strong>. It
-              generates one design at a time so you can pause it.
+              generates coordinated front and back artwork plus two
+              shirt mockups for each design. It works one design at a
+              time so you can pause it.
             </span>
           </div>
 

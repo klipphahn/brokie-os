@@ -740,8 +740,8 @@ export default function DesignLibrary() {
             <div className="drawerHero">
               <img
                 src={
-                  selected.front_artwork_url ||
                   selected.thumbnail_url ||
+                  selected.front_artwork_url ||
                   ""
                 }
                 alt={selected.name}
