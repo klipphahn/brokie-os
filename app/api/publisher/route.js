@@ -160,6 +160,21 @@ mutation SetBrokieApparelVariants(
   }
 }`;
 
+const READ_PRODUCT_VARIANTS = `
+query ReadBrokieProductVariants($id: ID!) {
+  product(id: $id) {
+    id
+    variants(first: 100) {
+      nodes {
+        id
+        title
+        price
+        inventoryPolicy
+      }
+    }
+  }
+}`;
+
 const DEFAULT_APPAREL_SIZES = [
   "S",
   "M",
@@ -369,6 +384,7 @@ async function setShopifyApparelVariants(
       variants: DEFAULT_APPAREL_SIZES.map((size, index) => ({
         position: index + 1,
         price,
+        inventoryPolicy: "CONTINUE",
         optionValues: [
           { optionName: "Color", name: "Black" },
           { optionName: "Size", name: size }
@@ -439,6 +455,42 @@ async function setShopifyApparelVariants(
   };
 }
 
+async function enablePrintOnDemandAvailability(
+  supabase,
+  productRecord
+) {
+  const queryData = await shopifyGraphQL(
+    READ_PRODUCT_VARIANTS,
+    { id: productRecord.shopify_product_id }
+  );
+  const variants = queryData.product?.variants?.nodes || [];
+
+  if (!variants.length) {
+    throw new Error("Shopify returned no product variants.");
+  }
+
+  const updateData = await shopifyGraphQL(UPDATE_VARIANTS, {
+    productId: productRecord.shopify_product_id,
+    variants: variants.map((variant) => ({
+      id: variant.id,
+      inventoryPolicy: "CONTINUE"
+    }))
+  });
+
+  ensureNoErrors(updateData, "productVariantsBulkUpdate");
+
+  await recordRun(
+    supabase,
+    productRecord.id,
+    "shopify",
+    "enable_pod_availability",
+    "success",
+    updateData
+  );
+
+  return variants.length;
+}
+
 async function launchProduct(supabase, productRecord, review) {
   if (!productRecord.shopify_product_id) {
     throw new Error("Create the Shopify draft first.");
@@ -454,6 +506,11 @@ async function launchProduct(supabase, productRecord, review) {
       "Printful fulfillment has not passed API verification. Open the Printful panel, configure the imported product, and verify every variant before launching."
     );
   }
+
+  await enablePrintOnDemandAvailability(
+    supabase,
+    productRecord
+  );
 
   const activateData = await shopifyGraphQL(UPDATE_PRODUCT, {
     product: {
