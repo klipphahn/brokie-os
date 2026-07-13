@@ -440,7 +440,7 @@ async function setShopifyApparelVariants(
         position: index + 1,
         price,
         inventoryPolicy: "CONTINUE",
-        inventoryItem: { tracked: false },
+        inventoryItem: { tracked: true },
         optionValues: [
           { optionName: "Color", name: color },
           { optionName: "Size", name: size }
@@ -530,7 +530,7 @@ async function enablePrintOnDemandAvailability(
     variants: variants.map((variant) => ({
       id: variant.id,
       inventoryPolicy: "CONTINUE",
-      inventoryItem: { tracked: false }
+      inventoryItem: { tracked: true }
     }))
   });
 
@@ -545,12 +545,12 @@ async function enablePrintOnDemandAvailability(
   const unavailable = verifiedVariants.filter(
     (variant) =>
       variant.inventoryPolicy !== "CONTINUE" ||
-      variant.inventoryItem?.tracked !== false
+      variant.inventoryItem?.tracked !== true
   );
 
   if (unavailable.length) {
     throw new Error(
-      `${unavailable.length} Shopify variant(s) still have inventory restrictions. The product was not launched.`
+      `${unavailable.length} Shopify variant(s) are not tracking Printful inventory. The product was not launched.`
     );
   }
 
