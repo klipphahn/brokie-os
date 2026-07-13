@@ -449,7 +449,7 @@ export async function POST(request) {
         ok: configured.verification.ready,
         message: configured.verification.ready
           ? "Printful fulfillment is fully configured."
-          : `Printful configured ${configured.verification.syncedVariants}/${configured.verification.totalVariants} variants. Review the remaining variants.`,
+          : `Printful configured ${configured.verification.syncedVariants}/${configured.verification.totalVariants} variants. ${failures[0]?.name || "A remaining variant"}: ${failures[0]?.error || "review required"}.`,
         product: saved,
         configured,
         inspection: configured.verification,
