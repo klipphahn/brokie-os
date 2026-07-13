@@ -310,6 +310,12 @@ async function saveArtwork(base64, concept, direction, variationIndex) {
     prompt: direction.prompt,
     product_type: direction.productType,
     concept: metadata,
+    design_dna: metadata,
+    color_palette: direction.colors || [],
+    theme: concept.collection_name || direction.mood,
+    target_audience: direction.audience,
+    visual_style: direction.style,
+    placement: direction.placement,
     updated_at: new Date().toISOString()
   });
 

@@ -1,0 +1,23 @@
+BROKIE OS V1.9 INSTALL ORDER
+
+1. Run supabase/migrations/006_design_library_3.sql in the Supabase SQL Editor.
+2. Copy this package into your existing repository while preserving:
+   .git
+   .env.local
+   node_modules
+   .next
+   pnpm-lock.yaml
+3. Run:
+   pnpm install
+   pnpm build
+   pnpm dev
+4. Open Design Library and test:
+   search
+   filters
+   favorites
+   detail drawer
+   Design DNA editing
+   duplicate
+   archive/restore
+   version history
+5. Commit and push to GitHub.

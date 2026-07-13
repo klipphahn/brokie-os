@@ -189,3 +189,33 @@ Release a new Shopify app version with those scopes and approve the updated inst
 ### Printful safety gate
 
 Brokie OS does not claim that Printful was configured automatically. The launch button remains disabled until the administrator explicitly confirms the synced Printful product, variants, placement, pricing, and fulfillment setup.
+
+
+## v1.9 Design Library 3.0
+
+The Design Library is now a full creative asset manager.
+
+### Features
+
+- Semantic-style search across names, prompts, tags, themes, audiences, styles, placements, and colors
+- Filters for status, product type, audience, style, and theme
+- Grid and list views
+- Favorites and archive
+- Full Design DNA editing
+- Product and Shopify linkage
+- Version history
+- Duplicate, archive, restore, and permanent delete actions
+- Performance-ready metrics for views, clicks, orders, revenue, profit, and returns
+- Automatic Design DNA fields for newly generated Foundry concepts
+
+### Database preparation
+
+Run:
+
+```sql
+supabase/migrations/006_design_library_3.sql
+```
+
+before loading the new library.
+
+Analytics values begin at zero. Later Shopify order and storefront event synchronization can populate the metrics table without changing the Design Library data model.
