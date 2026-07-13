@@ -36,7 +36,11 @@ function conceptFromDesign(design) {
       "",
     collectionName: concept.collection_name || "Foundry",
     artworkUrl:
-      design.front_artwork_url || design.thumbnail_url
+      design.front_artwork_url || design.thumbnail_url,
+    mockups: {
+      front: raw.mockups?.front || null,
+      back: raw.mockups?.back || design.thumbnail_url || null
+    }
   };
 }
 

@@ -456,14 +456,34 @@ export default function Publisher() {
             <div className="reviewWorkspace">
               <div className="reviewTop">
                 <div className="reviewArtwork">
-                  <img
-                    src={
-                      current.concept.artworkUrl ||
-                      current.design.thumbnail_url ||
-                      ""
-                    }
-                    alt=""
-                  />
+                  {current.concept.mockups?.front &&
+                  current.concept.mockups?.back ? (
+                    <div className="twoSidedReview">
+                      <figure>
+                        <img
+                          src={current.concept.mockups.front}
+                          alt={`${current.form.title} front mockup`}
+                        />
+                        <figcaption>FRONT</figcaption>
+                      </figure>
+                      <figure>
+                        <img
+                          src={current.concept.mockups.back}
+                          alt={`${current.form.title} back mockup`}
+                        />
+                        <figcaption>BACK</figcaption>
+                      </figure>
+                    </div>
+                  ) : (
+                    <img
+                      src={
+                        current.design.thumbnail_url ||
+                        current.concept.artworkUrl ||
+                        ""
+                      }
+                      alt={`${current.form.title} preview`}
+                    />
+                  )}
                 </div>
 
                 <div className="publishChecklist">
@@ -479,6 +499,31 @@ export default function Publisher() {
                   ))}
                 </div>
               </div>
+
+              {(current.design.front_artwork_url ||
+                current.design.back_artwork_url) && (
+                <div className="reviewAssetLinks">
+                  <span>PRINT FILES</span>
+                  {current.design.front_artwork_url && (
+                    <a
+                      href={current.design.front_artwork_url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Open front artwork
+                    </a>
+                  )}
+                  {current.design.back_artwork_url && (
+                    <a
+                      href={current.design.back_artwork_url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Open back artwork
+                    </a>
+                  )}
+                </div>
+              )}
 
               <div className="reviewFields">
                 <label>
