@@ -142,3 +142,21 @@ Every variation is saved separately to the existing Supabase Design Library and 
 ### Cost control
 
 Each variation uses one text concept request and one image-generation request. Start with two variations and only use four when the direction is worth exploring.
+
+
+## v1.7 Publisher
+
+Run `supabase/migrations/004_publisher.sql` before using Publisher.
+
+Publisher provides an idempotent review workflow:
+
+1. Save reviewed metadata.
+2. Create or update one Shopify draft per design.
+3. Set its first/default Shopify variant price.
+4. Activate the Shopify product after approval.
+5. Preserve Shopify IDs and successful steps for retries.
+6. Record all attempts in publish runs and the activity log.
+
+### Printful limitation
+
+The Printful synced-product creation endpoint does not apply to a normal Shopify-connected Printful store. Publisher therefore tracks Printful as a required manual fulfillment checkpoint instead of falsely claiming it can attach the product automatically. Configure the product in Printful before taking orders.

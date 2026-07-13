@@ -17,6 +17,7 @@ const links = [
   ["Brand DNA", Fingerprint, "#brand-dna"],
   ["Design Library", Images, "#designs"],
   ["Foundry", BrainCircuit, "#ai"],
+  ["Publisher", Send, "#publisher"],
   ["Shopify Sync", ShoppingBag, "#shopify-manager"],
   ["Collection Builder", PackagePlus, "#builder"],
   ["Publish Center", Send, "#publish"],

@@ -1,0 +1,5 @@
+Run the Supabase migration first:
+  supabase/migrations/004_publisher.sql
+
+Copy into the existing repo while preserving .git, .env.local, node_modules, .next, and pnpm-lock.yaml.
+Then run pnpm install && pnpm build.
