@@ -170,6 +170,10 @@ query ReadBrokieProductVariants($id: ID!) {
         title
         price
         inventoryPolicy
+        inventoryItem {
+          id
+          tracked
+        }
       }
     }
   }
@@ -436,6 +440,7 @@ async function setShopifyApparelVariants(
         position: index + 1,
         price,
         inventoryPolicy: "CONTINUE",
+        inventoryItem: { tracked: false },
         optionValues: [
           { optionName: "Color", name: color },
           { optionName: "Size", name: size }
@@ -524,11 +529,30 @@ async function enablePrintOnDemandAvailability(
     productId: productRecord.shopify_product_id,
     variants: variants.map((variant) => ({
       id: variant.id,
-      inventoryPolicy: "CONTINUE"
+      inventoryPolicy: "CONTINUE",
+      inventoryItem: { tracked: false }
     }))
   });
 
   ensureNoErrors(updateData, "productVariantsBulkUpdate");
+
+  const verificationData = await shopifyGraphQL(
+    READ_PRODUCT_VARIANTS,
+    { id: productRecord.shopify_product_id }
+  );
+  const verifiedVariants =
+    verificationData.product?.variants?.nodes || [];
+  const unavailable = verifiedVariants.filter(
+    (variant) =>
+      variant.inventoryPolicy !== "CONTINUE" ||
+      variant.inventoryItem?.tracked !== false
+  );
+
+  if (unavailable.length) {
+    throw new Error(
+      `${unavailable.length} Shopify variant(s) still have inventory restrictions. The product was not launched.`
+    );
+  }
 
   await recordRun(
     supabase,
@@ -539,7 +563,7 @@ async function enablePrintOnDemandAvailability(
     updateData
   );
 
-  return variants.length;
+  return verifiedVariants.length;
 }
 
 async function launchProduct(supabase, productRecord, review) {
