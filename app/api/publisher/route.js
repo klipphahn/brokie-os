@@ -849,7 +849,10 @@ export async function POST(request) {
       await supabase
         .from("designs")
         .update({
-          status: "ready",
+          status:
+            productRecord.status === "live"
+              ? "published"
+              : "ready",
           updated_at: new Date().toISOString()
         })
         .eq("id", designId);
@@ -871,7 +874,9 @@ export async function POST(request) {
       return NextResponse.json({
         ok: true,
         message:
-          "Shopify draft created without duplicating the product.",
+          productRecord.status === "live"
+            ? "Live Shopify product updated without duplicating it."
+            : "Shopify draft created without duplicating the product.",
         product: productRecord
       });
     }
