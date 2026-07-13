@@ -1,0 +1,27 @@
+BROKIE OS V2.1 INSTALL ORDER
+
+1. Run supabase/migrations/008_printful_bridge.sql.
+2. Leave RLS disabled on printful_variant_links because it is server-only.
+3. Confirm Vercel has:
+   PRINTFUL_TOKEN
+   PRINTFUL_STORE_ID
+4. Optional Vercel defaults:
+   PRINTFUL_DEFAULT_BLANK=Comfort Colors 1717
+   PRINTFUL_DEFAULT_COLOR=Black
+   PRINTFUL_DEFAULT_SIZE=M
+5. Copy the update into the existing repository while preserving:
+   .git
+   .env.local
+   node_modules
+   .next
+   pnpm-lock.yaml
+6. Run:
+   pnpm install
+   pnpm build
+   pnpm dev
+7. In Publisher:
+   Detect imported product
+   Configure Printful
+   Verify fulfillment
+   Launch to Store
+8. Commit and push to GitHub.

@@ -1,34 +1,34 @@
 import { NextResponse } from "next/server";
+import { diagnosePrintful } from "@/lib/printful-bridge";
+
+async function test() {
+  try {
+    const diagnostics = await diagnosePrintful();
+
+    return NextResponse.json({
+      ok: true,
+      message: "Printful is connected.",
+      diagnostics
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : String(error),
+        details: error?.payload || null
+      },
+      { status: error?.status || 400 }
+    );
+  }
+}
+
+export async function GET() {
+  return test();
+}
 
 export async function POST() {
-  const token = process.env.PRINTFUL_TOKEN;
-  const storeId = process.env.PRINTFUL_STORE_ID;
-
-  if (!token) {
-    return NextResponse.json(
-      { error: "PRINTFUL_TOKEN is missing from the deployment environment." },
-      { status: 400 }
-    );
-  }
-
-  const headers = { Authorization: `Bearer ${token}` };
-  if (storeId) headers["X-PF-Store-Id"] = storeId;
-
-  const response = await fetch("https://api.printful.com/stores", {
-    headers,
-    cache: "no-store"
-  });
-  const data = await response.json();
-
-  if (!response.ok) {
-    return NextResponse.json(
-      { error: data?.error?.message || "Printful rejected the credentials.", details: data },
-      { status: response.status }
-    );
-  }
-
-  return NextResponse.json({
-    message: `Printful connected. ${Array.isArray(data.result) ? data.result.length : 1} store record(s) available.`,
-    stores: data.result
-  });
+  return test();
 }

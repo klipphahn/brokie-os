@@ -255,3 +255,45 @@ The installed app must have:
 - Product-level revenue uses Shopify line-item values after discounts and current returns/removals.
 - Profit is intentionally not estimated yet. It will be added after Printful cost synchronization.
 - Customer names, email addresses, phone numbers, and postal addresses are not stored by this release.
+
+
+## v2.1 Printful Fulfillment Bridge
+
+This release replaces the manual Printful checkbox with API-backed detection,
+configuration, and verification for Shopify-connected Printful products.
+
+### Workflow
+
+1. Brokie OS creates or updates the Shopify product.
+2. Printful imports the product from Shopify.
+3. **Detect imported product** resolves it by Shopify external product ID.
+4. **Configure Printful**:
+   - locates Comfort Colors 1717 in the Printful catalog,
+   - matches imported variant names to catalog color/size variants,
+   - assigns the public front artwork,
+   - sets the retail price,
+   - updates each Printful sync variant.
+5. **Verify fulfillment** checks that every imported variant:
+   - has a Printful catalog variant,
+   - is marked synced,
+   - has artwork attached.
+6. Store Launch remains disabled until verification passes.
+
+### Required environment variables
+
+- `PRINTFUL_TOKEN`
+- `PRINTFUL_STORE_ID`
+
+Optional defaults:
+
+- `PRINTFUL_DEFAULT_BLANK=Comfort Colors 1717`
+- `PRINTFUL_DEFAULT_COLOR=Black`
+- `PRINTFUL_DEFAULT_SIZE=M`
+
+### Important behavior
+
+Printful does not import Shopify product changes instantly. The bridge handles
+"not imported yet" as a waiting state and provides a direct Printful dashboard
+link. The legacy `/api/printful/products` create-product route is retired
+because it targets Manual Order/API stores rather than a Shopify-connected
+store.

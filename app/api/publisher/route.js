@@ -298,9 +298,14 @@ async function launchProduct(supabase, productRecord, review) {
     throw new Error("Create the Shopify draft first.");
   }
 
-  if (productRecord.printful_status !== "configured") {
+  if (
+    productRecord.printful_status !== "configured" ||
+    Number(productRecord.printful_variant_count || 0) < 1 ||
+    Number(productRecord.printful_synced_variant_count || 0) !==
+      Number(productRecord.printful_variant_count || 0)
+  ) {
     throw new Error(
-      "Printful fulfillment is not confirmed. Configure the product in the Shopify-connected Printful store, then mark Printful as configured."
+      "Printful fulfillment has not passed API verification. Open the Printful panel, configure the imported product, and verify every variant before launching."
     );
   }
 
@@ -562,58 +567,9 @@ export async function POST(request) {
     }
 
     if (action === "mark_printful_configured") {
-      if (!body.confirmed) {
-        throw new Error(
-          "Confirm that Printful fulfillment and variants were checked."
-        );
-      }
-
-      const confirmedAt = new Date().toISOString();
-
-      const updated = await supabase
-        .from("products")
-        .update({
-          printful_status: "configured",
-          printful_confirmed_at: confirmedAt,
-          publish_error: null,
-          updated_at: confirmedAt
-        })
-        .eq("id", productRecord.id)
-        .select()
-        .single();
-
-      if (updated.error) throw updated.error;
-      productRecord = updated.data;
-
-      await recordRun(
-        supabase,
-        productRecord.id,
-        "printful",
-        "manual_configuration_confirmed",
-        "success",
-        {
-          confirmedAt
-        }
+      throw new Error(
+        "Manual Printful confirmation has been retired. Use the Printful Fulfillment Bridge to detect, configure, and verify the product."
       );
-
-      await logActivity(
-        supabase,
-        "printful_confirmed",
-        `Confirmed Printful: ${review.title}`,
-        "Fulfillment, variants, artwork placement, and pricing were manually confirmed.",
-        "success",
-        {
-          designId,
-          productId: productRecord.id
-        }
-      );
-
-      return NextResponse.json({
-        ok: true,
-        message:
-          "Printful configuration confirmed. This product can now be launched.",
-        product: productRecord
-      });
     }
 
     if (action === "launch_store") {

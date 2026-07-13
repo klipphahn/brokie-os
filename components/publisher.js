@@ -67,8 +67,14 @@ export default function Publisher() {
   const [working, setWorking] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [printfulConfirmed, setPrintfulConfirmed] =
-    useState(false);
+  const [printful, setPrintful] = useState(null);
+  const [printfulWorking, setPrintfulWorking] =
+    useState("");
+  const [printfulForm, setPrintfulForm] = useState({
+    blankName: "Comfort Colors 1717",
+    defaultColor: "Black",
+    defaultSize: "M"
+  });
   const [publication, setPublication] = useState(null);
   const [publicationError, setPublicationError] =
     useState("");
@@ -125,9 +131,103 @@ export default function Publisher() {
     checkPublication();
   }, []);
 
+  async function loadPrintful(item = current) {
+    if (!item?.product?.id) {
+      setPrintful(null);
+      return;
+    }
+
+    setPrintfulWorking("loading");
+
+    try {
+      const response = await fetch(
+        `/api/printful/bridge?productId=${encodeURIComponent(
+          item.product.id
+        )}`,
+        { cache: "no-store" }
+      );
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(
+          data.error ||
+            "Printful status could not be loaded."
+        );
+      }
+
+      setPrintful(data);
+    } catch (loadError) {
+      setPrintful({
+        ok: false,
+        error: loadError.message
+      });
+    } finally {
+      setPrintfulWorking("");
+    }
+  }
+
+  async function printfulAction(action) {
+    if (!current?.product?.id) {
+      setError(
+        "Create the Shopify product before connecting Printful."
+      );
+      return;
+    }
+
+    setPrintfulWorking(action);
+    setMessage("");
+    setError("");
+
+    try {
+      const response = await fetch(
+        "/api/printful/bridge",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            action,
+            productId: current.product.id,
+            artworkUrl:
+              current.concept.artworkUrl ||
+              current.design.front_artwork_url ||
+              current.design.thumbnail_url,
+            retailPrice: current.form.price,
+            ...printfulForm
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok && response.status !== 409) {
+        throw new Error(
+          data.error ||
+            "Printful action failed."
+        );
+      }
+
+      setPrintful(data);
+      setMessage(data.message);
+      await load();
+
+      if (data.inspection?.ready) {
+        await loadPrintful({
+          ...current,
+          product: data.product
+        });
+      }
+    } catch (actionError) {
+      setError(actionError.message);
+    } finally {
+      setPrintfulWorking("");
+    }
+  }
+
   useEffect(() => {
-    setPrintfulConfirmed(false);
-  }, [selected]);
+    loadPrintful(current);
+  }, [selected, current?.product?.id]);
 
   const current = items[selected];
 
@@ -237,6 +337,13 @@ export default function Publisher() {
   const canLaunch =
     Boolean(current?.product?.shopify_product_id) &&
     current?.product?.printful_status === "configured" &&
+    Number(current?.product?.printful_variant_count || 0) > 0 &&
+    Number(
+      current?.product?.printful_synced_variant_count || 0
+    ) ===
+      Number(
+        current?.product?.printful_variant_count || 0
+      ) &&
     Boolean(publication);
 
   return (
@@ -268,11 +375,11 @@ export default function Publisher() {
       <div className="publisherNotice">
         <TriangleAlert size={18} />
         <span>
-          Brokie OS can activate and publish the Shopify
-          product automatically. Because Printful does not
-          allow its Shopify-connected store to be configured
-          through the synced-product API, you must confirm
-          fulfillment once before launching.
+          Brokie OS now detects the Shopify listing imported
+          into Printful, maps its variants to Comfort Colors 1717,
+          attaches the artwork, and verifies fulfillment through
+          Printful's Ecommerce Platform Sync API. Store Launch stays
+          locked until every sellable variant passes verification.
         </span>
       </div>
 
@@ -468,61 +575,242 @@ export default function Publisher() {
                 </label>
               </div>
 
-              <div className="launchGate">
-                <div>
-                  <PackageCheck size={19} />
-                  <span>
-                    <strong>
-                      Printful fulfillment checkpoint
-                    </strong>
-                    Confirm the product blank, all variants,
-                    artwork placement, retail price, and
-                    Shopify synchronization in Printful.
+              <div className="printfulBridgePanel">
+                <div className="printfulBridgeHead">
+                  <div>
+                    <PackageCheck size={20} />
+                    <span>
+                      <strong>
+                        Printful Fulfillment Bridge
+                      </strong>
+                      Imported Shopify product · Comfort Colors
+                      1717 · API-verified fulfillment
+                    </span>
+                  </div>
+
+                  <span
+                    className={`printfulBridgeStatus ${
+                      current.product?.printful_status ||
+                      "not_configured"
+                    }`}
+                  >
+                    {current.product?.printful_status ||
+                      "not configured"}
                   </span>
                 </div>
 
-                {current.product?.printful_status ===
-                "configured" ? (
-                  <div className="confirmedGate">
-                    <CheckCircle2 size={18} />
-                    Printful configuration confirmed
-                  </div>
-                ) : (
-                  <>
-                    <label className="confirmationCheck">
-                      <input
-                        type="checkbox"
-                        checked={printfulConfirmed}
-                        onChange={(event) =>
-                          setPrintfulConfirmed(
-                            event.target.checked
-                          )
-                        }
-                      />
-                      I checked the Printful product and it
-                      is ready to fulfill customer orders.
-                    </label>
-
-                    <button
-                      className="secondary"
-                      disabled={
-                        !printfulConfirmed || !!working
+                <div className="printfulSettings">
+                  <label>
+                    Default blank
+                    <input
+                      value={printfulForm.blankName}
+                      onChange={(event) =>
+                        setPrintfulForm((value) => ({
+                          ...value,
+                          blankName: event.target.value
+                        }))
                       }
-                      onClick={() =>
-                        act(
-                          "mark_printful_configured",
-                          { confirmed: true }
-                        )
+                    />
+                  </label>
+
+                  <label>
+                    Default color
+                    <input
+                      value={printfulForm.defaultColor}
+                      onChange={(event) =>
+                        setPrintfulForm((value) => ({
+                          ...value,
+                          defaultColor: event.target.value
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <label>
+                    Default size
+                    <select
+                      value={printfulForm.defaultSize}
+                      onChange={(event) =>
+                        setPrintfulForm((value) => ({
+                          ...value,
+                          defaultSize: event.target.value
+                        }))
                       }
                     >
-                      <PackageCheck size={16} />
-                      {working ===
-                      "mark_printful_configured"
-                        ? "Saving…"
-                        : "Mark Printful configured"}
-                    </button>
-                  </>
+                      {[
+                        "XS",
+                        "S",
+                        "M",
+                        "L",
+                        "XL",
+                        "2XL",
+                        "3XL",
+                        "4XL"
+                      ].map((size) => (
+                        <option key={size}>{size}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                {printful?.error && (
+                  <div className="printfulBridgeError">
+                    {printful.error}
+                  </div>
                 )}
+
+                {printful?.inspection && (
+                  <div className="printfulVerification">
+                    <article>
+                      <strong>
+                        {printful.inspection.found
+                          ? "Detected"
+                          : "Waiting"}
+                      </strong>
+                      <span>Imported product</span>
+                    </article>
+                    <article>
+                      <strong>
+                        {printful.inspection.syncedVariants ||
+                          0}
+                        /
+                        {printful.inspection.totalVariants ||
+                          0}
+                      </strong>
+                      <span>Variants synced</span>
+                    </article>
+                    <article>
+                      <strong>
+                        {printful.inspection
+                          .artworkReadyVariants || 0}
+                        /
+                        {printful.inspection.totalVariants ||
+                          0}
+                      </strong>
+                      <span>Artwork ready</span>
+                    </article>
+                    <article>
+                      <strong>
+                        {printful.inspection.ready
+                          ? "READY"
+                          : "NOT READY"}
+                      </strong>
+                      <span>Fulfillment state</span>
+                    </article>
+                  </div>
+                )}
+
+                {printful?.inspection?.variants?.length > 0 && (
+                  <div className="printfulVariantList">
+                    {printful.inspection.variants.map(
+                      (variant) => (
+                        <div key={variant.id}>
+                          <span>
+                            <strong>{variant.name}</strong>
+                            <small>
+                              Catalog variant{" "}
+                              {variant.catalogVariantId ||
+                                "not assigned"}
+                            </small>
+                          </span>
+                          <span>
+                            {variant.synced ? (
+                              <CheckCircle2 size={16} />
+                            ) : (
+                              <CircleDashed size={16} />
+                            )}
+                            {variant.artworkReady ? (
+                              <CheckCircle2 size={16} />
+                            ) : (
+                              <CircleDashed size={16} />
+                            )}
+                          </span>
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+
+                <div className="printfulBridgeActions">
+                  <button
+                    className="secondary"
+                    onClick={() =>
+                      printfulAction("detect")
+                    }
+                    disabled={
+                      !!printfulWorking ||
+                      !current.product
+                        ?.shopify_product_id
+                    }
+                  >
+                    <RefreshCw
+                      size={15}
+                      className={
+                        printfulWorking === "detect"
+                          ? "spin"
+                          : ""
+                      }
+                    />
+                    Detect imported product
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      printfulAction("configure")
+                    }
+                    disabled={
+                      !!printfulWorking ||
+                      !current.product
+                        ?.shopify_product_id
+                    }
+                  >
+                    <PackageCheck size={16} />
+                    {printfulWorking === "configure"
+                      ? "Configuring…"
+                      : "Configure Printful"}
+                  </button>
+
+                  <button
+                    className="secondary"
+                    onClick={() =>
+                      printfulAction("verify")
+                    }
+                    disabled={
+                      !!printfulWorking ||
+                      !current.product
+                        ?.shopify_product_id
+                    }
+                  >
+                    <CheckCircle2 size={16} />
+                    Verify fulfillment
+                  </button>
+
+                  {(printful?.dashboardUrl ||
+                    current.product
+                      ?.printful_product_url) && (
+                    <a
+                      href={
+                        printful?.dashboardUrl ||
+                        current.product
+                          .printful_product_url
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Open Printful{" "}
+                      <ExternalLink size={14} />
+                    </a>
+                  )}
+                </div>
+
+                <p className="printfulBridgeNote">
+                  Imported products can take a few seconds to
+                  several hours to appear in Printful after
+                  Shopify creates or updates them. Variant names
+                  are matched automatically; a single “Default
+                  Title” variant uses the default color and size
+                  above.
+                </p>
               </div>
 
               <div className="publisherActions">

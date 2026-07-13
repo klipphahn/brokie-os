@@ -778,3 +778,100 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
   .analyticsTableHead span:nth-child(3),
   .analyticsTableRow > span:nth-child(3) { display:none; }
 }
+
+
+.printfulBridgePanel {
+  margin-top:15px; padding:15px;
+  background:#0e0e0e; border:1px solid #3d3d3d;
+  border-radius:12px;
+}
+.printfulBridgeHead {
+  display:flex; justify-content:space-between; gap:12px;
+  align-items:flex-start; margin-bottom:13px;
+}
+.printfulBridgeHead > div {
+  display:flex; align-items:flex-start; gap:10px;
+  color:#aaa; font-size:12px; line-height:1.45;
+}
+.printfulBridgeHead svg { color:var(--orange); flex:0 0 auto; }
+.printfulBridgeHead strong { display:block; color:#fff; }
+.printfulBridgeStatus {
+  padding:6px 9px; border-radius:999px; font-size:9px;
+  font-weight:900; text-transform:uppercase; white-space:nowrap;
+  background:#292929; color:#aaa;
+}
+.printfulBridgeStatus.configured {
+  background:#14351f; color:#8ce3a4;
+}
+.printfulBridgeStatus.imported {
+  background:#3b250d; color:#ffc079;
+}
+.printfulBridgeStatus.error {
+  background:#411818; color:#ff9f9f;
+}
+.printfulSettings {
+  display:grid; grid-template-columns:1.4fr 1fr .7fr;
+  gap:9px; margin-bottom:12px;
+}
+.printfulSettings input,.printfulSettings select {
+  width:100%;
+}
+.printfulVerification {
+  display:grid; grid-template-columns:repeat(4,1fr);
+  gap:8px; margin:12px 0;
+}
+.printfulVerification article {
+  padding:11px; background:#171717;
+  border:1px solid #303030; border-radius:9px;
+}
+.printfulVerification strong {
+  display:block; font-size:15px;
+}
+.printfulVerification span {
+  color:#777; font-size:9px; text-transform:uppercase;
+}
+.printfulVariantList {
+  display:grid; gap:6px; margin:12px 0;
+  max-height:220px; overflow-y:auto;
+}
+.printfulVariantList > div {
+  display:flex; justify-content:space-between;
+  align-items:center; gap:10px; padding:9px 10px;
+  background:#151515; border:1px solid #2e2e2e;
+  border-radius:8px;
+}
+.printfulVariantList strong {
+  display:block; font-size:11px;
+}
+.printfulVariantList small {
+  color:#777; font-size:9px;
+}
+.printfulVariantList > div > span:last-child {
+  display:flex; gap:7px; color:#7bdd98;
+}
+.printfulBridgeActions {
+  display:flex; align-items:center; flex-wrap:wrap;
+  gap:8px; margin-top:12px;
+}
+.printfulBridgeActions a {
+  display:inline-flex; align-items:center; gap:5px;
+  color:var(--orange); text-decoration:none;
+  font-size:11px; font-weight:900;
+}
+.printfulBridgeNote {
+  color:#6e6e6e; font-size:10px;
+  line-height:1.45; margin:12px 0 0;
+}
+.printfulBridgeError {
+  padding:10px; color:#ffaaaa; background:#341414;
+  border:1px solid #6f2d2d; border-radius:8px;
+  font-size:11px;
+}
+@media(max-width:760px) {
+  .printfulSettings {
+    grid-template-columns:1fr;
+  }
+  .printfulVerification {
+    grid-template-columns:1fr 1fr;
+  }
+}
