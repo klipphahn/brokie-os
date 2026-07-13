@@ -14,6 +14,13 @@ Foundry now creates a coordinated four-asset product set for every concept:
 The shirt mockups are review images only. The clean front and back PNG files are
 stored separately and sent to Printful for their matching print placements.
 
+### Printful Shopify bridge
+
+Shopify-connected products are detected and configured through Printful's
+Ecommerce Platform Sync API (`/sync/products` and `/sync/variant`). The legacy
+`/store/products` workflow remains intentionally excluded from the bridge
+because it is limited to Manual Order/API stores.
+
 ## Why this build is different
 
 - JavaScript instead of TypeScript, eliminating the prior TypeScript build failure
