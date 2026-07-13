@@ -35,12 +35,14 @@ function conceptFromDesign(design) {
       concept.product_description ||
       "",
     collectionName: concept.collection_name || "Foundry",
-    artworkUrl:
-      design.front_artwork_url || design.thumbnail_url,
     mockups: {
       front: raw.mockups?.front || null,
       back: raw.mockups?.back || design.thumbnail_url || null
-    }
+    },
+    artworkUrl:
+      raw.mockups?.front ||
+      design.thumbnail_url ||
+      design.front_artwork_url
   };
 }
 
@@ -100,14 +102,20 @@ mutation CreateBrokieProduct(
 }`;
 
 const UPDATE_PRODUCT = `
-mutation UpdateBrokieProduct($product: ProductUpdateInput!) {
-  productUpdate(product: $product) {
+mutation UpdateBrokieProduct(
+  $product: ProductUpdateInput!,
+  $media: [CreateMediaInput!]
+) {
+  productUpdate(product: $product, media: $media) {
     product {
       id
       title
       handle
       status
       onlineStoreUrl
+      media(first: 20) {
+        nodes { id alt mediaContentType }
+      }
     }
     userErrors { field message }
   }
@@ -185,10 +193,16 @@ const DEFAULT_APPAREL_SIZES = [
   "L",
   "XL",
   "2XL",
-  "3XL"
+  "3XL",
+  "4XL"
 ];
 
-const DEFAULT_APPAREL_COLORS = ["Black"];
+const DEFAULT_APPAREL_COLORS = [
+  "Black",
+  "Pepper",
+  "Graphite",
+  "True Navy"
+];
 
 function cleanApparelOptions(values, fallback) {
   const cleaned = Array.isArray(values)
@@ -268,6 +282,18 @@ async function createOrUpdateShopifyDraft(
   productRecord,
   review
 ) {
+  const mediaUrls = [
+    { url: review.mockups?.front, side: "Front" },
+    { url: review.mockups?.back, side: "Back" }
+  ].filter((item, index, values) =>
+    item.url && values.findIndex((other) => other.url === item.url) === index
+  );
+  const media = mediaUrls.map((item) => ({
+    originalSource: item.url,
+    mediaContentType: "IMAGE",
+    alt: `${review.title} — ${item.side}`
+  }));
+
   if (productRecord.shopify_product_id) {
     const updateData = await shopifyGraphQL(UPDATE_PRODUCT, {
       product: {
@@ -276,12 +302,13 @@ async function createOrUpdateShopifyDraft(
         descriptionHtml: review.description,
         productType: review.productType,
         tags: review.tags,
-        status: "DRAFT",
+        status: productRecord.status === "live" ? "ACTIVE" : "DRAFT",
         seo: {
           title: review.seoTitle,
           description: review.metaDescription
         }
-      }
+      },
+      media
     });
 
     ensureNoErrors(updateData, "productUpdate");
@@ -289,7 +316,10 @@ async function createOrUpdateShopifyDraft(
     const saved = await supabase
       .from("products")
       .update({
-        status: "shopify_draft",
+        status:
+          productRecord.status === "live"
+            ? "live"
+            : "shopify_draft",
         publish_error: null,
         updated_at: new Date().toISOString()
       })
@@ -310,16 +340,6 @@ async function createOrUpdateShopifyDraft(
 
     return saved.data;
   }
-
-  const media = review.artworkUrl
-    ? [
-        {
-          originalSource: review.artworkUrl,
-          mediaContentType: "IMAGE",
-          alt: review.title
-        }
-      ]
-    : [];
 
   const createData = await shopifyGraphQL(CREATE_PRODUCT, {
     product: {
@@ -765,6 +785,7 @@ export async function POST(request) {
         body.metaDescription || defaults.metaDescription
       ).trim(),
       artworkUrl: defaults.artworkUrl,
+      mockups: defaults.mockups,
       colors: cleanApparelOptions(
         body.colors,
         DEFAULT_APPAREL_COLORS

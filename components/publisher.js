@@ -79,8 +79,8 @@ export default function Publisher() {
   const [catalogWorking, setCatalogWorking] =
     useState(false);
   const [merchOptions, setMerchOptions] = useState({
-    colors: ["Black"],
-    sizes: ["S", "M", "L", "XL", "2XL", "3XL"]
+    colors: ["Black", "Pepper", "Graphite", "True Navy"],
+    sizes: ["S", "M", "L", "XL", "2XL", "3XL", "4XL"]
   });
   const [publication, setPublication] = useState(null);
   const [publicationError, setPublicationError] =
@@ -210,8 +210,9 @@ export default function Publisher() {
   }, [catalog, merchOptions]);
 
   async function loadPrintful(item) {
+    setPrintful(null);
+
     if (!item?.product?.id) {
-      setPrintful(null);
       return;
     }
 
@@ -234,6 +235,27 @@ export default function Publisher() {
       }
 
       setPrintful(data);
+
+      const configuredOptions = (data.inspection?.variants || [])
+        .map((variant) => {
+          const parts = String(variant.name || "")
+            .split("/")
+            .map((value) => value.trim())
+            .filter(Boolean);
+          if (parts.length < 2) return null;
+          return {
+            color: parts[parts.length - 2],
+            size: parts[parts.length - 1]
+          };
+        })
+        .filter(Boolean);
+
+      if (configuredOptions.length) {
+        setMerchOptions({
+          colors: [...new Set(configuredOptions.map((item) => item.color))],
+          sizes: [...new Set(configuredOptions.map((item) => item.size))]
+        });
+      }
     } catch (loadError) {
       setPrintful({
         ok: false,
@@ -271,6 +293,8 @@ export default function Publisher() {
               current.concept.artworkUrl ||
               current.design.front_artwork_url ||
               current.design.thumbnail_url,
+            backArtworkUrl:
+              current.design.back_artwork_url || null,
             retailPrice: current.form.price,
             ...printfulForm
           })
@@ -304,6 +328,10 @@ export default function Publisher() {
   }
 
   useEffect(() => {
+    setMerchOptions({
+      colors: ["Black", "Pepper", "Graphite", "True Navy"],
+      sizes: ["S", "M", "L", "XL", "2XL", "3XL", "4XL"]
+    });
     loadPrintful(current);
   }, [selected, current?.product?.id]);
 

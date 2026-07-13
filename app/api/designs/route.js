@@ -1,6 +1,188 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import sharp from "sharp";
 import { extractDesignDna, searchableText } from "@/lib/design-dna";
+
+function slugify(value) {
+  return String(value || "brokie-design")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 60);
+}
+
+async function downloadImage(url) {
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`Unable to download artwork (${response.status}).`);
+  }
+  return Buffer.from(await response.arrayBuffer());
+}
+
+async function createGarmentMockup(artwork, side, productType) {
+  const width = 1200;
+  const height = 1400;
+  const isFront = side === "front";
+  const isHoodie = /hoodie/i.test(productType || "");
+  const silhouette = isHoodie
+    ? `<path filter="url(#shadow)" fill="url(#shirt)" stroke="#343434" stroke-width="3"
+        d="M410 245 Q455 110 600 95 Q745 110 790 245 L960 300 L1120 560 L930 670 L850 515 L850 1250 Q600 1325 350 1250 L350 515 L270 670 L80 560 L240 300 Z"/>
+       <path d="M455 250 Q600 390 745 250 Q700 155 600 145 Q500 155 455 250" fill="#111" stroke="#3a3a3a" stroke-width="10"/>`
+    : `<path filter="url(#shadow)" fill="url(#shirt)" stroke="#343434" stroke-width="3"
+        d="M395 205 L245 275 L78 470 L245 590 L335 485 L335 1240 Q600 1320 865 1240 L865 485 L955 590 L1122 470 L955 275 L805 205 Q745 250 600 250 Q455 250 395 205 Z"/>
+       ${isFront
+         ? '<path d="M500 215 Q600 330 700 215" fill="#111" stroke="#3a3a3a" stroke-width="12"/>'
+         : '<path d="M505 220 Q600 285 695 220" fill="none" stroke="#3a3a3a" stroke-width="10"/>'}`;
+
+  const garment = Buffer.from(`
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="shirt" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#242424"/>
+          <stop offset="0.5" stop-color="#080808"/>
+          <stop offset="1" stop-color="#191919"/>
+        </linearGradient>
+        <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+          <feDropShadow dx="0" dy="30" stdDeviation="28" flood-color="#000" flood-opacity=".55"/>
+        </filter>
+      </defs>
+      <rect width="1200" height="1400" fill="#111111"/>
+      ${silhouette}
+    </svg>`);
+
+  const target = isFront
+    ? { width: 210, height: 210 }
+    : { width: 560, height: 650 };
+  const art = await sharp(artwork)
+    .ensureAlpha()
+    .resize(target.width, target.height, { fit: "inside" })
+    .png()
+    .toBuffer();
+  const meta = await sharp(art).metadata();
+  const left = isFront
+    ? Math.round(690 - (meta.width || target.width) / 2)
+    : Math.round((width - (meta.width || target.width)) / 2);
+  const top = isFront ? (isHoodie ? 470 : 430) : (isHoodie ? 430 : 380);
+
+  return sharp(garment)
+    .composite([{ input: art, left, top }])
+    .png()
+    .toBuffer();
+}
+
+async function repairLegacyDesigns(supabase) {
+  const { data: designs, error } = await supabase
+    .from("designs")
+    .select("*")
+    .is("archived_at", null)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+
+  const template = (designs || []).find(
+    (design) =>
+      design.front_artwork_url &&
+      design.back_artwork_url &&
+      /phantom keep building/i.test(design.name || "")
+  ) || (designs || []).find(
+    (design) => design.front_artwork_url && design.back_artwork_url
+  );
+
+  if (!template?.front_artwork_url) {
+    throw new Error("A paired design is required as the chest-logo template.");
+  }
+
+  const chestLogo = await downloadImage(template.front_artwork_url);
+  const legacy = (designs || []).filter((design) => {
+    const mockups = design.concept?.mockups || design.design_dna?.mockups || {};
+    return !design.back_artwork_url || !mockups.front || !mockups.back;
+  });
+
+  const repaired = [];
+  const failures = [];
+
+  for (const design of legacy) {
+    try {
+      const originalArtwork =
+        design.back_artwork_url ||
+        design.front_artwork_url ||
+        design.thumbnail_url;
+      if (!originalArtwork) throw new Error("No original artwork was found.");
+
+      const backArtwork = await downloadImage(originalArtwork);
+      const [frontMockup, backMockup] = await Promise.all([
+        createGarmentMockup(chestLogo, "front", design.product_type),
+        createGarmentMockup(backArtwork, "back", design.product_type)
+      ]);
+      const stem = `repairs/${Date.now()}-${slugify(design.name)}`;
+
+      async function upload(suffix, bytes) {
+        const path = `${stem}-${suffix}.png`;
+        const uploaded = await supabase.storage
+          .from("artwork")
+          .upload(path, bytes, {
+            contentType: "image/png",
+            cacheControl: "3600",
+            upsert: false
+          });
+        if (uploaded.error) throw uploaded.error;
+        return supabase.storage.from("artwork").getPublicUrl(path).data.publicUrl;
+      }
+
+      const [frontMockupUrl, backMockupUrl] = await Promise.all([
+        upload("front-mockup", frontMockup),
+        upload("back-mockup", backMockup)
+      ]);
+      const concept = {
+        ...(design.concept || {}),
+        mockups: { front: frontMockupUrl, back: backMockupUrl },
+        legacyRepair: {
+          repairedAt: new Date().toISOString(),
+          chestLogoSource: template.id,
+          originalArtwork
+        }
+      };
+      const designDna = {
+        ...(design.design_dna || {}),
+        mockups: { front: frontMockupUrl, back: backMockupUrl }
+      };
+      const productType = ["Artwork", "Apparel", ""].includes(
+        design.product_type || ""
+      )
+        ? "Heavyweight Tee"
+        : design.product_type;
+
+      const updated = await supabase
+        .from("designs")
+        .update({
+          front_artwork_url: template.front_artwork_url,
+          back_artwork_url: originalArtwork,
+          thumbnail_url: backMockupUrl,
+          product_type: productType,
+          concept,
+          design_dna: designDna,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", design.id)
+        .select("id,name")
+        .single();
+      if (updated.error) throw updated.error;
+      repaired.push(updated.data);
+    } catch (repairError) {
+      failures.push({ id: design.id, name: design.name, error: repairError.message });
+    }
+  }
+
+  await activity(
+    supabase,
+    "legacy_design_repair",
+    `Repaired ${repaired.length} legacy designs`,
+    "Added a shared chest logo plus paired front/back garment mockups.",
+    failures.length ? "warning" : "success",
+    { repaired, failures }
+  );
+
+  return { repaired, failures, template: template.name };
+}
 
 function client() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -300,10 +482,18 @@ export async function POST(request) {
     const body = await request.json();
     const action = String(body.action || "");
     const id = String(body.id || "");
+    const supabase = client();
+
+    if (action === "repair_legacy_batch") {
+      const result = await repairLegacyDesigns(supabase);
+      return NextResponse.json({
+        ok: true,
+        message: `Repaired ${result.repaired.length} legacy designs.`,
+        ...result
+      });
+    }
 
     if (!id) throw new Error("Design id is required.");
-
-    const supabase = client();
 
     const { data: original, error: originalError } =
       await supabase

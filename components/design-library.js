@@ -121,6 +121,36 @@ export default function DesignLibrary() {
     return () => clearTimeout(timer);
   }, [query, favorites, archived, filters]);
 
+  async function repairLegacyDesigns() {
+    setWorking("repair_legacy_batch");
+    setError("");
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/designs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "repair_legacy_batch" })
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || "Legacy designs could not be repaired.");
+      }
+
+      setMessage(
+        data.failures?.length
+          ? `${data.message} ${data.failures.length} need manual review.`
+          : data.message
+      );
+      await load();
+    } catch (repairError) {
+      setError(repairError.message);
+    } finally {
+      setWorking("");
+    }
+  }
+
   const selected = useMemo(
     () =>
       items.find((item) => item.id === selectedId) ||
@@ -325,6 +355,19 @@ export default function DesignLibrary() {
         </div>
 
         <div className="libraryHeadActions">
+          <button
+            className="secondary"
+            onClick={repairLegacyDesigns}
+            disabled={loading || Boolean(working)}
+          >
+            {working === "repair_legacy_batch" ? (
+              <LoaderCircle size={16} className="spin" />
+            ) : (
+              <Sparkles size={16} />
+            )}
+            Repair legacy designs
+          </button>
+
           <button
             className="secondary"
             onClick={() => setShowFilters((value) => !value)}
