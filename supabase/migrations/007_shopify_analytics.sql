@@ -92,5 +92,10 @@ create index if not exists product_daily_metrics_date_idx
 create index if not exists product_daily_metrics_product_idx
   on product_daily_metrics(shopify_product_id);
 
--- RLS remains disabled because Brokie OS accesses these tables only through
--- authenticated server routes using the Supabase service-role key.
+-- These tables are only accessed through authenticated server routes. RLS
+-- blocks direct anonymous/authenticated Data API access while the service role
+-- continues to perform the server-side sync.
+alter table analytics_sync_runs enable row level security;
+alter table shopify_orders enable row level security;
+alter table shopify_order_items enable row level security;
+alter table product_daily_metrics enable row level security;

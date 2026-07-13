@@ -7,9 +7,16 @@ query Products($first: Int!) {
     nodes {
       id
       title
+      handle
+      description
       status
       productType
       tags
+      onlineStoreUrl
+      priceRangeV2 {
+        minVariantPrice { amount currencyCode }
+        maxVariantPrice { amount currencyCode }
+      }
       featuredMedia {
         preview {
           image {
@@ -49,13 +56,19 @@ export async function GET(request) {
       return {
         id: product.id,
         title: product.title,
+        handle: product.handle,
+        description: product.description,
         status: product.status,
         productType: product.productType,
         tags: product.tags,
         image: product.featuredMedia?.preview?.image?.url || null,
         imageAlt: product.featuredMedia?.preview?.image?.altText || product.title,
-        minPrice: prices.length ? Math.min(...prices).toFixed(2) : null,
-        maxPrice: prices.length ? Math.max(...prices).toFixed(2) : null,
+        minPrice: product.priceRangeV2?.minVariantPrice?.amount ||
+          (prices.length ? Math.min(...prices).toFixed(2) : null),
+        maxPrice: product.priceRangeV2?.maxVariantPrice?.amount ||
+          (prices.length ? Math.max(...prices).toFixed(2) : null),
+        currencyCode: product.priceRangeV2?.minVariantPrice?.currencyCode || "USD",
+        onlineStoreUrl: product.onlineStoreUrl,
         inventory: variants.reduce(
           (sum, variant) => sum + Number(variant.inventoryQuantity || 0),
           0

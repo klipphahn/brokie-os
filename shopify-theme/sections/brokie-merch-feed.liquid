@@ -1,0 +1,145 @@
+{% comment %}
+  The Brokie merch feed. Content is managed in Brokie OS and fetched from its
+  public, read-only storefront endpoint. No Shopify credentials are exposed.
+{% endcomment %}
+
+<section
+  id="brokie-feed-{{ section.id }}"
+  class="brokie-feed"
+  data-feed-url="{{ section.settings.feed_url | escape }}"
+>
+  <div class="brokie-feed__loading">Loading The Brokie goods…</div>
+</section>
+
+{% style %}
+  #brokie-feed-{{ section.id }} {
+    --bb-bg:#080808; --bb-panel:#151515; --bb-orange:#ff4f00;
+    --bb-gold:#ffc107; --bb-text:#fff; --bb-muted:#9a9a9a;
+    background:var(--bb-bg); color:var(--bb-text); padding:0 0 72px;
+    font-family:var(--font-body-family,Arial,sans-serif);
+  }
+  #brokie-feed-{{ section.id }} * { box-sizing:border-box; }
+  #brokie-feed-{{ section.id }} .brokie-feed__announcement {
+    padding:10px 20px; text-align:center; background:var(--bb-orange); color:#fff;
+    font-size:12px; font-weight:900; letter-spacing:.1em; text-transform:uppercase;
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__hero {
+    min-height:540px; display:flex; align-items:center; padding:70px max(24px,7vw);
+    background:radial-gradient(circle at 78% 30%,#3b1a08 0,transparent 38%),linear-gradient(135deg,#080808,#17120e);
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__hero-inner { max-width:850px; }
+  #brokie-feed-{{ section.id }} .brokie-feed__eyebrow,
+  #brokie-feed-{{ section.id }} .brokie-feed__section-label {
+    color:var(--bb-orange); font-weight:900; letter-spacing:.16em; text-transform:uppercase;
+  }
+  #brokie-feed-{{ section.id }} h1 {
+    margin:14px 0; max-width:900px; color:var(--bb-text); font-size:clamp(54px,9vw,126px);
+    line-height:.86; letter-spacing:-.03em; text-transform:uppercase;
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__hero p {
+    max-width:660px; color:var(--bb-muted); font-size:clamp(16px,2vw,21px); line-height:1.55;
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:28px; }
+  #brokie-feed-{{ section.id }} .brokie-feed__button {
+    display:inline-flex; padding:14px 22px; border:2px solid var(--bb-orange); background:var(--bb-orange);
+    color:#fff; font-weight:900; text-decoration:none; letter-spacing:.06em; text-transform:uppercase;
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__button--secondary { background:transparent; border-color:#555; }
+  #brokie-feed-{{ section.id }} .brokie-feed__content { max-width:1500px; margin:auto; padding:70px max(20px,5vw); }
+  #brokie-feed-{{ section.id }} .brokie-feed__heading { display:flex; justify-content:space-between; gap:20px; align-items:end; margin-bottom:24px; }
+  #brokie-feed-{{ section.id }} .brokie-feed__heading h2 { margin:7px 0 0; font-size:clamp(34px,5vw,64px); line-height:.95; text-transform:uppercase; }
+  #brokie-feed-{{ section.id }} .brokie-feed__grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
+  #brokie-feed-{{ section.id }} .brokie-feed__card { position:relative; background:var(--bb-panel); border:1px solid #303030; }
+  #brokie-feed-{{ section.id }} .brokie-feed__image { display:block; aspect-ratio:1; background:#222; overflow:hidden; }
+  #brokie-feed-{{ section.id }} .brokie-feed__image img { width:100%; height:100%; object-fit:cover; transition:transform .25s ease; }
+  #brokie-feed-{{ section.id }} .brokie-feed__card:hover img { transform:scale(1.025); }
+  #brokie-feed-{{ section.id }} .brokie-feed__badge { position:absolute; top:10px; left:10px; padding:6px 8px; background:var(--bb-orange); color:#fff; font-size:10px; font-weight:900; }
+  #brokie-feed-{{ section.id }} .brokie-feed__body { padding:16px; }
+  #brokie-feed-{{ section.id }} .brokie-feed__body h3 { margin:0 0 7px; color:var(--bb-text); font-size:18px; text-transform:uppercase; }
+  #brokie-feed-{{ section.id }} .brokie-feed__body p { min-height:20px; margin:0 0 12px; color:var(--bb-muted); font-size:13px; }
+  #brokie-feed-{{ section.id }} .brokie-feed__price { color:var(--bb-gold); font-weight:900; }
+  #brokie-feed-{{ section.id }} .brokie-feed__manifesto { margin:0 max(20px,5vw); padding:70px max(22px,5vw); border:1px solid #333; background:linear-gradient(135deg,#151515,#211209); text-align:center; }
+  #brokie-feed-{{ section.id }} .brokie-feed__manifesto h2 { margin:0 0 14px; font-size:clamp(40px,7vw,90px); line-height:.9; text-transform:uppercase; }
+  #brokie-feed-{{ section.id }} .brokie-feed__manifesto p { max-width:700px; margin:auto; color:var(--bb-muted); font-size:18px; }
+  #brokie-feed-{{ section.id }} .brokie-feed__loading { padding:80px 24px; text-align:center; color:#999; }
+  @media(max-width:990px) { #brokie-feed-{{ section.id }} .brokie-feed__grid { grid-template-columns:repeat(2,1fr); } }
+  @media(max-width:600px) {
+    #brokie-feed-{{ section.id }} .brokie-feed__hero { min-height:470px; }
+    #brokie-feed-{{ section.id }} .brokie-feed__grid { grid-template-columns:1fr; }
+    #brokie-feed-{{ section.id }} .brokie-feed__heading { align-items:start; flex-direction:column; }
+  }
+{% endstyle %}
+
+<script>
+(function () {
+  const root = document.getElementById('brokie-feed-{{ section.id }}');
+  if (!root || root.dataset.loaded === 'true') return;
+  root.dataset.loaded = 'true';
+
+  const element = (tag, className, text) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text) node.textContent = text;
+    return node;
+  };
+  const link = (className, label, url) => {
+    const node = element('a', className, label);
+    node.href = url; return node;
+  };
+  const money = (value, currency) => value == null ? '' : new Intl.NumberFormat(undefined, { style:'currency', currency:currency || 'USD' }).format(value);
+
+  fetch(root.dataset.feedUrl, { headers:{ Accept:'application/json' } })
+    .then((response) => { if (!response.ok) throw new Error('Feed unavailable'); return response.json(); })
+    .then((data) => {
+      if (!data.ok) throw new Error('Feed unavailable');
+      const store = data.storefront;
+      Object.entries(store.palette || {}).forEach(([name,value]) => root.style.setProperty(`--bb-${name === 'background' ? 'bg' : name}`, value));
+      root.textContent = '';
+
+      root.appendChild(element('div','brokie-feed__announcement',store.announcement));
+      const hero = element('div','brokie-feed__hero');
+      const heroInner = element('div','brokie-feed__hero-inner');
+      heroInner.append(element('span','brokie-feed__eyebrow',store.hero.eyebrow), element('h1','',store.hero.headline), element('p','',store.hero.subheadline));
+      const actions = element('div','brokie-feed__actions');
+      actions.append(link('brokie-feed__button',store.hero.primaryCta.label,store.hero.primaryCta.url),link('brokie-feed__button brokie-feed__button--secondary',store.hero.secondaryCta.label,store.hero.secondaryCta.url));
+      heroInner.appendChild(actions); hero.appendChild(heroInner); root.appendChild(hero);
+
+      const content = element('div','brokie-feed__content');
+      const heading = element('div','brokie-feed__heading');
+      const headingCopy = element('div','');
+      headingCopy.append(element('span','brokie-feed__section-label','FEATURED DROP'),element('h2','',store.collection.title));
+      heading.append(headingCopy,link('brokie-feed__button brokie-feed__button--secondary','SHOP ALL',store.collection.url));
+      content.appendChild(heading);
+      const grid = element('div','brokie-feed__grid');
+      (data.products || []).forEach((product) => {
+        const card = element('article','brokie-feed__card');
+        if (product.badge) card.appendChild(element('span','brokie-feed__badge',product.badge));
+        const imageLink = link('brokie-feed__image','',product.url);
+        if (product.image) { const image = element('img'); image.src=product.image; image.alt=product.imageAlt || product.title; image.loading='lazy'; imageLink.appendChild(image); }
+        const body = element('div','brokie-feed__body');
+        body.append(element('h3','',product.title),element('p','',product.subtitle || ''),element('span','brokie-feed__price',money(product.price,product.currencyCode)));
+        card.append(imageLink,body); grid.appendChild(card);
+      });
+      content.appendChild(grid); root.appendChild(content);
+
+      const manifesto = element('div','brokie-feed__manifesto');
+      manifesto.append(element('h2','',store.manifesto.headline),element('p','',store.manifesto.body));
+      root.appendChild(manifesto);
+    })
+    .catch(() => { root.textContent='The Brokie goods are temporarily unavailable. Please refresh or shop again shortly.'; root.className='brokie-feed brokie-feed__loading'; });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Brokie OS merch feed",
+  "settings": [
+    {
+      "type": "url",
+      "id": "feed_url",
+      "label": "Brokie OS feed URL"
+    }
+  ],
+  "presets": [{ "name": "Brokie OS merch feed" }]
+}
+{% endschema %}

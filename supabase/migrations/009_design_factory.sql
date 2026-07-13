@@ -54,3 +54,6 @@ alter table designs
 
 create index if not exists designs_factory_run_idx
   on designs(factory_run_id);
+
+alter table factory_runs enable row level security;
+alter table factory_jobs enable row level security;

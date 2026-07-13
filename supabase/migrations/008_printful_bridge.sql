@@ -35,3 +35,5 @@ create index if not exists printful_variant_links_product_idx
 
 create index if not exists products_printful_sync_product_idx
   on products(printful_sync_product_id);
+
+alter table printful_variant_links enable row level security;

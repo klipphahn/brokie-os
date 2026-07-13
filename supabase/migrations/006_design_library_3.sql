@@ -71,3 +71,6 @@ where not exists (
 insert into design_metrics (design_id)
 select id from designs
 on conflict (design_id) do nothing;
+
+alter table design_versions enable row level security;
+alter table design_metrics enable row level security;

@@ -21,6 +21,7 @@ const links = [
   ["Design Factory", PackagePlus, "#factory"],
   ["Publisher", Send, "#publisher"],
   ["Shopify Sync", ShoppingBag, "#shopify-manager"],
+  ["Storefront", ShoppingBag, "#storefront"],
   ["Analytics", LineChart, "#analytics"],
   ["Collection Builder", PackagePlus, "#builder"],
   ["Publish Center", Send, "#publish"],
