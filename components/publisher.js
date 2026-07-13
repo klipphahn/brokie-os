@@ -779,6 +779,21 @@ export default function Publisher() {
                 <div className="printfulBridgeActions">
                   <button
                     className="secondary"
+                    onClick={() => act("set_apparel_variants")}
+                    disabled={
+                      !!working ||
+                      !!printfulWorking ||
+                      !current.product?.shopify_product_id
+                    }
+                  >
+                    <ShoppingBag size={16} />
+                    {working === "set_apparel_variants"
+                      ? "Adding sizes…"
+                      : "Add Black sizes S–3XL"}
+                  </button>
+
+                  <button
+                    className="secondary"
                     onClick={() =>
                       printfulAction("detect")
                     }

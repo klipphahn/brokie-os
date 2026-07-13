@@ -127,6 +127,48 @@ mutation UpdateBrokieVariants(
   }
 }`;
 
+const SET_APPAREL_VARIANTS = `
+mutation SetBrokieApparelVariants(
+  $identifier: ProductSetIdentifiers!,
+  $input: ProductSetInput!
+) {
+  productSet(
+    identifier: $identifier,
+    input: $input,
+    synchronous: true
+  ) {
+    product {
+      id
+      options(first: 5) {
+        name
+        position
+        optionValues { name }
+      }
+      variants(first: 100) {
+        nodes {
+          id
+          title
+          price
+          selectedOptions {
+            name
+            optionValue { name }
+          }
+        }
+      }
+    }
+    userErrors { field message code }
+  }
+}`;
+
+const DEFAULT_APPAREL_SIZES = [
+  "S",
+  "M",
+  "L",
+  "XL",
+  "2XL",
+  "3XL"
+];
+
 function ensureNoErrors(payload, key) {
   const errors = payload?.[key]?.userErrors || [];
   if (errors.length) {
@@ -295,6 +337,106 @@ async function createOrUpdateShopifyDraft(
   );
 
   return saved.data;
+}
+
+async function setShopifyApparelVariants(
+  supabase,
+  productRecord,
+  review
+) {
+  if (!productRecord.shopify_product_id) {
+    throw new Error("Create the Shopify draft first.");
+  }
+
+  const price = review.price.toFixed(2);
+  const result = await shopifyGraphQL(SET_APPAREL_VARIANTS, {
+    identifier: { id: productRecord.shopify_product_id },
+    input: {
+      productOptions: [
+        {
+          name: "Color",
+          position: 1,
+          values: [{ name: "Black" }]
+        },
+        {
+          name: "Size",
+          position: 2,
+          values: DEFAULT_APPAREL_SIZES.map((size) => ({
+            name: size
+          }))
+        }
+      ],
+      variants: DEFAULT_APPAREL_SIZES.map((size, index) => ({
+        position: index + 1,
+        price,
+        optionValues: [
+          { optionName: "Color", name: "Black" },
+          { optionName: "Size", name: size }
+        ]
+      }))
+    }
+  });
+
+  ensureNoErrors(result, "productSet");
+
+  const variants = result.productSet?.product?.variants?.nodes || [];
+  if (variants.length !== DEFAULT_APPAREL_SIZES.length) {
+    throw new Error(
+      `Shopify returned ${variants.length} variants; expected ${DEFAULT_APPAREL_SIZES.length}.`
+    );
+  }
+
+  const updated = await supabase
+    .from("products")
+    .update({
+      printful_status: "not_configured",
+      printful_variant_count: 0,
+      printful_synced_variant_count: 0,
+      printful_verified_at: null,
+      publish_error: null,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", productRecord.id)
+    .select()
+    .single();
+
+  if (updated.error) throw updated.error;
+
+  const staleLinks = await supabase
+    .from("printful_variant_links")
+    .delete()
+    .eq("product_id", productRecord.id);
+
+  if (staleLinks.error) throw staleLinks.error;
+
+  await recordRun(
+    supabase,
+    productRecord.id,
+    "shopify",
+    "set_apparel_variants",
+    "success",
+    result
+  );
+
+  await logActivity(
+    supabase,
+    "shopify_variants",
+    `Added sizes to ${review.title}`,
+    `Black · ${DEFAULT_APPAREL_SIZES.join(", ")} · $${price}`,
+    "success",
+    {
+      productId: productRecord.id,
+      shopifyProductId: productRecord.shopify_product_id,
+      sizes: DEFAULT_APPAREL_SIZES,
+      color: "Black",
+      price
+    }
+  );
+
+  return {
+    product: updated.data,
+    variants
+  };
 }
 
 async function launchProduct(supabase, productRecord, review) {
@@ -574,6 +716,22 @@ export async function POST(request) {
       throw new Error(
         "Manual Printful confirmation has been retired. Use the Printful Fulfillment Bridge to detect, configure, and verify the product."
       );
+    }
+
+    if (action === "set_apparel_variants") {
+      const configured = await setShopifyApparelVariants(
+        supabase,
+        productRecord,
+        review
+      );
+
+      return NextResponse.json({
+        ok: true,
+        message:
+          "Added Black sizes S–3XL in Shopify. Printful must now import and configure all six variants.",
+        product: configured.product,
+        variants: configured.variants
+      });
     }
 
     if (action === "launch_store") {
