@@ -121,3 +121,24 @@ The proxy protects the dashboard and API routes, including AI generation. Unauth
 ## v1.5 Foundry + Library Stabilization
 
 Adds Foundry, visible generation stages, persistent Design Library 2.0, favorites/search/delete, and an activity log. Run `supabase/migrations/003_foundry_activity.sql` before deploying.
+
+
+## v1.6 Foundry 2.0
+
+Adds structured creative direction:
+
+- product type
+- audience
+- visual style
+- mood
+- print placement
+- approved color palette
+- 1, 2, or 4 generated variations
+- side-by-side comparison
+- favorites and selected-concept workspace
+
+Every variation is saved separately to the existing Supabase Design Library and activity log.
+
+### Cost control
+
+Each variation uses one text concept request and one image-generation request. Start with two variations and only use four when the direction is worth exploring.

@@ -1,0 +1,9 @@
+Brokie OS v1.6 uses pnpm.
+
+After copying this update into the existing repository, KEEP the existing
+pnpm-lock.yaml from the repository. The rsync command in the instructions
+excludes pnpm-lock.yaml so the known-good lockfile remains in place.
+
+Then run:
+  pnpm install
+  pnpm build
