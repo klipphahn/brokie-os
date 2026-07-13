@@ -302,7 +302,9 @@ async function createOrUpdateShopifyDraft(
         descriptionHtml: review.description,
         productType: review.productType,
         tags: review.tags,
-        status: productRecord.status === "live" ? "ACTIVE" : "DRAFT",
+        status: ["live", "active"].includes(productRecord.status)
+          ? "ACTIVE"
+          : "DRAFT",
         seo: {
           title: review.seoTitle,
           description: review.metaDescription
@@ -317,8 +319,8 @@ async function createOrUpdateShopifyDraft(
       .from("products")
       .update({
         status:
-          productRecord.status === "live"
-            ? "live"
+          ["live", "active"].includes(productRecord.status)
+            ? productRecord.status
             : "shopify_draft",
         publish_error: null,
         updated_at: new Date().toISOString()
@@ -850,7 +852,7 @@ export async function POST(request) {
         .from("designs")
         .update({
           status:
-            productRecord.status === "live"
+            ["live", "active"].includes(productRecord.status)
               ? "published"
               : "ready",
           updated_at: new Date().toISOString()
@@ -874,7 +876,7 @@ export async function POST(request) {
       return NextResponse.json({
         ok: true,
         message:
-          productRecord.status === "live"
+          ["live", "active"].includes(productRecord.status)
             ? "Live Shopify product updated without duplicating it."
             : "Shopify draft created without duplicating the product.",
         product: productRecord
