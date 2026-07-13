@@ -302,22 +302,27 @@ async function saveArtwork(base64, concept, direction, variationIndex) {
     concept
   };
 
-  const { error: insertError } = await supabase.from("designs").insert({
-    name: concept.concept_name,
-    front_artwork_url: publicUrl,
-    thumbnail_url: publicUrl,
-    status: "generated",
-    prompt: direction.prompt,
-    product_type: direction.productType,
-    concept: metadata,
-    design_dna: metadata,
-    color_palette: direction.colors || [],
-    theme: concept.collection_name || direction.mood,
-    target_audience: direction.audience,
-    visual_style: direction.style,
-    placement: direction.placement,
-    updated_at: new Date().toISOString()
-  });
+  const { data: insertedDesign, error: insertError } =
+    await supabase
+      .from("designs")
+      .insert({
+        name: concept.concept_name,
+        front_artwork_url: publicUrl,
+        thumbnail_url: publicUrl,
+        status: "generated",
+        prompt: direction.prompt,
+        product_type: direction.productType,
+        concept: metadata,
+        design_dna: metadata,
+        color_palette: direction.colors || [],
+        theme: concept.collection_name || direction.mood,
+        target_audience: direction.audience,
+        visual_style: direction.style,
+        placement: direction.placement,
+        updated_at: new Date().toISOString()
+      })
+      .select("id")
+      .single();
 
   if (insertError) {
     console.warn(
@@ -336,7 +341,7 @@ async function saveArtwork(base64, concept, direction, variationIndex) {
     metadata: { publicUrl, ...metadata }
   });
 
-  return { publicUrl, saved: true, path: filename };
+  return { publicUrl, saved: true, path: filename, designId: insertedDesign?.id || null };
 }
 
 export async function POST(request) {
@@ -412,6 +417,7 @@ export async function POST(request) {
           dataUrl: `data:image/png;base64,${artwork.base64}`,
           publicUrl: saved.publicUrl,
           savedToSupabase: saved.saved,
+          designId: saved.designId,
           transparencyMode: artwork.transparencyMode
         }
       });

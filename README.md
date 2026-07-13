@@ -297,3 +297,30 @@ Printful does not import Shopify product changes instantly. The bridge handles
 link. The legacy `/api/printful/products` create-product route is retired
 because it targets Manual Order/API stores rather than a Shopify-connected
 store.
+
+
+## v2.2 Design Factory
+
+Design Factory creates an entire collection as a controlled, resumable queue.
+
+### Capabilities
+
+- Queue 5, 10, 15, or 25 designs
+- Create a Supabase collection automatically
+- Assign a unique creative angle to each design
+- Generate one design at a time through the existing Foundry engine
+- Save each result directly to Design Library
+- Link designs to the factory run and collection
+- Pause or stop after the current generation
+- Resume later
+- Retry failed jobs
+- Cancel a run
+- Track completed, failed, and remaining jobs
+- Show artwork previews as jobs complete
+- Estimate image and concept request volume before starting
+
+### Safety
+
+Design Factory does not automatically publish products live. Finished artwork is
+saved for review in Design Library. Publisher and Printful verification remain
+the controlled path to storefront launch.

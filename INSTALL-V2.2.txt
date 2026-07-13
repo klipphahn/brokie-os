@@ -1,0 +1,19 @@
+BROKIE OS V2.2 INSTALL ORDER
+
+1. Run supabase/migrations/009_design_factory.sql.
+2. Leave RLS unchanged; factory routes use the Supabase service-role key.
+3. Copy this update into the existing repository while preserving:
+   .git
+   .env.local
+   node_modules
+   .next
+   pnpm-lock.yaml
+4. Run:
+   pnpm install
+   pnpm build
+   pnpm dev
+5. Open Design Factory.
+6. Start with a 5-design test collection.
+7. Click Start / Continue.
+8. Confirm finished designs appear in Design Library.
+9. Commit and push to GitHub.
