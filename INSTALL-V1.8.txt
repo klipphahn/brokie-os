@@ -1,0 +1,16 @@
+BROKIE OS V1.8 INSTALL ORDER
+
+1. Run supabase/migrations/005_store_launch.sql.
+2. In Shopify Dev Dashboard, add:
+   read_publications
+   write_publications
+   Keep read_products and write_products.
+3. Release the new Shopify app version and approve updated access.
+4. Copy this package into the existing repository while preserving:
+   .git
+   .env.local
+   pnpm-lock.yaml
+   node_modules
+5. Run pnpm install, pnpm build, and pnpm dev.
+6. Test /api/shopify/publications or check Publisher's green channel badge.
+7. Confirm Printful manually before clicking Launch to Store.

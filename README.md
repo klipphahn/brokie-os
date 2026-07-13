@@ -160,3 +160,32 @@ Publisher provides an idempotent review workflow:
 ### Printful limitation
 
 The Printful synced-product creation endpoint does not apply to a normal Shopify-connected Printful store. Publisher therefore tracks Printful as a required manual fulfillment checkpoint instead of falsely claiming it can attach the product automatically. Configure the product in Printful before taking orders.
+
+
+## v1.8 Store Launch
+
+Adds a guarded Shopify Online Store launch pipeline:
+
+1. Review metadata
+2. Create or update the Shopify product
+3. Confirm Printful fulfillment manually
+4. Activate the Shopify product
+5. Discover the Online Store publication
+6. Publish using `publishablePublish`
+7. Verify and save the storefront URL
+8. Record every step in Supabase
+
+### Shopify permissions required
+
+The Shopify app now needs:
+
+- `read_products`
+- `write_products`
+- `read_publications`
+- `write_publications`
+
+Release a new Shopify app version with those scopes and approve the updated installation before testing Store Launch.
+
+### Printful safety gate
+
+Brokie OS does not claim that Printful was configured automatically. The launch button remains disabled until the administrator explicitly confirms the synced Printful product, variants, placement, pricing, and fulfillment setup.
