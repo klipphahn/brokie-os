@@ -289,7 +289,8 @@ configuration, and verification for Shopify-connected Printful products.
 4. **Configure Printful**:
    - locates Comfort Colors 1717 in the Printful catalog,
    - matches imported variant names to catalog color/size variants,
-   - assigns the public front artwork,
+   - assigns public artwork to Printful's explicit `front` and `back` apparel placements,
+   - clears the imported variant's ignored state,
    - sets the retail price,
    - updates each Printful sync variant.
 5. **Verify fulfillment** checks that every imported variant:
