@@ -392,7 +392,7 @@ async function setShopifyApparelVariants(
       printful_status: "not_configured",
       printful_variant_count: 0,
       printful_synced_variant_count: 0,
-      printful_verified_at: null,
+      printful_last_verified_at: null,
       publish_error: null,
       updated_at: new Date().toISOString()
     })
