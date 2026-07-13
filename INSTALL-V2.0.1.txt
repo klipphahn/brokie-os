@@ -1,0 +1,17 @@
+BROKIE OS V2.0.1 INSTALL ORDER
+
+1. Run supabase/migrations/007_shopify_analytics.sql in Supabase SQL Editor.
+2. Do not enable RLS manually for these server-only analytics tables.
+3. Copy this update into the existing repository while preserving:
+   .git
+   .env.local
+   node_modules
+   .next
+   pnpm-lock.yaml
+4. Run:
+   pnpm install
+   pnpm build
+   pnpm dev
+5. Open Analytics and click Sync Shopify.
+6. Review revenue, orders, units, top products, and recent orders.
+7. Commit and push to GitHub.

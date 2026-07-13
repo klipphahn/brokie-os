@@ -219,3 +219,39 @@ supabase/migrations/006_design_library_3.sql
 before loading the new library.
 
 Analytics values begin at zero. Later Shopify order and storefront event synchronization can populate the metrics table without changing the Design Library data model.
+
+
+## v2.0.1 Shopify Sales Intelligence
+
+This is the first working Performance Engine release.
+
+### Included
+
+- Manual Shopify order synchronization
+- Incremental sync with a one-day overlap for edited/refunded orders
+- Optional 12-month rebuild
+- Order and line-item storage in Supabase
+- Revenue, order, unit, refund, and average-order-value cards
+- Revenue trend chart
+- Top-product leaderboard
+- Recent-order feed
+- Sync history and plain-English errors
+- Automatic updates to Design Library performance metrics
+
+### Shopify scopes
+
+The installed app must have:
+
+- `read_orders`
+- `read_all_orders`
+- `read_products`
+- `write_products`
+- `read_publications`
+- `write_publications`
+
+### Notes
+
+- Test orders are stored for auditing but excluded from dashboard totals.
+- Product-level revenue uses Shopify line-item values after discounts and current returns/removals.
+- Profit is intentionally not estimated yet. It will be added after Printful cost synchronization.
+- Customer names, email addresses, phone numbers, and postal addresses are not stored by this release.

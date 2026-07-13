@@ -14,6 +14,7 @@ import PublishCenter from "@/components/publish-center";
 import Publisher from "@/components/publisher";
 import ActivityLog from "@/components/activity-log";
 import ShopifyManager from "@/components/shopify-manager";
+import AnalyticsDashboard from "@/components/analytics-dashboard";
 import { foundersProducts } from "@/lib/founders";
 
 export default function HomePage() {
@@ -49,6 +50,7 @@ export default function HomePage() {
         <AiStudio />
         <Publisher />
         <ShopifyManager />
+        <AnalyticsDashboard />
         <FoundersBuilder />
         <PublishCenter />
         <ActivityLog />
