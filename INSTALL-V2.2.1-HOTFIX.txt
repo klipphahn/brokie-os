@@ -1,0 +1,21 @@
+BROKIE OS V2.2.1 HOTFIX
+
+Problem fixed:
+Next.js prerender crashed with:
+ReferenceError: Cannot access 'O' before initialization
+
+The Design Factory is now loaded only in the browser through next/dynamic
+with SSR disabled.
+
+Install over the existing repository while preserving:
+.git
+.env.local
+node_modules
+.next
+pnpm-lock.yaml
+
+Then run:
+rm -rf .next
+pnpm build
+
+No new Supabase migration is required if 009_design_factory.sql was already run.

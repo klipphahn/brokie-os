@@ -79,6 +79,8 @@ export default function Publisher() {
   const [publicationError, setPublicationError] =
     useState("");
 
+  const current = items[selected];
+
   async function load() {
     setLoading(true);
     setError("");
@@ -131,7 +133,7 @@ export default function Publisher() {
     checkPublication();
   }, []);
 
-  async function loadPrintful(item = current) {
+  async function loadPrintful(item) {
     if (!item?.product?.id) {
       setPrintful(null);
       return;
@@ -228,8 +230,6 @@ export default function Publisher() {
   useEffect(() => {
     loadPrintful(current);
   }, [selected, current?.product?.id]);
-
-  const current = items[selected];
 
   function patch(key, value) {
     setItems((values) =>

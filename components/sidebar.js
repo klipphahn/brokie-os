@@ -2,7 +2,6 @@
 
 import {
   BrainCircuit,
-  Factory,
   Fingerprint,
   Gauge,
   Images,
@@ -19,7 +18,7 @@ const links = [
   ["Brand DNA", Fingerprint, "#brand-dna"],
   ["Design Library", Images, "#designs"],
   ["Foundry", BrainCircuit, "#ai"],
-  ["Design Factory", Factory, "#factory"],
+  ["Design Factory", PackagePlus, "#factory"],
   ["Publisher", Send, "#publisher"],
   ["Shopify Sync", ShoppingBag, "#shopify-manager"],
   ["Analytics", LineChart, "#analytics"],

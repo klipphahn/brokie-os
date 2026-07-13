@@ -1,0 +1,14 @@
+BROKIE OS V2.2.3 HOTFIX
+
+Fixes the Publisher temporal-dead-zone prerender crash.
+
+The variable `current` was referenced before initialization by the Printful
+loader and effect. It is now declared before all references, and the unsafe
+default function parameter was removed.
+
+No database migration is required.
+
+Install over the current project and run:
+
+rm -rf .next
+pnpm build

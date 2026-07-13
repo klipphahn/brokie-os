@@ -10,7 +10,7 @@ import IntegrationCard from "@/components/integration-card";
 import BrandDnaPanel from "@/components/brand-dna-panel";
 import DesignLibrary from "@/components/design-library";
 import AiStudio from "@/components/ai-studio";
-import DesignFactory from "@/components/design-factory";
+import DesignFactoryLoader from "@/components/design-factory-loader";
 import PublishCenter from "@/components/publish-center";
 import Publisher from "@/components/publisher";
 import ActivityLog from "@/components/activity-log";
@@ -49,7 +49,7 @@ export default function HomePage() {
         <BrandDnaPanel />
         <DesignLibrary />
         <AiStudio />
-        <DesignFactory />
+        <DesignFactoryLoader />
         <Publisher />
         <ShopifyManager />
         <AnalyticsDashboard />

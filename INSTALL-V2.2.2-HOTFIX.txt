@@ -1,0 +1,12 @@
+BROKIE OS V2.2.2 HOTFIX
+
+This removes the newly added Lucide Factory icon from the server-prerendered
+sidebar dependency graph and uses the already stable PackagePlus icon.
+
+No database migration is required.
+
+Install over the current project, preserve .git, .env.local, node_modules,
+.next, and pnpm-lock.yaml, then run:
+
+rm -rf .next
+pnpm build
