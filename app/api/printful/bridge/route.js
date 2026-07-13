@@ -64,9 +64,7 @@ async function saveInspection(
 ) {
   const now = new Date().toISOString();
   const syncProductId = String(
-    inspection?.syncProduct?.id ||
-    product.printful_sync_product_id ||
-    ""
+    inspection?.syncProduct?.id || ""
   ) || null;
 
   const values = {
@@ -109,6 +107,12 @@ async function saveInspection(
     .single();
 
   if (error) throw error;
+
+  const clearedLinks = await supabase
+    .from("printful_variant_links")
+    .delete()
+    .eq("product_id", product.id);
+  if (clearedLinks.error) throw clearedLinks.error;
 
   if (inspection.variants?.length) {
     const rows = inspection.variants
@@ -187,9 +191,7 @@ export async function GET(request) {
 
     const inspection = await inspectPrintfulProduct({
       shopifyProductId:
-        product.shopify_product_id,
-      syncProductId:
-        product.printful_sync_product_id
+        product.shopify_product_id
     });
 
     const saved = await saveInspection(
@@ -464,9 +466,7 @@ export async function POST(request) {
       const inspection =
         await inspectPrintfulProduct({
           shopifyProductId:
-            product.shopify_product_id,
-          syncProductId:
-            product.printful_sync_product_id
+            product.shopify_product_id
         });
 
       const saved = await saveInspection(
