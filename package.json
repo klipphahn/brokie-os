@@ -20,5 +20,8 @@
     "sharp": "0.34.5",
     "zod": "4.0.17"
   },
-  "packageManager": "pnpm@10.13.1"
+  "packageManager": "pnpm@10.13.1",
+  "devDependencies": {
+    "supabase": "^2.109.1"
+  }
 }
