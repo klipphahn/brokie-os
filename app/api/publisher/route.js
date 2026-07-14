@@ -11,7 +11,8 @@ import {
 import { promoteStorefrontProduct } from "@/lib/storefront-feed";
 import {
   buildShopifyVariantPlan,
-  defaultProductTypeLabel
+  defaultProductTypeLabel,
+  merchListingCopy
 } from "@/lib/product-types";
 
 function db() {
@@ -714,9 +715,11 @@ async function launchProduct(supabase, productRecord, review) {
         null
     },
     {
-      badge: "NEW DROP",
+      badge: merchListingCopy(review.productType).badge || "NEW DROP",
       display_title: review.title,
-      display_subtitle: review.productType,
+      display_subtitle:
+        merchListingCopy(review.productType).subtitle ||
+        review.productType,
       image_url:
         review.mockups?.back ||
         review.mockups?.front ||
