@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { productTypes } from "@/lib/foundry-options";
 import {
+  buildListingDefaults,
   defaultPrintfulBlankForProductType,
   defaultProductTypeLabel,
   productTypeFamily
@@ -24,6 +25,18 @@ import {
 function normalize(item) {
   const concept = item.concept || {};
   const product = item.product || {};
+  const defaults = buildListingDefaults({
+    productType:
+      product.product_type ||
+      item.design.product_type ||
+      concept.productType ||
+      "Heavyweight Tee",
+    customTitle:
+      product.title ||
+      concept.title ||
+      item.design.name ||
+      ""
+  });
 
   return {
     ...item,
@@ -36,7 +49,7 @@ function normalize(item) {
       description:
         product.description ||
         concept.description ||
-        "",
+        defaults.description,
       productType:
         defaultProductTypeLabel(
           product.product_type ||
@@ -57,14 +70,11 @@ function normalize(item) {
       seoTitle:
         product.seo_title ||
         concept.seoTitle ||
-        concept.title ||
-        item.design.name ||
-        "",
+        defaults.seoTitle,
       metaDescription:
         product.meta_description ||
         concept.metaDescription ||
-        concept.description ||
-        ""
+        defaults.metaDescription
     }
   };
 }

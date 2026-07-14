@@ -11,6 +11,7 @@ import {
 import { promoteStorefrontProduct } from "@/lib/storefront-feed";
 import {
   buildShopifyVariantPlan,
+  buildListingDefaults,
   defaultProductTypeLabel,
   merchListingCopy
 } from "@/lib/product-types";
@@ -27,22 +28,28 @@ function db() {
 function conceptFromDesign(design) {
   const raw = design.concept || {};
   const concept = raw.concept || raw;
+  const defaults = buildListingDefaults({
+    productType:
+      raw.productType || design.product_type || "Heavyweight Tee",
+    customTitle:
+      concept.product_title || design.name || "",
+    collectionName: concept.collection_name || "Foundry"
+  });
 
   return {
-    title: concept.product_title || design.name,
-    description: concept.product_description || "",
+    title: concept.product_title || defaults.title,
+    description: concept.product_description || defaults.description,
     productType:
       defaultProductTypeLabel(
         raw.productType || design.product_type || "Heavyweight Tee"
       ) || "Heavyweight Tee",
     price: Number(concept.retail_price || 39.99),
-    tags: Array.isArray(concept.tags) ? concept.tags : ["The Brokie"],
-    seoTitle:
-      concept.seo_title || concept.product_title || design.name,
+    tags: Array.isArray(concept.tags) && concept.tags.length
+      ? concept.tags
+      : defaults.tags,
+    seoTitle: concept.seo_title || defaults.seoTitle,
     metaDescription:
-      concept.meta_description ||
-      concept.product_description ||
-      "",
+      concept.meta_description || defaults.metaDescription,
     collectionName: concept.collection_name || "Foundry",
     mockups: {
       front: raw.mockups?.front || null,
@@ -869,6 +876,22 @@ export async function POST(request) {
         body.variantOptions
       )
     };
+
+    const familyDefaults = buildListingDefaults({
+      productType: review.productType,
+      customTitle: review.title,
+      collectionName: "The Brokie"
+    });
+
+    if (!review.title) review.title = familyDefaults.title;
+    if (!review.description) review.description = familyDefaults.description;
+    if (!review.seoTitle) review.seoTitle = familyDefaults.seoTitle;
+    if (!review.metaDescription) {
+      review.metaDescription = familyDefaults.metaDescription;
+    }
+    if (!Array.isArray(review.tags) || !review.tags.length) {
+      review.tags = familyDefaults.tags;
+    }
 
     if (!review.title) throw new Error("Product title is required.");
 
