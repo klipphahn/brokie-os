@@ -8,6 +8,48 @@ async function loadMerch() {
   return loadStorefrontFeed(supabase);
 }
 
+function uniqueHighlights(products) {
+  const seen = new Set();
+  const highlights = [];
+
+  for (const product of products) {
+    const key = product.familyLabel || product.productType || product.id;
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    highlights.push(product);
+    if (highlights.length >= 3) break;
+  }
+
+  return highlights.length
+    ? highlights
+    : [
+        {
+          id: "default-apparel",
+          familyLabel: "Core apparel",
+          title: "Heavyweight tees and hoodies",
+          fitNote: "Built for long days, late nights, and repeat wear.",
+          story: "The foundation of the Brokie wardrobe.",
+          badge: "APPAREL"
+        },
+        {
+          id: "default-headwear",
+          familyLabel: "Headwear",
+          title: "Hats and caps",
+          fitNote: "Easy everyday pieces with low-key branding.",
+          story: "Clean pieces you can wear anywhere.",
+          badge: "HEADWEAR"
+        },
+        {
+          id: "default-stickers",
+          familyLabel: "Small-format merch",
+          title: "Stickers and extras",
+          fitNote: "Little drops that spread the brand everywhere.",
+          story: "For laptops, toolboxes, hard hats, and water bottles.",
+          badge: "STICKER"
+        }
+      ];
+}
+
 function money(value, currency) {
   return value == null
     ? ""
@@ -19,6 +61,7 @@ function money(value, currency) {
 
 export default async function MerchPage() {
   const { storefront, products } = await loadMerch();
+  const highlights = uniqueHighlights(products);
 
   return (
     <main
@@ -65,6 +108,16 @@ export default async function MerchPage() {
           </a>
         </div>
 
+        <div className="merchHighlights">
+          {highlights.map((product) => (
+            <article key={product.id} className="merchHighlight">
+              <span>{product.familyLabel || "The Brokie"}</span>
+              <strong>{product.title}</strong>
+              <p>{product.fitNote || product.story || product.subtitle || ""}</p>
+            </article>
+          ))}
+        </div>
+
         <div className="merchGrid">
           {products.length ? (
             products.map((product) => (
@@ -78,8 +131,10 @@ export default async function MerchPage() {
                   )}
                 </a>
                 <div className="merchBody">
+                  {product.familyLabel ? <span className="merchFamily">{product.familyLabel}</span> : null}
                   <strong>{product.title}</strong>
-                  <p>{product.subtitle || ""}</p>
+                  <p>{product.fitNote || product.story || product.subtitle || ""}</p>
+                  {product.cardLabel ? <small>{product.cardLabel}</small> : null}
                   <span>{money(product.price, product.currencyCode)}</span>
                 </div>
               </article>
@@ -102,6 +157,22 @@ export default async function MerchPage() {
         <article>
           <span>Fulfillment</span>
           <p>{storefront.policies.note}</p>
+        </article>
+      </section>
+
+      <section className="merchStory">
+        <article>
+          <span>BUILT FOR</span>
+          <h3>{storefront.manifesto.headline}</h3>
+          <p>{storefront.manifesto.body}</p>
+        </article>
+        <article>
+          <span>WHAT YOU GET</span>
+          <p>
+            Each drop is shaped around the product family—tee, hoodie, hat, or
+            sticker—so the listing copy, storefront cards, and merch page all
+            stay in sync.
+          </p>
         </article>
       </section>
     </main>

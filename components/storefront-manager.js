@@ -67,7 +67,8 @@ export default function StorefrontManager() {
         id: item.shopify_product_id,
         badge: item.badge,
         displayTitle: item.display_title,
-        displaySubtitle: item.display_subtitle
+        displaySubtitle: item.display_subtitle,
+        productType: item.product_type
       })));
     } catch (error) {
       setNotice({ type: "error", text: error.message });
@@ -87,7 +88,7 @@ export default function StorefrontManager() {
     const exists = selected.some((item) => item.id === product.id);
     if (exists) return setSelected((items) => items.filter((item) => item.id !== product.id));
     if (selected.length >= 8) return setNotice({ type: "error", text: "Choose up to eight featured products." });
-    setSelected((items) => [...items, { id: product.id, badge: "", displayTitle: "", displaySubtitle: "" }]);
+    setSelected((items) => [...items, { id: product.id, badge: "", displayTitle: "", displaySubtitle: "", productType: product.productType }]);
   }
 
   function move(index, direction) {
@@ -181,7 +182,7 @@ export default function StorefrontManager() {
                   const checked = selected.some((item) => item.id === product.id);
                   return <button type="button" className={checked ? "selected" : ""} key={product.id} onClick={() => toggle(product)}>
                     {product.image ? <img src={product.image} alt="" /> : <ShoppingBag size={20} />}
-                    <span>{product.title}<small>{product.minPrice ? `$${product.minPrice}` : "No price"}</small></span>
+                    <span>{product.title}<small>{product.productType || "tee"} · {product.minPrice ? `$${product.minPrice}` : "No price"}</small></span>
                     {checked && <Check size={16} />}
                   </button>;
                 })}

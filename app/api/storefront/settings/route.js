@@ -46,6 +46,7 @@ function cleanProduct(product, position) {
     badge: cleanText(product.badge, 60),
     display_title: cleanText(product.displayTitle, 160),
     display_subtitle: cleanText(product.displaySubtitle, 240),
+    product_type: cleanText(product.productType, 120) || "tee",
     product_title: cleanText(product.title, 255),
     product_handle: cleanText(product.handle, 255),
     product_url: cleanText(product.onlineStoreUrl, 1000) || null,
