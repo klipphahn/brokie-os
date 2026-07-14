@@ -43,9 +43,50 @@ function Change({ value }) {
   );
 }
 
+function summarizeLaunchQueue(items = []) {
+  const queue = Array.isArray(items) ? items : [];
+  const ready = [];
+  const blocked = [];
+  const live = [];
+
+  for (const item of queue) {
+    const product = item?.product || {};
+    const state = String(
+      product.status || item?.design?.status || ""
+    ).toLowerCase();
+    const configured =
+      product.shopify_product_id &&
+      product.printful_status === "configured";
+    const isLive = state === "live" || state === "active";
+
+    if (isLive) {
+      live.push(item);
+    } else if (configured) {
+      ready.push(item);
+    } else {
+      blocked.push(item);
+    }
+  }
+
+  return {
+    total: queue.length,
+    ready: ready.length,
+    blocked: blocked.length,
+    live: live.length,
+    nextBlocked: blocked[0] || null
+  };
+}
+
 export default function AnalyticsDashboard() {
   const [days, setDays] = useState(30);
   const [data, setData] = useState(null);
+  const [launch, setLaunch] = useState({
+    total: 0,
+    ready: 0,
+    blocked: 0,
+    live: 0,
+    nextBlocked: null
+  });
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [message, setMessage] = useState("");
@@ -56,11 +97,14 @@ export default function AnalyticsDashboard() {
     setError("");
 
     try {
-      const response = await fetch(
-        `/api/analytics?days=${days}`,
-        { cache: "no-store" }
-      );
+      const [response, publisherResponse] = await Promise.all([
+        fetch(`/api/analytics?days=${days}`, {
+          cache: "no-store"
+        }),
+        fetch("/api/publisher", { cache: "no-store" })
+      ]);
       const payload = await response.json();
+      const publisher = await publisherResponse.json();
 
       if (!response.ok || !payload.ok) {
         throw new Error(
@@ -68,7 +112,15 @@ export default function AnalyticsDashboard() {
         );
       }
 
+      if (!publisherResponse.ok || !publisher.ok) {
+        throw new Error(
+          publisher.error ||
+            "Launch workflow could not be loaded."
+        );
+      }
+
       setData(payload);
+      setLaunch(summarizeLaunchQueue(publisher.items || []));
     } catch (loadError) {
       setError(loadError.message);
     } finally {
@@ -219,6 +271,18 @@ export default function AnalyticsDashboard() {
               <strong>{currency(cards.averageOrderValue)}</strong>
               <small>{currency(cards.refunds)} refunded</small>
             </article>
+
+            <article>
+              <div className="analyticsCardIcon">
+                <PackageCheck />
+              </div>
+              <span>Launch ready</span>
+              <strong>{compact(launch.ready)}</strong>
+              <small>
+                {compact(launch.blocked)} blocked ·{" "}
+                {compact(launch.live)} live
+              </small>
+            </article>
           </div>
 
           <div className="analyticsGrid">
@@ -317,6 +381,84 @@ export default function AnalyticsDashboard() {
                 <RotateCcw size={15} />
                 Rebuild last 12 months
               </button>
+            </article>
+          </div>
+
+          <div className="analyticsGrid lowerAnalyticsGrid">
+            <article className="syncStatusCard">
+              <div className="analyticsSectionHead">
+                <div>
+                  <span className="eyebrow">LAUNCH STATUS</span>
+                  <h3>Publisher readiness</h3>
+                </div>
+                <PackageCheck />
+              </div>
+
+              <div className="syncStatusRows">
+                <div>
+                  <span>Total in queue</span>
+                  <strong>{compact(launch.total)}</strong>
+                </div>
+                <div>
+                  <span>Ready to launch</span>
+                  <strong className="statusGood">
+                    {compact(launch.ready)}
+                  </strong>
+                </div>
+                <div>
+                  <span>Blocked</span>
+                  <strong className="statusWarn">
+                    {compact(launch.blocked)}
+                  </strong>
+                </div>
+                <div>
+                  <span>Live</span>
+                  <strong>{compact(launch.live)}</strong>
+                </div>
+              </div>
+            </article>
+
+            <article className="recentOrdersCard">
+              <div className="analyticsSectionHead">
+                <div>
+                  <span className="eyebrow">NEXT BLOCKER</span>
+                  <h3>Needs attention</h3>
+                </div>
+                <BarChart3 />
+              </div>
+
+              {launch.nextBlocked ? (
+                <div className="recentOrdersList">
+                  <div>
+                    <span>
+                      <strong>
+                        {launch.nextBlocked.form?.title ||
+                          launch.nextBlocked.design?.name ||
+                          "Untitled"}
+                      </strong>
+                      <small>
+                        {launch.nextBlocked.product?.status ||
+                          launch.nextBlocked.design?.status ||
+                          "draft"}
+                      </small>
+                    </span>
+                    <span>
+                      <strong>
+                        {launch.nextBlocked.product?.printful_status ||
+                          "not configured"}
+                      </strong>
+                      <small>Printful state</small>
+                    </span>
+                  </div>
+                  <div className="analyticsEmptyRow">
+                    Finish the remaining Publisher and Printful steps for this item to clear the queue.
+                  </div>
+                </div>
+              ) : (
+                <div className="analyticsEmptyRow">
+                  Nothing is blocked right now. The launch queue is moving.
+                </div>
+              )}
             </article>
           </div>
 
