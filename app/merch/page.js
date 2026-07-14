@@ -1,52 +1,11 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import {
-  DEFAULT_STOREFRONT_SETTINGS,
-  STOREFRONT_KEY,
-  storefrontPublicSettings
-} from "@/lib/storefront";
+import { loadStorefrontFeed } from "@/lib/storefront-feed";
 
 export const dynamic = "force-dynamic";
 
 async function loadMerch() {
   const supabase = createSupabaseAdminClient();
-  const [
-    { data: settings, error: settingsError },
-    { data: featured, error: featuredError }
-  ] = await Promise.all([
-    supabase
-      .from("storefront_settings")
-      .select("*")
-      .eq("key", STOREFRONT_KEY)
-      .maybeSingle(),
-    supabase
-      .from("storefront_featured_products")
-      .select("*")
-      .eq("active", true)
-      .order("position")
-  ]);
-
-  if (settingsError) throw settingsError;
-  if (featuredError) throw featuredError;
-
-  const rawSettings = settings || DEFAULT_STOREFRONT_SETTINGS;
-  const storefront = storefrontPublicSettings(rawSettings);
-  const products = (featured || []).map((row) => ({
-    id: row.shopify_product_id,
-    title: row.display_title || row.product_title,
-    subtitle: row.display_subtitle,
-    badge: row.badge,
-    url:
-      row.product_url ||
-      `https://${storefront.shopDomain}/products/${row.product_handle}`,
-    image: row.image_url,
-    imageAlt: row.image_alt || row.product_title,
-    price: row.min_price === null ? null : Number(row.min_price),
-    maxPrice: row.max_price === null ? null : Number(row.max_price),
-    currencyCode: row.currency_code,
-    position: row.position
-  }));
-
-  return { storefront, products };
+  return loadStorefrontFeed(supabase);
 }
 
 function money(value, currency) {
