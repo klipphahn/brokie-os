@@ -26,7 +26,7 @@ const labels = [
   "Applying Brand DNA",
   "Writing product concepts",
   "Generating front + back artwork",
-  "Building shirt mockups",
+  "Building product mockups",
   "Saving approved assets"
 ];
 
@@ -39,7 +39,7 @@ const initialState = {
   palette: "brokie-core",
   variations: 2,
   prompt:
-    "Create a shirt for people who outwork everyone. Use power, current, overtime, and pride in skilled work."
+    "Create a product for people who outwork everyone. Use power, current, overtime, and pride in skilled work."
 };
 
 export default function AiStudio() {
@@ -280,7 +280,7 @@ export default function AiStudio() {
 
           <p className="aiCostNote">
             Each variation creates coordinated front and back print files plus
-            two shirt mockups. Start with one, then explore more when the
+            two product mockups. Start with one, then explore more when the
             direction is promising.
           </p>
 

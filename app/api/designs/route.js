@@ -11,6 +11,14 @@ function slugify(value) {
     .slice(0, 60);
 }
 
+function normalizeProductType(productType) {
+  const value = String(productType || "").toLowerCase();
+  if (value.includes("hoodie")) return "hoodie";
+  if (value.includes("hat") || value.includes("cap")) return "hat";
+  if (value.includes("sticker")) return "sticker";
+  return "tee";
+}
+
 async function downloadImage(url) {
   const response = await fetch(url, { cache: "no-store" });
   if (!response.ok) {
@@ -23,16 +31,24 @@ async function createGarmentMockup(artwork, side, productType) {
   const width = 1200;
   const height = 1400;
   const isFront = side === "front";
-  const isHoodie = /hoodie/i.test(productType || "");
-  const silhouette = isHoodie
-    ? `<path filter="url(#shadow)" fill="url(#shirt)" stroke="#343434" stroke-width="3"
-        d="M410 245 Q455 110 600 95 Q745 110 790 245 L960 300 L1120 560 L930 670 L850 515 L850 1250 Q600 1325 350 1250 L350 515 L270 670 L80 560 L240 300 Z"/>
-       <path d="M455 250 Q600 390 745 250 Q700 155 600 145 Q500 155 455 250" fill="#111" stroke="#3a3a3a" stroke-width="10"/>`
-    : `<path filter="url(#shadow)" fill="url(#shirt)" stroke="#343434" stroke-width="3"
+  const productKey = normalizeProductType(productType);
+  const silhouettes = {
+    tee: `<path filter="url(#shadow)" fill="url(#shirt)" stroke="#343434" stroke-width="3"
         d="M395 205 L245 275 L78 470 L245 590 L335 485 L335 1240 Q600 1320 865 1240 L865 485 L955 590 L1122 470 L955 275 L805 205 Q745 250 600 250 Q455 250 395 205 Z"/>
        ${isFront
          ? '<path d="M500 215 Q600 330 700 215" fill="#111" stroke="#3a3a3a" stroke-width="12"/>'
-         : '<path d="M505 220 Q600 285 695 220" fill="none" stroke="#3a3a3a" stroke-width="10"/>'}`;
+         : '<path d="M505 220 Q600 285 695 220" fill="none" stroke="#3a3a3a" stroke-width="10"/>'}`,
+    hoodie: `<path filter="url(#shadow)" fill="url(#shirt)" stroke="#343434" stroke-width="3"
+        d="M410 245 Q455 110 600 95 Q745 110 790 245 L960 300 L1120 560 L930 670 L850 515 L850 1250 Q600 1325 350 1250 L350 515 L270 670 L80 560 L240 300 Z"/>
+       <path d="M455 250 Q600 390 745 250 Q700 155 600 145 Q500 155 455 250" fill="#111" stroke="#3a3a3a" stroke-width="10"/>`,
+    hat: `<path filter="url(#shadow)" fill="url(#shirt)" stroke="#343434" stroke-width="3"
+        d="M300 510 Q355 280 600 250 Q845 280 900 510 Q910 620 825 670 L825 690 Q825 760 770 790 L430 790 Q375 760 375 690 L375 670 Q290 620 300 510 Z"/>
+       <path d="M390 520 Q600 430 810 520 Q765 600 600 600 Q435 600 390 520 Z" fill="#111" stroke="#3a3a3a" stroke-width="10"/>`,
+    sticker: `<rect x="245" y="320" width="710" height="760" rx="80" fill="url(#shirt)" stroke="#343434" stroke-width="3" stroke-dasharray="28 18"/>
+       <rect x="305" y="380" width="590" height="640" rx="50" fill="none" stroke="#3a3a3a" stroke-width="8" stroke-dasharray="18 16"/>`
+  };
+
+  const silhouette = silhouettes[productKey] || silhouettes.tee;
 
   const garment = Buffer.from(`
     <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
@@ -50,19 +66,41 @@ async function createGarmentMockup(artwork, side, productType) {
       ${silhouette}
     </svg>`);
 
-  const target = isFront
-    ? { width: 210, height: 210 }
-    : { width: 560, height: 650 };
+  const target =
+    productKey === "hat"
+      ? isFront
+        ? { width: 260, height: 180 }
+        : { width: 300, height: 180 }
+      : productKey === "sticker"
+        ? { width: 360, height: 360 }
+        : isFront
+          ? { width: 210, height: 210 }
+          : { width: 560, height: 650 };
   const art = await sharp(artwork)
     .ensureAlpha()
     .resize(target.width, target.height, { fit: "inside" })
     .png()
     .toBuffer();
   const meta = await sharp(art).metadata();
-  const left = isFront
-    ? Math.round(690 - (meta.width || target.width) / 2)
-    : Math.round((width - (meta.width || target.width)) / 2);
-  const top = isFront ? (isHoodie ? 470 : 430) : (isHoodie ? 430 : 380);
+  const left = productKey === "hat"
+    ? Math.round((width - (meta.width || target.width)) / 2)
+    : productKey === "sticker"
+      ? Math.round((width - (meta.width || target.width)) / 2)
+      : isFront
+        ? Math.round(690 - (meta.width || target.width) / 2)
+        : Math.round((width - (meta.width || target.width)) / 2);
+  const top =
+    productKey === "hoodie"
+      ? isFront
+        ? 470
+        : 430
+      : productKey === "hat"
+        ? 470
+        : productKey === "sticker"
+          ? 510
+          : isFront
+            ? 430
+            : 380;
 
   return sharp(garment)
     .composite([{ input: art, left, top }])

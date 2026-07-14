@@ -10,7 +10,10 @@ const EDITABLE_FIELDS = [
   "hero_headline", "hero_subheadline", "primary_cta_label",
   "primary_cta_url", "secondary_cta_label", "secondary_cta_url",
   "manifesto_headline", "manifesto_body", "collection_title",
-  "collection_handle", "collection_description", "palette"
+  "collection_handle", "collection_description", "palette",
+  "shipping_policy_title", "shipping_policy_body",
+  "returns_policy_title", "returns_policy_body",
+  "fulfillment_note"
 ];
 
 function cleanText(value, max = 500) {

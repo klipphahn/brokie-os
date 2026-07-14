@@ -26,6 +26,11 @@ const EMPTY = {
   secondary_cta_url: "https://thebrokie.com",
   manifesto_headline: "BROKE TODAY. BUILDING FOREVER.",
   manifesto_body: "We build. We sacrifice. We stay loyal. We keep showing up.",
+  shipping_policy_title: "Shipping",
+  shipping_policy_body: "Orders are fulfilled by Printful and usually ship after production is complete. You will get tracking as soon as the order leaves the facility.",
+  returns_policy_title: "Returns",
+  returns_policy_body: "Because each item is made to order, returns are limited to damaged, misprinted, or incorrect items. Reach out quickly if something arrives wrong so we can help fix it.",
+  fulfillment_note: "Printed on demand. Fulfilled by Printful. Built for the people still building.",
   collection_title: "The Brokie Featured",
   collection_handle: "the-brokie-featured",
   collection_description: "The latest pieces selected by The Brokie. Built for the people still building."
@@ -159,6 +164,11 @@ export default function StorefrontManager() {
               {field("primary_cta_url", "Primary button link")}
               {field("manifesto_headline", "Manifesto headline")}
               {field("manifesto_body", "Manifesto message", true)}
+              {field("shipping_policy_title", "Shipping title")}
+              {field("shipping_policy_body", "Shipping policy", true)}
+              {field("returns_policy_title", "Returns title")}
+              {field("returns_policy_body", "Returns policy", true)}
+              {field("fulfillment_note", "Fulfillment note", true)}
               {field("collection_title", "Collection title")}
               {field("collection_handle", "Collection URL handle")}
               {field("collection_description", "Collection description", true)}
@@ -191,15 +201,29 @@ export default function StorefrontManager() {
             </div>
           </div>
 
-          <div className="storefrontPreview">
-            <span className="storefrontAnnouncement">{settings.announcement_text}</span>
-            <small>{settings.hero_eyebrow}</small>
-            <h3>{settings.hero_headline}</h3>
-            <p>{settings.hero_subheadline}</p>
-            <button>{settings.primary_cta_label}</button>
-            <div className="storefrontMiniGrid">{selectedProducts.slice(0, 4).map((product) => <article key={product.id}>{product.image ? <img src={product.image} alt="" /> : <ShoppingBag />}<strong>{product.title}</strong></article>)}</div>
-            <div className="feedLink"><code>{feedUrl}</code><button onClick={() => navigator.clipboard?.writeText(feedUrl)}><Copy size={14} /></button><a href={feedUrl} target="_blank" rel="noreferrer"><ExternalLink size={14} /></a></div>
-          </div>
+            <div className="storefrontPreview">
+              <span className="storefrontAnnouncement">{settings.announcement_text}</span>
+              <small>{settings.hero_eyebrow}</small>
+              <h3>{settings.hero_headline}</h3>
+              <p>{settings.hero_subheadline}</p>
+              <button>{settings.primary_cta_label}</button>
+              <div className="storefrontMiniGrid">{selectedProducts.slice(0, 4).map((product) => <article key={product.id}>{product.image ? <img src={product.image} alt="" /> : <ShoppingBag />}<strong>{product.title}</strong></article>)}</div>
+              <div className="storefrontPolicyPreview">
+                <article>
+                  <span>{settings.shipping_policy_title}</span>
+                  <p>{settings.shipping_policy_body}</p>
+                </article>
+                <article>
+                  <span>{settings.returns_policy_title}</span>
+                  <p>{settings.returns_policy_body}</p>
+                </article>
+                <article>
+                  <span>Fulfillment note</span>
+                  <p>{settings.fulfillment_note}</p>
+                </article>
+              </div>
+              <div className="feedLink"><code>{feedUrl}</code><button onClick={() => navigator.clipboard?.writeText(feedUrl)}><Copy size={14} /></button><a href={feedUrl} target="_blank" rel="noreferrer"><ExternalLink size={14} /></a></div>
+            </div>
         </div>
       )}
     </section>

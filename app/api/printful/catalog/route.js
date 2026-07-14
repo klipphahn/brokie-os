@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { resolveBlankNameForProductType } from "@/lib/printful-bridge";
 import {
   extractCatalogResult,
   findCatalogProduct,
@@ -30,10 +31,19 @@ function sortSizes(values) {
 export async function GET(request) {
   try {
     const url = new URL(request.url);
-    const blankName =
-      url.searchParams.get("blankName") ||
-      process.env.PRINTFUL_DEFAULT_BLANK ||
-      "Comfort Colors 1717";
+    const productType =
+      url.searchParams.get("productType") || "";
+    const useProductTypeDefaults =
+      url.searchParams.get("useProductTypeDefaults") ===
+      "1" ||
+      url.searchParams.get("useProductTypeDefaults") ===
+        "true";
+    const blankName = useProductTypeDefaults
+      ? resolveBlankNameForProductType(productType)
+      : resolveBlankNameForProductType(
+          productType,
+          url.searchParams.get("blankName") || ""
+        );
 
     const products = await listCatalogProducts();
     const match = findCatalogProduct(products, blankName);
