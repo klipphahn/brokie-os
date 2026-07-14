@@ -14,6 +14,12 @@ import {
   Store,
   TriangleAlert
 } from "lucide-react";
+import { productTypes } from "@/lib/foundry-options";
+import {
+  defaultPrintfulBlankForProductType,
+  defaultProductTypeLabel,
+  productTypeFamily
+} from "@/lib/product-types";
 
 function normalize(item) {
   const concept = item.concept || {};
@@ -32,9 +38,12 @@ function normalize(item) {
         concept.description ||
         "",
       productType:
-        product.product_type ||
-        concept.productType ||
-        "Apparel",
+        defaultProductTypeLabel(
+          product.product_type ||
+            item.design.product_type ||
+            concept.productType ||
+            "Heavyweight Tee"
+        ) || "Heavyweight Tee",
       price: String(
         product.retail_price ||
         concept.price ||
@@ -61,20 +70,10 @@ function normalize(item) {
 }
 
 function defaultBlankForProductType(productType) {
-  const value = String(productType || "").toLowerCase();
-  if (value.includes("hoodie")) {
-    return "Independent Trading Co. IND4000";
-  }
-  if (value.includes("long sleeve")) {
-    return "Comfort Colors 6014";
-  }
-  if (value.includes("hat") || value.includes("cap")) {
-    return "Closed-Back Trucker Cap | Flexfit 6511";
-  }
-  if (value.includes("sticker")) {
-    return "Sticker";
-  }
-  return "Comfort Colors 1717";
+  return (
+    defaultPrintfulBlankForProductType(productType) ||
+    "Comfort Colors 1717"
+  );
 }
 
 export default function Publisher() {
@@ -155,6 +154,7 @@ export default function Publisher() {
   function currentProductType() {
     return (
       current?.product?.product_type ||
+      current?.design?.product_type ||
       current?.form?.productType ||
       ""
     );
@@ -226,6 +226,20 @@ export default function Publisher() {
 
   const selectedVariantOptions = useMemo(() => {
     if (!catalog?.colors?.length) return [];
+
+    const family = productTypeFamily(currentProductType());
+
+    if (family === "headwear") {
+      return catalog.colors
+        .filter((color) =>
+          merchOptions.colors.includes(color.name)
+        )
+        .map((color) => ({ color: color.name }));
+    }
+
+    if (family === "sticker") {
+      return [{ style: "Standard" }];
+    }
 
     return catalog.colors
       .filter((color) =>
@@ -709,7 +723,7 @@ export default function Publisher() {
 
                 <label>
                   Product type
-                  <input
+                  <select
                     value={current.form.productType}
                     onChange={(event) =>
                       patch(
@@ -717,7 +731,13 @@ export default function Publisher() {
                         event.target.value
                       )
                     }
-                  />
+                  >
+                    {productTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
                 </label>
 
                 <label className="fullField">

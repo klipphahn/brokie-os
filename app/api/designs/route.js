@@ -13,8 +13,15 @@ function slugify(value) {
 
 function normalizeProductType(productType) {
   const value = String(productType || "").toLowerCase();
+  if (value.includes("zip hoodie") || value.includes("zip-up")) {
+    return "hoodie";
+  }
   if (value.includes("hoodie")) return "hoodie";
+  if (value.includes("crewneck") || value.includes("sweatshirt")) {
+    return "hoodie";
+  }
   if (value.includes("hat") || value.includes("cap")) return "hat";
+  if (value.includes("beanie")) return "hat";
   if (value.includes("sticker")) return "sticker";
   return "tee";
 }

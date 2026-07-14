@@ -290,8 +290,15 @@ Do not use black inside the foreground artwork.`,
 
 function normalizeProductType(productType) {
   const value = String(productType || "").toLowerCase();
+  if (value.includes("zip hoodie") || value.includes("zip-up")) {
+    return "hoodie";
+  }
   if (value.includes("hoodie")) return "hoodie";
+  if (value.includes("crewneck") || value.includes("sweatshirt")) {
+    return "hoodie";
+  }
   if (value.includes("hat") || value.includes("cap")) return "hat";
+  if (value.includes("beanie")) return "hat";
   if (value.includes("sticker")) return "sticker";
   if (value.includes("long sleeve")) return "long-sleeve";
   return "tee";

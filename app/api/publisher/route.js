@@ -9,6 +9,10 @@ import {
   readShopifyProductState
 } from "@/lib/shopify-publications";
 import { promoteStorefrontProduct } from "@/lib/storefront-feed";
+import {
+  buildShopifyVariantPlan,
+  defaultProductTypeLabel
+} from "@/lib/product-types";
 
 function db() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -26,7 +30,10 @@ function conceptFromDesign(design) {
   return {
     title: concept.product_title || design.name,
     description: concept.product_description || "",
-    productType: raw.productType || design.product_type || "Apparel",
+    productType:
+      defaultProductTypeLabel(
+        raw.productType || design.product_type || "Heavyweight Tee"
+      ) || "Heavyweight Tee",
     price: Number(concept.retail_price || 39.99),
     tags: Array.isArray(concept.tags) ? concept.tags : ["The Brokie"],
     seoTitle:
@@ -406,7 +413,7 @@ async function createOrUpdateShopifyDraft(
   return saved.data;
 }
 
-async function setShopifyApparelVariants(
+async function setShopifyProductVariants(
   supabase,
   productRecord,
   review
@@ -427,16 +434,27 @@ async function setShopifyApparelVariants(
   const requestedCombinations = cleanVariantOptions(
     review.variantOptions
   );
+  const plan = buildShopifyVariantPlan(review.productType, {
+    colors,
+    sizes,
+    price: review.price,
+    defaultLabel: "Standard"
+  });
+
   const combinations = requestedCombinations.length
     ? requestedCombinations
-    : colors.flatMap((color) =>
-        sizes.map((size) => ({ color, size }))
-      );
+    : plan.family === "apparel"
+      ? colors.flatMap((color) =>
+          sizes.map((size) => ({ color, size }))
+        )
+      : plan.family === "headwear"
+        ? colors.map((color) => ({ color }))
+        : [{ style: "Standard" }];
 
-  colors = [...new Set(combinations.map(({ color }) => color))];
-  sizes = [...new Set(combinations.map(({ size }) => size))];
-
-  if (combinations.length > 100) {
+  if (
+    plan.family === "apparel" &&
+    combinations.length > 100
+  ) {
     throw new Error(
       "Shopify supports up to 100 variants here. Select fewer color and size combinations."
     );
@@ -445,30 +463,40 @@ async function setShopifyApparelVariants(
   const result = await shopifyGraphQL(SET_APPAREL_VARIANTS, {
     identifier: { id: productRecord.shopify_product_id },
     input: {
-      productOptions: [
-        {
-          name: "Color",
-          position: 1,
-          values: colors.map((color) => ({ name: color }))
-        },
-        {
-          name: "Size",
-          position: 2,
-          values: sizes.map((size) => ({
-            name: size
-          }))
-        }
-      ],
-      variants: combinations.map(({ color, size }, index) => ({
-        position: index + 1,
-        price,
-        inventoryPolicy: "CONTINUE",
-        inventoryItem: { tracked: true },
-        optionValues: [
-          { optionName: "Color", name: color },
-          { optionName: "Size", name: size }
-        ]
-      }))
+      productOptions: plan.productOptions,
+      variants:
+        plan.family === "apparel"
+          ? combinations.map(({ color, size }, index) => ({
+              position: index + 1,
+              price,
+              inventoryPolicy: "CONTINUE",
+              inventoryItem: { tracked: true },
+              optionValues: [
+                { optionName: "Color", name: color },
+                { optionName: "Size", name: size }
+              ]
+            }))
+          : plan.family === "headwear"
+            ? combinations.map(({ color }, index) => ({
+                position: index + 1,
+                price,
+                inventoryPolicy: "CONTINUE",
+                inventoryItem: { tracked: true },
+                optionValues: [
+                  { optionName: "Color", name: color }
+                ]
+              }))
+            : [
+                {
+                  position: 1,
+                  price,
+                  inventoryPolicy: "CONTINUE",
+                  inventoryItem: { tracked: true },
+                  optionValues: [
+                    { optionName: "Style", name: "Standard" }
+                  ]
+                }
+              ]
     }
   });
 
@@ -516,14 +544,19 @@ async function setShopifyApparelVariants(
   await logActivity(
     supabase,
     "shopify_variants",
-    `Added sizes to ${review.title}`,
-    `${colors.join(", ")} · ${sizes.join(", ")} · $${price}`,
+    `Updated variants for ${review.title}`,
+    plan.family === "apparel"
+      ? `${colors.join(", ")} · ${sizes.join(", ")} · $${price}`
+      : plan.family === "headwear"
+        ? `${colors.join(", ")} · $${price}`
+        : `Single-variant product · $${price}`,
     "success",
     {
       productId: productRecord.id,
       shopifyProductId: productRecord.shopify_product_id,
       sizes,
       colors,
+      family: plan.family,
       price
     }
   );
@@ -923,7 +956,7 @@ export async function POST(request) {
     }
 
     if (action === "set_apparel_variants") {
-      const configured = await setShopifyApparelVariants(
+      const configured = await setShopifyProductVariants(
         supabase,
         productRecord,
         review
@@ -932,7 +965,9 @@ export async function POST(request) {
       return NextResponse.json({
         ok: true,
         message:
-          `Added ${configured.variants.length} Shopify variants. Printful must now import and configure every selected color and size.`,
+          configured.variants.length === 1
+            ? "Added the Shopify variant. Printful can now import and configure it."
+            : `Added ${configured.variants.length} Shopify variants. Printful must now import and configure every selected option.`,
         product: configured.product,
         variants: configured.variants
       });
