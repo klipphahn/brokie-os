@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 import { extractDesignDna, searchableText } from "@/lib/design-dna";
+import { getProductTypeTemplate } from "@/lib/product-types";
 
 function slugify(value) {
   return String(value || "brokie-design")
@@ -39,6 +40,7 @@ async function createGarmentMockup(artwork, side, productType) {
   const height = 1400;
   const isFront = side === "front";
   const productKey = normalizeProductType(productType);
+  const template = getProductTypeTemplate(productType);
   const silhouettes = {
     tee: `<path filter="url(#shadow)" fill="url(#shirt)" stroke="#343434" stroke-width="3"
         d="M395 205 L245 275 L78 470 L245 590 L335 485 L335 1240 Q600 1320 865 1240 L865 485 L955 590 L1122 470 L955 275 L805 205 Q745 250 600 250 Q455 250 395 205 Z"/>
@@ -74,7 +76,8 @@ async function createGarmentMockup(artwork, side, productType) {
     </svg>`);
 
   const target =
-    productKey === "hat"
+    template.mockup?.[side] ||
+    (productKey === "hat"
       ? isFront
         ? { width: 260, height: 180 }
         : { width: 300, height: 180 }
@@ -82,32 +85,31 @@ async function createGarmentMockup(artwork, side, productType) {
         ? { width: 360, height: 360 }
         : isFront
           ? { width: 210, height: 210 }
-          : { width: 560, height: 650 };
+          : { width: 560, height: 650 });
   const art = await sharp(artwork)
     .ensureAlpha()
     .resize(target.width, target.height, { fit: "inside" })
     .png()
     .toBuffer();
   const meta = await sharp(art).metadata();
-  const left = productKey === "hat"
-    ? Math.round((width - (meta.width || target.width)) / 2)
-    : productKey === "sticker"
+  const left =
+    productKey === "hat" || productKey === "sticker"
       ? Math.round((width - (meta.width || target.width)) / 2)
       : isFront
         ? Math.round(690 - (meta.width || target.width) / 2)
         : Math.round((width - (meta.width || target.width)) / 2);
   const top =
-    productKey === "hoodie"
-      ? isFront
-        ? 470
-        : 430
-      : productKey === "hat"
-        ? 470
-        : productKey === "sticker"
-          ? 510
-          : isFront
-            ? 430
-            : 380;
+    productKey === "hat"
+      ? 470
+      : productKey === "sticker"
+        ? 360
+        : productKey === "hoodie"
+        ? isFront
+          ? 470
+          : 430
+        : isFront
+          ? 430
+          : 380;
 
   return sharp(garment)
     .composite([{ input: art, left, top }])

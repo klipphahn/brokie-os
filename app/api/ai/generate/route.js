@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
+import { getProductTypeTemplate } from "@/lib/product-types";
 
 const BRAND_RULES = `
 Brand: The Brokie.
@@ -386,28 +387,15 @@ async function createProductMockup(artworkBase64, side, productType) {
   const productKey = normalizeProductType(productType);
   const isFront = side === "front";
   const mockup = Buffer.from(buildMockupSvg(productKey, isFront));
-
-  const placements = {
-    tee: isFront
+  const template = getProductTypeTemplate(productType);
+  const placement =
+    template.mockup?.[side] ||
+    (isFront
       ? { width: 210, height: 210, left: 690, top: 430 }
-      : { width: 560, height: 650, left: 320, top: 380 },
-    hoodie: isFront
-      ? { width: 220, height: 220, left: 690, top: 420 }
-      : { width: 560, height: 640, left: 320, top: 380 },
-    "long-sleeve": isFront
-      ? { width: 210, height: 210, left: 690, top: 430 }
-      : { width: 560, height: 650, left: 320, top: 380 },
-    hat: isFront
-      ? { width: 290, height: 180, left: 455, top: 520 }
-      : { width: 290, height: 180, left: 455, top: 520 },
-    sticker: isFront
-      ? { width: 420, height: 420, left: 390, top: 385 }
-      : { width: 420, height: 420, left: 390, top: 385 }
-  };
+      : { width: 560, height: 650, left: 320, top: 380 });
 
-  const artSize = placements[productKey] || placements.tee;
   const art = await sharp(Buffer.from(artworkBase64, "base64"))
-    .resize(artSize.width, artSize.height, {
+    .resize(placement.width, placement.height, {
       fit: "inside",
       withoutEnlargement: false
     })
@@ -416,9 +404,9 @@ async function createProductMockup(artworkBase64, side, productType) {
 
   const meta = await sharp(art).metadata();
   const left = Math.round(
-    artSize.left - (meta.width || artSize.width) / 2
+    placement.left - (meta.width || placement.width) / 2
   );
-  const top = artSize.top;
+  const top = placement.top;
 
   return sharp(mockup)
     .composite([{ input: art, left, top }])
