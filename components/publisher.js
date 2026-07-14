@@ -60,6 +60,23 @@ function normalize(item) {
   };
 }
 
+function defaultBlankForProductType(productType) {
+  const value = String(productType || "").toLowerCase();
+  if (value.includes("hoodie")) {
+    return "Independent Trading Co. IND4000";
+  }
+  if (value.includes("long sleeve")) {
+    return "Comfort Colors 6014";
+  }
+  if (value.includes("hat") || value.includes("cap")) {
+    return "Closed-Back Trucker Cap | Flexfit 6511";
+  }
+  if (value.includes("sticker")) {
+    return "Sticker";
+  }
+  return "Comfort Colors 1717";
+}
+
 export default function Publisher() {
   const [items, setItems] = useState([]);
   const [selected, setSelected] = useState(0);
@@ -135,15 +152,28 @@ export default function Publisher() {
     }
   }
 
-  async function loadCatalog() {
+  function currentProductType() {
+    return (
+      current?.product?.product_type ||
+      current?.form?.productType ||
+      ""
+    );
+  }
+
+  async function loadCatalog(productType = "") {
+    const resolvedProductType =
+      typeof productType === "string"
+        ? productType
+        : currentProductType();
+
     setCatalogWorking(true);
     setError("");
 
     try {
       const response = await fetch(
-        `/api/printful/catalog?blankName=${encodeURIComponent(
-          printfulForm.blankName
-        )}`,
+        `/api/printful/catalog?productType=${encodeURIComponent(
+          resolvedProductType
+        )}&useProductTypeDefaults=1`,
         { cache: "no-store" }
       );
       const data = await response.json();
@@ -180,7 +210,6 @@ export default function Publisher() {
   useEffect(() => {
     load();
     checkPublication();
-    loadCatalog();
   }, []);
 
   function toggleMerchOption(type, value) {
@@ -281,6 +310,16 @@ export default function Publisher() {
     setMessage("");
     setError("");
 
+    const resolvedBlankName =
+      printfulForm.blankName &&
+      printfulForm.blankName !== "Comfort Colors 1717"
+        ? printfulForm.blankName
+        : defaultBlankForProductType(
+            current?.product?.product_type ||
+              current?.form?.productType ||
+              ""
+          );
+
     try {
       const response = await fetch(
         "/api/printful/bridge",
@@ -299,7 +338,8 @@ export default function Publisher() {
             backArtworkUrl:
               current.design.back_artwork_url || null,
             retailPrice: current.form.price,
-            ...printfulForm
+            ...printfulForm,
+            blankName: resolvedBlankName
           })
         }
       );
@@ -331,12 +371,32 @@ export default function Publisher() {
   }
 
   useEffect(() => {
+    const nextBlank = defaultBlankForProductType(
+      current?.product?.product_type ||
+        current?.form?.productType ||
+        ""
+    );
+
+    setPrintfulForm((value) => ({
+      ...value,
+      blankName: nextBlank
+    }));
     setMerchOptions({
       colors: ["Black", "Pepper", "Graphite", "True Navy"],
       sizes: ["S", "M", "L", "XL", "2XL", "3XL", "4XL"]
     });
     loadPrintful(current);
-  }, [selected, current?.product?.id]);
+    loadCatalog(
+      current?.product?.product_type ||
+        current?.form?.productType ||
+        ""
+    );
+  }, [
+    selected,
+    current?.product?.id,
+    current?.product?.product_type,
+    current?.form?.productType
+  ]);
 
   function patch(key, value) {
     setItems((values) =>
@@ -483,10 +543,11 @@ export default function Publisher() {
         <TriangleAlert size={18} />
         <span>
           Brokie OS now detects the Shopify listing imported
-          into Printful, maps its variants to Comfort Colors 1717,
-          attaches the artwork, and verifies fulfillment through
-          Printful's Ecommerce Platform Sync API. Store Launch stays
-          locked until every sellable variant passes verification.
+          into Printful, maps its variants to the matching Printful
+          blank for that product type, attaches the artwork, and
+          verifies fulfillment through Printful's Ecommerce Platform
+          Sync API. Store Launch stays locked until every sellable
+          variant passes verification.
         </span>
       </div>
 
@@ -806,16 +867,16 @@ export default function Publisher() {
                 </div>
 
                 <div className="merchOptionBuilder">
-                  <div className="merchOptionHead">
+                <div className="merchOptionHead">
                     <span>
-                      <strong>Shirt colors and sizes</strong>
+                      <strong>Product options</strong>
                       <small>
                         Pulled live from the selected Printful blank
                       </small>
                     </span>
                     <button
                       className="secondary"
-                      onClick={loadCatalog}
+                      onClick={() => loadCatalog(currentProductType())}
                       disabled={catalogWorking}
                     >
                       <RefreshCw
@@ -980,8 +1041,8 @@ export default function Publisher() {
                   >
                     <ShoppingBag size={16} />
                     {working === "set_apparel_variants"
-                      ? "Adding sizes…"
-                      : `Apply ${selectedVariantOptions.length} color/size options`}
+                      ? "Applying options…"
+                      : `Apply ${selectedVariantOptions.length} product option${selectedVariantOptions.length === 1 ? "" : "s"}`}
                   </button>
 
                   <button

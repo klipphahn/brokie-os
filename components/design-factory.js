@@ -475,7 +475,7 @@ export default function DesignFactory() {
               <strong>{form.count * 2} image requests</strong> and{" "}
               <strong>{form.count} concept requests</strong>. It
               generates coordinated front and back artwork plus two
-              shirt mockups for each design. It works one design at a
+              product mockups for each design. It works one design at a
               time so you can pause it.
             </span>
           </div>

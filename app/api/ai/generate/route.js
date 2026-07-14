@@ -288,33 +288,117 @@ Do not use black inside the foreground artwork.`,
   };
 }
 
-async function createShirtMockup(artworkBase64, side) {
-  const width = 1200;
-  const height = 1400;
-  const isFront = side === "front";
-  const shirt = Buffer.from(`
-    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="shirt" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#242424"/>
-          <stop offset="0.5" stop-color="#080808"/>
-          <stop offset="1" stop-color="#191919"/>
-        </linearGradient>
-        <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
-          <feDropShadow dx="0" dy="30" stdDeviation="28" flood-color="#000" flood-opacity=".55"/>
-        </filter>
-      </defs>
-      <rect width="1200" height="1400" fill="#111111"/>
-      <path filter="url(#shadow)" fill="url(#shirt)" stroke="#343434" stroke-width="3"
-        d="M395 205 L245 275 L78 470 L245 590 L335 485 L335 1240 Q600 1320 865 1240 L865 485 L955 590 L1122 470 L955 275 L805 205 Q745 250 600 250 Q455 250 395 205 Z"/>
-      ${isFront
-        ? '<path d="M500 215 Q600 330 700 215" fill="#111" stroke="#3a3a3a" stroke-width="12"/>'
-        : '<path d="M505 220 Q600 285 695 220" fill="none" stroke="#3a3a3a" stroke-width="10"/>'}
-    </svg>`);
+function normalizeProductType(productType) {
+  const value = String(productType || "").toLowerCase();
+  if (value.includes("hoodie")) return "hoodie";
+  if (value.includes("hat") || value.includes("cap")) return "hat";
+  if (value.includes("sticker")) return "sticker";
+  if (value.includes("long sleeve")) return "long-sleeve";
+  return "tee";
+}
 
-  const artSize = isFront
-    ? { width: 210, height: 210 }
-    : { width: 560, height: 650 };
+function buildMockupSvg(productKey, isFront) {
+  const baseDefs = `
+    <defs>
+      <linearGradient id="fabric" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#242424"/>
+        <stop offset="0.5" stop-color="#080808"/>
+        <stop offset="1" stop-color="#191919"/>
+      </linearGradient>
+      <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+        <feDropShadow dx="0" dy="30" stdDeviation="28" flood-color="#000" flood-opacity=".55"/>
+      </filter>
+    </defs>`;
+
+  const shirtBody = `
+    <path filter="url(#shadow)" fill="url(#fabric)" stroke="#343434" stroke-width="3"
+      d="M395 205 L245 275 L78 470 L245 590 L335 485 L335 1240 Q600 1320 865 1240 L865 485 L955 590 L1122 470 L955 275 L805 205 Q745 250 600 250 Q455 250 395 205 Z"/>`;
+
+  const hoodieBody = `
+    <path filter="url(#shadow)" fill="url(#fabric)" stroke="#343434" stroke-width="3"
+      d="M392 190 Q440 110 600 110 Q760 110 808 190
+         L920 250 L1078 454 L963 578 L866 504
+         L866 1240 Q600 1322 334 1240 L334 504
+         L237 578 L122 454 L280 250 Z"/>
+    <path d="M490 143 Q600 255 710 143" fill="#101010" stroke="#3a3a3a" stroke-width="12"/>
+    <path d="M475 236 Q600 180 725 236" fill="none" stroke="#2f2f2f" stroke-width="8"/>
+    <path d="M428 865 Q600 805 772 865 L742 1110 Q600 1148 458 1110 Z" fill="#151515" stroke="#353535" stroke-width="3"/>`;
+
+  const longSleeveBody = `
+    <path filter="url(#shadow)" fill="url(#fabric)" stroke="#343434" stroke-width="3"
+      d="M363 205 L195 295 L52 560 L172 635 L282 512 L300 1240 Q600 1320 900 1240 L918 512 L1028 635 L1148 560 L1005 295 L837 205 Q760 250 600 250 Q440 250 363 205 Z"/>
+    <path d="M500 215 Q600 330 700 215" fill="#111" stroke="#3a3a3a" stroke-width="12"/>`;
+
+  const hatBody = `
+    <path filter="url(#shadow)" fill="url(#fabric)" stroke="#343434" stroke-width="3"
+      d="M226 700 Q280 330 600 330 Q920 330 974 700
+         Q874 750 600 750 Q326 750 226 700 Z"/>
+    <path d="M300 620 Q600 250 900 620" fill="none" stroke="#383838" stroke-width="16"/>
+    <path d="M415 615 Q600 470 785 615" fill="none" stroke="#2f2f2f" stroke-width="8"/>
+    <path d="M273 690 Q600 830 927 690" fill="#141414" stroke="#3a3a3a" stroke-width="3"/>`;
+
+  const stickerBody = `
+    <rect x="210" y="250" width="780" height="900" rx="70" fill="#f8f2e8" stroke="#d2c8b7" stroke-width="6"/>
+    <path d="M210 320 Q600 90 990 320" fill="#efe8db" stroke="#d2c8b7" stroke-width="6"/>
+    <path d="M290 1000 Q600 1140 910 1000" fill="none" stroke="#e0d6c6" stroke-width="8" stroke-dasharray="14 14"/>`;
+
+  const shapes = {
+    tee: shirtBody,
+    hoodie: hoodieBody,
+    "long-sleeve": longSleeveBody,
+    hat: hatBody,
+    sticker: stickerBody
+  };
+
+  const canopy = {
+    tee: isFront
+      ? '<path d="M500 215 Q600 330 700 215" fill="#111" stroke="#3a3a3a" stroke-width="12"/>'
+      : '<path d="M505 220 Q600 285 695 220" fill="none" stroke="#3a3a3a" stroke-width="10"/>',
+    hoodie: isFront
+      ? '<path d="M490 143 Q600 255 710 143" fill="#101010" stroke="#3a3a3a" stroke-width="12"/>'
+      : '<path d="M505 145 Q600 210 695 145" fill="none" stroke="#3a3a3a" stroke-width="10"/>',
+    "long-sleeve": isFront
+      ? '<path d="M500 215 Q600 330 700 215" fill="#111" stroke="#3a3a3a" stroke-width="12"/>'
+      : '<path d="M505 220 Q600 285 695 220" fill="none" stroke="#3a3a3a" stroke-width="10"/>',
+    hat: isFront
+      ? '<path d="M360 620 Q600 340 840 620" fill="#111" stroke="#3a3a3a" stroke-width="12"/>'
+      : '<path d="M370 620 Q600 420 830 620" fill="none" stroke="#3a3a3a" stroke-width="10"/>',
+    sticker: ""
+  };
+
+  return `
+    <svg width="1200" height="1400" viewBox="0 0 1200 1400" xmlns="http://www.w3.org/2000/svg">
+      ${baseDefs}
+      <rect width="1200" height="1400" fill="${productKey === "sticker" ? "#faf7f1" : "#111111"}"/>
+      ${shapes[productKey] || shirtBody}
+      ${canopy[productKey] || ""}
+    </svg>`;
+}
+
+async function createProductMockup(artworkBase64, side, productType) {
+  const productKey = normalizeProductType(productType);
+  const isFront = side === "front";
+  const mockup = Buffer.from(buildMockupSvg(productKey, isFront));
+
+  const placements = {
+    tee: isFront
+      ? { width: 210, height: 210, left: 690, top: 430 }
+      : { width: 560, height: 650, left: 320, top: 380 },
+    hoodie: isFront
+      ? { width: 220, height: 220, left: 690, top: 420 }
+      : { width: 560, height: 640, left: 320, top: 380 },
+    "long-sleeve": isFront
+      ? { width: 210, height: 210, left: 690, top: 430 }
+      : { width: 560, height: 650, left: 320, top: 380 },
+    hat: isFront
+      ? { width: 290, height: 180, left: 455, top: 520 }
+      : { width: 290, height: 180, left: 455, top: 520 },
+    sticker: isFront
+      ? { width: 420, height: 420, left: 390, top: 385 }
+      : { width: 420, height: 420, left: 390, top: 385 }
+  };
+
+  const artSize = placements[productKey] || placements.tee;
   const art = await sharp(Buffer.from(artworkBase64, "base64"))
     .resize(artSize.width, artSize.height, {
       fit: "inside",
@@ -322,13 +406,14 @@ async function createShirtMockup(artworkBase64, side) {
     })
     .png()
     .toBuffer();
-  const meta = await sharp(art).metadata();
-  const left = isFront
-    ? Math.round(690 - (meta.width || artSize.width) / 2)
-    : Math.round((width - (meta.width || artSize.width)) / 2);
-  const top = isFront ? 430 : 380;
 
-  return sharp(shirt)
+  const meta = await sharp(art).metadata();
+  const left = Math.round(
+    artSize.left - (meta.width || artSize.width) / 2
+  );
+  const top = artSize.top;
+
+  return sharp(mockup)
     .composite([{ input: art, left, top }])
     .png()
     .toBuffer();
@@ -504,8 +589,8 @@ export async function POST(request) {
         createArtwork(apiKey, concept, direction, "back")
       ]);
       const [frontMockup, backMockup] = await Promise.all([
-        createShirtMockup(front.base64, "front"),
-        createShirtMockup(back.base64, "back")
+        createProductMockup(front.base64, "front", direction.productType),
+        createProductMockup(back.base64, "back", direction.productType)
       ]);
       const saved = await saveArtwork(
         { front, back, frontMockup, backMockup },
@@ -544,7 +629,7 @@ export async function POST(request) {
         // Backwards-compatible primary image for older Factory clients.
         image: {
           dataUrl: backMockupDataUrl,
-          publicUrl: saved.urls?.backArtwork || null,
+          publicUrl: saved.urls?.backMockup || saved.urls?.backArtwork || null,
           savedToSupabase: saved.saved,
           designId: saved.designId,
           transparencyMode: back.transparencyMode
