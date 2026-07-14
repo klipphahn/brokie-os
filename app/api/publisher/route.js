@@ -8,6 +8,7 @@ import {
   publishProductToOnlineStore,
   readShopifyProductState
 } from "@/lib/shopify-publications";
+import { promoteStorefrontProduct } from "@/lib/storefront-feed";
 
 function db() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -664,6 +665,38 @@ async function launchProduct(supabase, productRecord, review) {
     .single();
 
   if (updated.error) throw updated.error;
+
+  await promoteStorefrontProduct(
+    {
+      ...updated.data,
+      title: review.title,
+      product_title: review.title,
+      product_type: review.productType,
+      shopify_handle: updated.data.shopify_handle || "",
+      online_store_url: state.onlineStoreUrl || null,
+      image_url:
+        review.mockups?.back ||
+        review.mockups?.front ||
+        review.artworkUrl ||
+        null
+    },
+    {
+      badge: "NEW DROP",
+      display_title: review.title,
+      display_subtitle: review.productType,
+      image_url:
+        review.mockups?.back ||
+        review.mockups?.front ||
+        review.artworkUrl ||
+        null,
+      image_alt: `${review.title} merch preview`,
+      min_price: review.price,
+      max_price: review.price,
+      currency_code: "USD",
+      product_url: state.onlineStoreUrl || null
+    },
+    supabase
+  );
 
   await supabase
     .from("designs")
