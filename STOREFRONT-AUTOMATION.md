@@ -51,3 +51,5 @@ Add this once where the merch cards should appear:
 ```
 
 The widget is isolated from the site's existing styles and reads the same public feed as Flora. New featured products and copy updates then appear without editing the main site again.
+
+The public merch widget now fetches the feed with `cache: "no-store"` so the customer-facing page picks up newly saved featured products immediately instead of waiting for browser caching to expire.
