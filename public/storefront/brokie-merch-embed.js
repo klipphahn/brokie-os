@@ -32,7 +32,10 @@
   root.appendChild(style);
   root.appendChild(node("div", "empty", "Loading The Brokie goods…"));
 
-  fetch(feed, { headers: { Accept: "application/json" } })
+  fetch(feed, {
+    cache: "no-store",
+    headers: { Accept: "application/json" }
+  })
     .then(function (response) { if (!response.ok) throw new Error(); return response.json(); })
     .then(function (data) {
       if (!data.ok) throw new Error();

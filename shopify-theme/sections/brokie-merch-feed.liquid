@@ -88,7 +88,10 @@
   };
   const money = (value, currency) => value == null ? '' : new Intl.NumberFormat(undefined, { style:'currency', currency:currency || 'USD' }).format(value);
 
-  fetch(root.dataset.feedUrl, { headers:{ Accept:'application/json' } })
+  fetch(root.dataset.feedUrl, {
+    cache: 'no-store',
+    headers:{ Accept:'application/json' }
+  })
     .then((response) => { if (!response.ok) throw new Error('Feed unavailable'); return response.json(); })
     .then((data) => {
       if (!data.ok) throw new Error('Feed unavailable');
