@@ -26,7 +26,7 @@
   var style = node("style");
   style.textContent = `
     :host{display:block}.bb{--bg:#080808;--panel:#151515;--orange:#ff4f00;--gold:#ffc107;--text:#fff;--muted:#999;background:var(--bg);color:var(--text);font-family:Arial,sans-serif;padding:48px clamp(18px,5vw,70px)}
-    *{box-sizing:border-box}.head{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:22px}.eyebrow{color:var(--orange);font-weight:900;font-size:11px;letter-spacing:.16em}.head h2{font-size:clamp(36px,6vw,72px);line-height:.9;margin:8px 0;text-transform:uppercase}.head p{color:var(--muted);max-width:560px}.all{color:#fff;border:2px solid var(--orange);background:var(--orange);padding:12px 18px;text-decoration:none;font-weight:900;white-space:nowrap}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}.card{position:relative;background:var(--panel);border:1px solid #333}.image{display:block;aspect-ratio:1;background:#222;overflow:hidden}.image img{width:100%;height:100%;object-fit:cover;transition:transform .2s}.card:hover img{transform:scale(1.025)}.body{padding:14px}.body strong{display:block;text-transform:uppercase}.body small{display:block;color:var(--muted);min-height:18px;margin:5px 0}.price{color:var(--gold);font-weight:900}.badge{position:absolute;z-index:1;top:9px;left:9px;background:var(--orange);padding:5px 7px;font-size:9px;font-weight:900}.empty{color:var(--muted);text-align:center;padding:30px}
+    *{box-sizing:border-box}.head{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:22px}.eyebrow{color:var(--orange);font-weight:900;font-size:11px;letter-spacing:.16em}.head h2{font-size:clamp(36px,6vw,72px);line-height:.9;margin:8px 0;text-transform:uppercase}.head p{color:var(--muted);max-width:560px}.all{color:#fff;border:2px solid var(--orange);background:var(--orange);padding:12px 18px;text-decoration:none;font-weight:900;white-space:nowrap}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}.card{position:relative;background:var(--panel);border:1px solid #333}.image{display:block;aspect-ratio:1;background:#222;overflow:hidden}.image img{width:100%;height:100%;object-fit:cover;transition:transform .2s}.card:hover img{transform:scale(1.025)}.body{padding:14px}.body strong{display:block;text-transform:uppercase}.body small{display:block;color:var(--muted);min-height:18px;margin:5px 0}.price{color:var(--gold);font-weight:900}.badge{position:absolute;z-index:1;top:9px;left:9px;background:var(--orange);padding:5px 7px;font-size:9px;font-weight:900}.policies{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:22px}.policy{background:var(--panel);border:1px solid #333;padding:16px}.policy span{display:block;color:var(--orange);font-weight:900;font-size:10px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px}.policy p{color:var(--muted);line-height:1.55;margin:0}.empty{color:var(--muted);text-align:center;padding:30px}
     @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){.head{align-items:start;flex-direction:column}.grid{grid-template-columns:1fr}}
   `;
   root.appendChild(style);
@@ -61,7 +61,28 @@
         card.append(imageLink, body); grid.appendChild(card);
       });
       if (!(data.products || []).length) grid.appendChild(node("div", "empty", "The next drop is still building."));
-      wrap.appendChild(grid); root.appendChild(wrap);
+      wrap.appendChild(grid);
+      if (store.policies) {
+        var policies = node("div", "policies");
+        var shipping = node("article", "policy");
+        shipping.append(
+          node("span", "", store.policies.shipping?.title || "Shipping"),
+          node("p", "", store.policies.shipping?.body || "")
+        );
+        var returns = node("article", "policy");
+        returns.append(
+          node("span", "", store.policies.returns?.title || "Returns"),
+          node("p", "", store.policies.returns?.body || "")
+        );
+        var fulfillment = node("article", "policy");
+        fulfillment.append(
+          node("span", "", "Fulfillment"),
+          node("p", "", store.policies.note || "")
+        );
+        policies.append(shipping, returns, fulfillment);
+        wrap.appendChild(policies);
+      }
+      root.appendChild(wrap);
     })
     .catch(function () {
       while (root.childNodes.length > 1) root.removeChild(root.lastChild);

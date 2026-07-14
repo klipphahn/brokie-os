@@ -58,6 +58,19 @@
   #brokie-feed-{{ section.id }} .brokie-feed__body h3 { margin:0 0 7px; color:var(--bb-text); font-size:18px; text-transform:uppercase; }
   #brokie-feed-{{ section.id }} .brokie-feed__body p { min-height:20px; margin:0 0 12px; color:var(--bb-muted); font-size:13px; }
   #brokie-feed-{{ section.id }} .brokie-feed__price { color:var(--bb-gold); font-weight:900; }
+  #brokie-feed-{{ section.id }} .brokie-feed__policies {
+    display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:28px;
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__policy {
+    background:var(--bb-panel); border:1px solid #303030; padding:16px;
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__policy span {
+    display:block; margin-bottom:8px; color:var(--bb-orange); font-size:10px; font-weight:900;
+    letter-spacing:.16em; text-transform:uppercase;
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__policy p {
+    margin:0; color:var(--bb-muted); font-size:13px; line-height:1.55;
+  }
   #brokie-feed-{{ section.id }} .brokie-feed__manifesto { margin:0 max(20px,5vw); padding:70px max(22px,5vw); border:1px solid #333; background:linear-gradient(135deg,#151515,#211209); text-align:center; }
   #brokie-feed-{{ section.id }} .brokie-feed__manifesto h2 { margin:0 0 14px; font-size:clamp(40px,7vw,90px); line-height:.9; text-transform:uppercase; }
   #brokie-feed-{{ section.id }} .brokie-feed__manifesto p { max-width:700px; margin:auto; color:var(--bb-muted); font-size:18px; }
@@ -124,6 +137,27 @@
         card.append(imageLink,body); grid.appendChild(card);
       });
       content.appendChild(grid); root.appendChild(content);
+
+      if (store.policies) {
+        const policies = element('div', 'brokie-feed__policies');
+        const shipping = element('article', 'brokie-feed__policy');
+        shipping.append(
+          element('span', '', store.policies.shipping?.title || 'Shipping'),
+          element('p', '', store.policies.shipping?.body || '')
+        );
+        const returns = element('article', 'brokie-feed__policy');
+        returns.append(
+          element('span', '', store.policies.returns?.title || 'Returns'),
+          element('p', '', store.policies.returns?.body || '')
+        );
+        const fulfillment = element('article', 'brokie-feed__policy');
+        fulfillment.append(
+          element('span', '', 'Fulfillment'),
+          element('p', '', store.policies.note || '')
+        );
+        policies.append(shipping, returns, fulfillment);
+        root.appendChild(policies);
+      }
 
       const manifesto = element('div','brokie-feed__manifesto');
       manifesto.append(element('h2','',store.manifesto.headline),element('p','',store.manifesto.body));
