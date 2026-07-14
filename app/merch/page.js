@@ -50,6 +50,46 @@ function uniqueHighlights(products) {
       ];
 }
 
+function familyBucket(product) {
+  return product.family || "apparel";
+}
+
+function familyLabel(product) {
+  return product.familyLabel || "The Brokie";
+}
+
+function familySections(products) {
+  const order = ["apparel", "headwear", "sticker"];
+  const sections = new Map();
+
+  for (const product of products) {
+    const key = familyBucket(product);
+    if (!sections.has(key)) {
+      sections.set(key, []);
+    }
+    sections.get(key).push(product);
+  }
+
+  return order
+    .filter((family) => sections.has(family))
+    .map((family) => ({
+      family,
+      title:
+        family === "headwear"
+          ? "Headwear"
+          : family === "sticker"
+            ? "Small-format merch"
+            : "Core apparel",
+      description:
+        family === "headwear"
+          ? "Caps and hats that keep the Brokie mark low-key and wearable."
+          : family === "sticker"
+            ? "Small pieces that spread the brand across the things you already carry."
+            : "The tees, hoodies, and layers that hold the main story.",
+      products: sections.get(family)
+    }));
+}
+
 function money(value, currency) {
   return value == null
     ? ""
@@ -62,6 +102,7 @@ function money(value, currency) {
 export default async function MerchPage() {
   const { storefront, products } = await loadMerch();
   const highlights = uniqueHighlights(products);
+  const sections = familySections(products);
 
   return (
     <main
@@ -118,31 +159,39 @@ export default async function MerchPage() {
           ))}
         </div>
 
-        <div className="merchGrid">
-          {products.length ? (
-            products.map((product) => (
-              <article key={product.id} className="merchCard">
-                {product.badge ? <span className="merchBadge">{product.badge}</span> : null}
-                <a href={product.url} className="merchImage">
-                  {product.image ? (
-                    <img src={product.image} alt={product.imageAlt || product.title} />
-                  ) : (
-                    <div className="merchImageEmpty">The Brokie</div>
-                  )}
-                </a>
-                <div className="merchBody">
-                  {product.familyLabel ? <span className="merchFamily">{product.familyLabel}</span> : null}
-                  <strong>{product.title}</strong>
-                  <p>{product.fitNote || product.story || product.subtitle || ""}</p>
-                  {product.cardLabel ? <small>{product.cardLabel}</small> : null}
-                  <span>{money(product.price, product.currencyCode)}</span>
-                </div>
-              </article>
-            ))
-          ) : (
+        {sections.length ? sections.map((section) => (
+          <div key={section.family} className="merchFamilySection">
+            <div className="merchFamilyHead">
+              <div>
+                <span className="merchEyebrow">{section.title}</span>
+                <p>{section.description}</p>
+              </div>
+            </div>
+            <div className={`merchGrid merchGrid--${section.family}`}>
+              {section.products.map((product) => (
+                <article key={product.id} className={`merchCard merchCard--${familyBucket(product)}`}>
+                  {product.badge ? <span className="merchBadge">{product.badge}</span> : null}
+                  <a href={product.url} className="merchImage">
+                    {product.image ? (
+                      <img src={product.image} alt={product.imageAlt || product.title} />
+                    ) : (
+                      <div className="merchImageEmpty">The Brokie</div>
+                    )}
+                  </a>
+                  <div className="merchBody">
+                    <span className="merchFamily">{familyLabel(product)}</span>
+                    <strong>{product.title}</strong>
+                    <p>{product.fitNote || product.story || product.subtitle || ""}</p>
+                    {product.cardLabel ? <small>{product.cardLabel}</small> : null}
+                    <span>{money(product.price, product.currencyCode)}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        )) : (
             <div className="merchEmpty">The next drop is still building.</div>
           )}
-        </div>
       </section>
 
       <section className="merchPolicies">
@@ -169,9 +218,10 @@ export default async function MerchPage() {
         <article>
           <span>WHAT YOU GET</span>
           <p>
-            Each drop is shaped around the product family—tee, hoodie, hat, or
-            sticker—so the listing copy, storefront cards, and merch page all
-            stay in sync.
+            Each drop is shaped around the product family—tees and hoodies
+            get the main stage, hats stay lean, and stickers get a compact
+            collector feel—so the listing copy, storefront cards, and merch
+            page all stay in sync.
           </p>
         </article>
       </section>

@@ -1276,6 +1276,24 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
   gap:14px;
   margin:24px 0 18px;
 }
+.merchFamilySection {
+  display:grid;
+  gap:14px;
+  margin-top:22px;
+}
+.merchFamilyHead {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:16px;
+  padding:0 2px;
+}
+.merchFamilyHead p {
+  max-width:740px;
+  margin:8px 0 0;
+  color:var(--mp-muted, #aaa);
+  line-height:1.55;
+}
 .merchHighlight {
   padding:18px;
   border:1px solid rgba(255,255,255,.12);
@@ -1314,6 +1332,31 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
   border:1px solid rgba(255,255,255,.1);
   border-radius:16px;
   overflow:hidden;
+}
+.merchCard--headwear .merchImage,
+.merchCard--sticker .merchImage {
+  aspect-ratio:4/3;
+}
+.merchCard--headwear .merchBody,
+.merchCard--sticker .merchBody {
+  padding-top:14px;
+}
+.merchCard--headwear .merchBody strong,
+.merchCard--sticker .merchBody strong {
+  font-size:14px;
+}
+.merchCard--headwear .merchBody p,
+.merchCard--sticker .merchBody p {
+  min-height:0;
+}
+.merchGrid--headwear {
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+.merchGrid--sticker {
+  grid-template-columns:repeat(5,minmax(0,1fr));
+}
+.merchGrid--apparel {
+  grid-template-columns:repeat(3,minmax(0,1fr));
 }
 .merchBadge {
   position:absolute;
@@ -1441,6 +1484,11 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
   .merchPolicies {
     grid-template-columns:1fr 1fr;
   }
+  .merchGrid--apparel,
+  .merchGrid--headwear,
+  .merchGrid--sticker {
+    grid-template-columns:1fr 1fr;
+  }
   .merchStory {
     grid-template-columns:1fr;
   }
@@ -1454,6 +1502,15 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
   .merchPolicies,
   .merchStory {
     grid-template-columns:1fr;
+  }
+  .merchGrid--apparel,
+  .merchGrid--headwear,
+  .merchGrid--sticker {
+    grid-template-columns:1fr;
+  }
+  .merchFamilyHead {
+    flex-direction:column;
+    align-items:flex-start;
   }
   .merchSectionHead,
   .merchHero {
