@@ -86,6 +86,14 @@ function defaultBlankForProductType(productType) {
   );
 }
 
+function defaultsForProductType(productType, customTitle = "") {
+  return buildListingDefaults({
+    productType,
+    customTitle,
+    collectionName: "Foundry"
+  });
+}
+
 export default function Publisher() {
   const [items, setItems] = useState([]);
   const [selected, setSelected] = useState(0);
@@ -438,6 +446,38 @@ export default function Publisher() {
     );
   }
 
+  function patchProductType(nextProductType) {
+    const nextDefaults = defaultsForProductType(
+      nextProductType,
+      current?.form?.title || ""
+    );
+
+    setItems((values) =>
+      values.map((item, index) =>
+        index === selected
+          ? {
+              ...item,
+              form: {
+                ...item.form,
+                productType: nextProductType,
+                title: nextDefaults.title,
+                description: nextDefaults.description,
+                tags: nextDefaults.tags.join(", "),
+                seoTitle: nextDefaults.seoTitle,
+                metaDescription: nextDefaults.metaDescription
+              }
+            }
+          : item
+      )
+    );
+
+    setPrintfulForm((value) => ({
+      ...value,
+      blankName: defaultBlankForProductType(nextProductType)
+    }));
+    loadCatalog(nextProductType);
+  }
+
   async function act(action, extra = {}) {
     if (!current) return;
 
@@ -736,10 +776,7 @@ export default function Publisher() {
                   <select
                     value={current.form.productType}
                     onChange={(event) =>
-                      patch(
-                        "productType",
-                        event.target.value
-                      )
+                      patchProductType(event.target.value)
                     }
                   >
                     {productTypes.map((type) => (
@@ -905,6 +942,7 @@ export default function Publisher() {
                       </small>
                     </span>
                     <button
+                      type="button"
                       className="secondary"
                       onClick={() => loadCatalog(currentProductType())}
                       disabled={catalogWorking}
@@ -1076,6 +1114,7 @@ export default function Publisher() {
                   </button>
 
                   <button
+                    type="button"
                     className="secondary"
                     onClick={() =>
                       printfulAction("detect")
@@ -1098,6 +1137,7 @@ export default function Publisher() {
                   </button>
 
                   <button
+                    type="button"
                     onClick={() =>
                       printfulAction("configure")
                     }
@@ -1114,6 +1154,7 @@ export default function Publisher() {
                   </button>
 
                   <button
+                    type="button"
                     className="secondary"
                     onClick={() =>
                       printfulAction("verify")

@@ -12,6 +12,7 @@ import {
   Save,
   ShoppingBag
 } from "lucide-react";
+import { merchListingCopy } from "@/lib/product-types";
 
 const EMPTY = {
   site_name: "the brokie",
@@ -35,6 +36,15 @@ const EMPTY = {
   collection_handle: "the-brokie-featured",
   collection_description: "The latest pieces selected by The Brokie. Built for the people still building."
 };
+
+function featuredDefaultsFor(product) {
+  const copy = merchListingCopy(product.productType || product.product_type);
+  return {
+    badge: copy.badge || "NEW",
+    displayTitle: copy.title || product.title,
+    displaySubtitle: copy.subtitle || ""
+  };
+}
 
 export default function StorefrontManager() {
   const [settings, setSettings] = useState(EMPTY);
@@ -65,9 +75,9 @@ export default function StorefrontManager() {
       setProducts(shopify.products || []);
       setSelected((state.featured || []).map((item) => ({
         id: item.shopify_product_id,
-        badge: item.badge,
-        displayTitle: item.display_title,
-        displaySubtitle: item.display_subtitle,
+        badge: item.badge || featuredDefaultsFor(item).badge,
+        displayTitle: item.display_title || featuredDefaultsFor(item).displayTitle,
+        displaySubtitle: item.display_subtitle || featuredDefaultsFor(item).displaySubtitle,
         productType: item.product_type
       })));
     } catch (error) {
@@ -88,7 +98,14 @@ export default function StorefrontManager() {
     const exists = selected.some((item) => item.id === product.id);
     if (exists) return setSelected((items) => items.filter((item) => item.id !== product.id));
     if (selected.length >= 8) return setNotice({ type: "error", text: "Choose up to eight featured products." });
-    setSelected((items) => [...items, { id: product.id, badge: "", displayTitle: "", displaySubtitle: "", productType: product.productType }]);
+    const defaults = featuredDefaultsFor(product);
+    setSelected((items) => [...items, {
+      id: product.id,
+      badge: defaults.badge,
+      displayTitle: defaults.displayTitle,
+      displaySubtitle: defaults.displaySubtitle,
+      productType: product.productType
+    }]);
   }
 
   function move(index, direction) {
