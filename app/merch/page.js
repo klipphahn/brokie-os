@@ -90,6 +90,37 @@ function familySections(products) {
     }));
 }
 
+function spotlightFor(products) {
+  const primary = products[0];
+  if (!primary) {
+    return {
+      title: "Drop of the week",
+      subtitle: "Still building the next family release.",
+      description:
+        "When the next piece lands, this spotlight will promote the newest Brokie family first.",
+      badge: "SPOTLIGHT",
+      url: "/collections/all",
+      image: null,
+      imageAlt: "The Brokie spotlight"
+    };
+  }
+
+  return {
+    title: primary.title,
+    subtitle:
+      primary.familyLabel || primary.cardLabel || "New this family",
+    description:
+      primary.story ||
+      primary.fitNote ||
+      primary.subtitle ||
+      "The latest piece in the Brokie drop family.",
+    badge: primary.badge || "SPOTLIGHT",
+    url: primary.url,
+    image: primary.image,
+    imageAlt: primary.imageAlt || primary.title
+  };
+}
+
 function money(value, currency) {
   return value == null
     ? ""
@@ -103,6 +134,7 @@ export default async function MerchPage() {
   const { storefront, products } = await loadMerch();
   const highlights = uniqueHighlights(products);
   const sections = familySections(products);
+  const spotlight = spotlightFor(products);
 
   return (
     <main
@@ -157,6 +189,25 @@ export default async function MerchPage() {
               <p>{product.fitNote || product.story || product.subtitle || ""}</p>
             </article>
           ))}
+        </div>
+
+        <div className="merchSpotlight">
+          <div className="merchSpotlightCopy">
+            <span>{spotlight.badge}</span>
+            <h3>{spotlight.title}</h3>
+            <strong>{spotlight.subtitle}</strong>
+            <p>{spotlight.description}</p>
+            <a href={spotlight.url} className="merchPrimary">
+              SHOP THE SPOTLIGHT
+            </a>
+          </div>
+          <a href={spotlight.url} className="merchSpotlightMedia">
+            {spotlight.image ? (
+              <img src={spotlight.image} alt={spotlight.imageAlt} />
+            ) : (
+              <div className="merchImageEmpty">The Brokie</div>
+            )}
+          </a>
         </div>
 
         {sections.length ? sections.map((section) => (
