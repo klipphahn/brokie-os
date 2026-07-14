@@ -577,6 +577,50 @@ export default function Publisher() {
       ) &&
     Boolean(publication);
 
+  const launchWorkflow = useMemo(() => {
+    if (!current) return null;
+
+    const total = steps.length;
+    const completed = steps.filter(([, done]) => done).length;
+    const nextPending = steps.find(([, done]) => !done)?.[0] || null;
+
+    let status = "In progress";
+    let nextAction = "Keep moving down the checklist.";
+
+    if (!current.product?.shopify_product_id) {
+      status = "Draft";
+      nextAction = "Create the Shopify product first.";
+    } else if (current.product?.status === "live") {
+      status = "Live";
+      nextAction = "This drop is already live in the store.";
+    } else if (!publication) {
+      status = "Waiting on store";
+      nextAction = "Confirm the Online Store publication channel.";
+    } else if (current.product?.printful_status !== "configured") {
+      status = "Waiting on Printful";
+      nextAction = "Finish the Printful bridge and verify the variants.";
+    } else if (
+      Number(current.product?.printful_variant_count || 0) > 0 &&
+      Number(current.product?.printful_synced_variant_count || 0) !==
+        Number(current.product?.printful_variant_count || 0)
+    ) {
+      status = "Syncing";
+      nextAction = "Finish syncing every sellable variant in Printful.";
+    } else if (completed === total) {
+      status = "Ready";
+      nextAction = "You can launch this product now.";
+    }
+
+    return {
+      status,
+      total,
+      completed,
+      nextPending,
+      nextAction,
+      ready: canLaunch
+    };
+  }, [canLaunch, current, publication, steps]);
+
   return (
     <section
       className="panel publisherPanel"
@@ -614,6 +658,47 @@ export default function Publisher() {
           variant passes verification.
         </span>
       </div>
+
+      {launchWorkflow && (
+        <div className="launchWorkflow">
+          <div className="launchWorkflowHead">
+            <div>
+              <span className="eyebrow">LAUNCH WORKFLOW</span>
+              <h3>{current?.form?.title || "Current product"}</h3>
+              <p>{launchWorkflow.nextAction}</p>
+            </div>
+            <div className={`launchWorkflowBadge ${launchWorkflow.ready ? "ready" : ""}`}>
+              {launchWorkflow.status}
+            </div>
+          </div>
+          <div className="launchWorkflowStats">
+            <article>
+              <strong>{launchWorkflow.completed}/{launchWorkflow.total}</strong>
+              <span>steps complete</span>
+            </article>
+            <article>
+              <strong>{current?.product?.status || current?.design?.status || "draft"}</strong>
+              <span>product state</span>
+            </article>
+            <article>
+              <strong>{current?.product?.printful_status || "not configured"}</strong>
+              <span>printful state</span>
+            </article>
+          </div>
+          <div className="launchWorkflowChecks">
+            {steps.map(([label, done]) => (
+              <span key={label} className={done ? "done" : ""}>
+                {done ? "✓" : "•"} {label}
+              </span>
+            ))}
+          </div>
+          {!launchWorkflow.ready && launchWorkflow.nextPending ? (
+            <div className="launchWorkflowNext">
+              Next up: <strong>{launchWorkflow.nextPending}</strong>
+            </div>
+          ) : null}
+        </div>
+      )}
 
       {publication ? (
         <div className="publicationReady">
