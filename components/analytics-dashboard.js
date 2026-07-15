@@ -12,7 +12,8 @@ import {
   RefreshCw,
   RotateCcw,
   ShoppingCart,
-  TrendingUp
+  TrendingUp,
+  Workflow
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -43,11 +44,55 @@ function Change({ value }) {
   );
 }
 
+function summarizeLaunchQueue(items = []) {
+  const queue = Array.isArray(items) ? items : [];
+  const ready = [];
+  const blocked = [];
+  const live = [];
+
+  for (const item of queue) {
+    const product = item?.product || {};
+    const state = String(
+      product.status || item?.design?.status || ""
+    ).toLowerCase();
+    const configured =
+      product.shopify_product_id &&
+      product.printful_status === "configured";
+    const isLive = state === "live" || state === "active";
+
+    if (isLive) {
+      live.push(item);
+    } else if (configured) {
+      ready.push(item);
+    } else {
+      blocked.push(item);
+    }
+  }
+
+  return {
+    total: queue.length,
+    ready: ready.length,
+    blocked: blocked.length,
+    live: live.length,
+    nextBlocked: blocked[0] || null
+  };
+}
+
 export default function AnalyticsDashboard() {
   const [days, setDays] = useState(30);
   const [data, setData] = useState(null);
+  const [launch, setLaunch] = useState({
+    total: 0,
+    ready: 0,
+    blocked: 0,
+    live: 0,
+    nextBlocked: null
+  });
+  const [approval, setApproval] = useState(null);
+  const [autopilot, setAutopilot] = useState(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [automating, setAutomating] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -56,11 +101,17 @@ export default function AnalyticsDashboard() {
     setError("");
 
     try {
-      const response = await fetch(
-        `/api/analytics?days=${days}`,
-        { cache: "no-store" }
-      );
+      const [response, publisherResponse, automationResponse] = await Promise.all([
+        fetch(`/api/analytics?days=${days}`, {
+          cache: "no-store"
+        }),
+        fetch("/api/publisher", { cache: "no-store" })
+        ,
+        fetch("/api/automation", { cache: "no-store" })
+      ]);
       const payload = await response.json();
+      const publisher = await publisherResponse.json();
+      const automation = await automationResponse.json();
 
       if (!response.ok || !payload.ok) {
         throw new Error(
@@ -68,7 +119,24 @@ export default function AnalyticsDashboard() {
         );
       }
 
+      if (!publisherResponse.ok || !publisher.ok) {
+        throw new Error(
+          publisher.error ||
+            "Launch workflow could not be loaded."
+        );
+      }
+
+      if (!automationResponse.ok || !automation.ok) {
+        throw new Error(
+          automation.error ||
+            "Approval queue could not be loaded."
+        );
+      }
+
       setData(payload);
+      setLaunch(summarizeLaunchQueue(publisher.items || []));
+      setApproval(automation.approval || null);
+      setAutopilot(automation.autopilot || null);
     } catch (loadError) {
       setError(loadError.message);
     } finally {
@@ -104,6 +172,37 @@ export default function AnalyticsDashboard() {
       setError(syncError.message);
     } finally {
       setSyncing(false);
+    }
+  }
+
+  async function runAutomation() {
+    setAutomating(true);
+    setMessage("");
+    setError("");
+
+    try {
+      const response = await fetch("/api/automation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ full: false, approved: true })
+      });
+      const payload = await response.json();
+
+      if (!response.ok || !payload.ok) {
+        throw new Error(
+          payload.error || "Automation cycle failed."
+        );
+      }
+
+      setMessage(payload.message || "Automation cycle completed.");
+      await load();
+      window.dispatchEvent(new Event("brokie-analytics-sync"));
+    } catch (automationError) {
+      setError(automationError.message);
+    } finally {
+      setAutomating(false);
     }
   }
 
@@ -148,7 +247,7 @@ export default function AnalyticsDashboard() {
           <button
             className="secondary"
             onClick={() => sync(false)}
-            disabled={syncing}
+            disabled={syncing || automating}
           >
             {syncing ? (
               <LoaderCircle className="spin" size={16} />
@@ -156,6 +255,19 @@ export default function AnalyticsDashboard() {
               <RefreshCw size={16} />
             )}
             {syncing ? "Syncing…" : "Sync Shopify"}
+          </button>
+
+          <button
+            className="secondary"
+            onClick={runAutomation}
+            disabled={syncing || automating}
+          >
+            {automating ? (
+              <LoaderCircle className="spin" size={16} />
+            ) : (
+              <Workflow size={16} />
+            )}
+            {automating ? "Running…" : "Run automation"}
           </button>
         </div>
       </div>
@@ -218,6 +330,18 @@ export default function AnalyticsDashboard() {
               <span>Average order</span>
               <strong>{currency(cards.averageOrderValue)}</strong>
               <small>{currency(cards.refunds)} refunded</small>
+            </article>
+
+            <article>
+              <div className="analyticsCardIcon">
+                <PackageCheck />
+              </div>
+              <span>Launch ready</span>
+              <strong>{compact(launch.ready)}</strong>
+              <small>
+                {compact(launch.blocked)} blocked ·{" "}
+                {compact(launch.live)} live
+              </small>
             </article>
           </div>
 
@@ -317,6 +441,152 @@ export default function AnalyticsDashboard() {
                 <RotateCcw size={15} />
                 Rebuild last 12 months
               </button>
+            </article>
+          </div>
+
+          <div className="analyticsGrid lowerAnalyticsGrid">
+            <article className="syncStatusCard">
+              <div className="analyticsSectionHead">
+                <div>
+                  <span className="eyebrow">AUTOPILOT</span>
+                  <h3>Business loop</h3>
+                </div>
+                <Workflow />
+              </div>
+
+              {autopilot ? (
+                <div className="approvalQueue">
+                  <p className="approvalSummary">{autopilot.summary}</p>
+                  <div className="approvalItems">
+                    {(autopilot.alwaysOn || []).map((item) => (
+                      <div key={item.label} className="approvalItem ready">
+                        <strong>{item.label}</strong>
+                        <p>{item.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="approvalItems">
+                    <div className="approvalItem needs_attention">
+                      <strong>{autopilot.nextMove?.label || "Next move"}</strong>
+                      <p>{autopilot.nextMove?.detail || "Keep the queue moving."}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="analyticsEmptyRow">Loading autopilot plan…</div>
+              )}
+            </article>
+
+            <article className="syncStatusCard">
+              <div className="analyticsSectionHead">
+                <div>
+                  <span className="eyebrow">APPROVAL CENTER</span>
+                  <h3>Major approvals only</h3>
+                </div>
+                <Workflow />
+              </div>
+
+              {approval ? (
+                <div className="approvalQueue">
+                  <p className="approvalSummary">{approval.summary}</p>
+                  <div className="approvalItems">
+                    {(approval.actions || []).map((item) => (
+                      <div key={item.id} className={`approvalItem ${item.status}`}>
+                        <strong>{item.label}</strong>
+                        <p>{item.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    className="secondary fullSyncButton"
+                    onClick={runAutomation}
+                    disabled={syncing || automating}
+                  >
+                    <Workflow size={15} />
+                    {automating ? "Running…" : approval.approveLabel || "Approve & run"}
+                  </button>
+                </div>
+              ) : (
+                <div className="analyticsEmptyRow">
+                  Loading approval queue…
+                </div>
+              )}
+            </article>
+
+            <article className="syncStatusCard">
+              <div className="analyticsSectionHead">
+                <div>
+                  <span className="eyebrow">LAUNCH STATUS</span>
+                  <h3>Publisher readiness</h3>
+                </div>
+                <PackageCheck />
+              </div>
+
+              <div className="syncStatusRows">
+                <div>
+                  <span>Total in queue</span>
+                  <strong>{compact(launch.total)}</strong>
+                </div>
+                <div>
+                  <span>Ready to launch</span>
+                  <strong className="statusGood">
+                    {compact(launch.ready)}
+                  </strong>
+                </div>
+                <div>
+                  <span>Blocked</span>
+                  <strong className="statusWarn">
+                    {compact(launch.blocked)}
+                  </strong>
+                </div>
+                <div>
+                  <span>Live</span>
+                  <strong>{compact(launch.live)}</strong>
+                </div>
+              </div>
+            </article>
+
+            <article className="recentOrdersCard">
+              <div className="analyticsSectionHead">
+                <div>
+                  <span className="eyebrow">NEXT BLOCKER</span>
+                  <h3>Needs attention</h3>
+                </div>
+                <BarChart3 />
+              </div>
+
+              {launch.nextBlocked ? (
+                <div className="recentOrdersList">
+                  <div>
+                    <span>
+                      <strong>
+                        {launch.nextBlocked.form?.title ||
+                          launch.nextBlocked.design?.name ||
+                          "Untitled"}
+                      </strong>
+                      <small>
+                        {launch.nextBlocked.product?.status ||
+                          launch.nextBlocked.design?.status ||
+                          "draft"}
+                      </small>
+                    </span>
+                    <span>
+                      <strong>
+                        {launch.nextBlocked.product?.printful_status ||
+                          "not configured"}
+                      </strong>
+                      <small>Printful state</small>
+                    </span>
+                  </div>
+                  <div className="analyticsEmptyRow">
+                    Finish the remaining Publisher and Printful steps for this item to clear the queue.
+                  </div>
+                </div>
+              ) : (
+                <div className="analyticsEmptyRow">
+                  Nothing is blocked right now. The launch queue is moving.
+                </div>
+              )}
             </article>
           </div>
 

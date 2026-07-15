@@ -132,9 +132,27 @@ Brokie OS is now protected with Supabase email/password authentication.
 
 ```text
 ADMIN_EMAIL=klipphahn@gmail.com
+CRON_SECRET
 ```
 
 The proxy protects the dashboard and API routes, including AI generation. Unauthenticated API requests receive HTTP 401 instead of spending OpenAI tokens.
+
+## Scheduled automation
+
+Brokie OS includes a daily Vercel Cron Job that hits `/api/cron/daily-automation` at `0 8 * * *` UTC.
+
+It also includes a deeper weekly pass at `/api/cron/weekly-automation` every Monday at `0 9 * * 1` UTC.
+
+Set `CRON_SECRET` in Vercel and in `.env.local` so the cron request can authenticate.
+The cron route runs the same automation cycle used by the mobile command center:
+
+- Shopify sales sync
+- Merch collection sync
+- Storefront feed refresh
+- Activity log summary
+
+The cron endpoint only accepts requests with `Authorization: Bearer <CRON_SECRET>`.
+The weekly cron runs the same flow in full mode so Shopify analytics reprocesses a wider history window.
 
 
 ## v1.5 Foundry + Library Stabilization

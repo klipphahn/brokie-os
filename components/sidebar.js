@@ -9,7 +9,8 @@ import {
   PackagePlus,
   PlugZap,
   Send,
-  ShoppingBag
+  ShoppingBag,
+  Smartphone
 } from "lucide-react";
 import LogoutButton from "@/components/logout-button";
 
@@ -23,6 +24,7 @@ const links = [
   ["Shopify Sync", ShoppingBag, "#shopify-manager"],
   ["Storefront", ShoppingBag, "#storefront"],
   ["Analytics", LineChart, "#analytics"],
+  ["Command", Smartphone, "/command"],
   ["Collection Builder", PackagePlus, "#builder"],
   ["Publish Center", Send, "#publish"],
   ["Products", ShoppingBag, "#products"],

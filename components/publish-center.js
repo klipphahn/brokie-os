@@ -16,7 +16,7 @@ export default function PublishCenter() {
           <span className="eyebrow">PUBLISH CENTER</span>
           <h2>From artwork to thebrokie.com/merch</h2>
         </div>
-        <span className="approval">MANUAL APPROVAL ON</span>
+        <span className="approval">MAJOR APPROVALS ONLY</span>
       </div>
 
       <div className="publishGrid">

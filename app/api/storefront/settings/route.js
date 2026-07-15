@@ -10,7 +10,10 @@ const EDITABLE_FIELDS = [
   "hero_headline", "hero_subheadline", "primary_cta_label",
   "primary_cta_url", "secondary_cta_label", "secondary_cta_url",
   "manifesto_headline", "manifesto_body", "collection_title",
-  "collection_handle", "collection_description", "palette"
+  "collection_handle", "collection_description", "palette",
+  "shipping_policy_title", "shipping_policy_body",
+  "returns_policy_title", "returns_policy_body",
+  "fulfillment_note"
 ];
 
 function cleanText(value, max = 500) {
@@ -43,6 +46,7 @@ function cleanProduct(product, position) {
     badge: cleanText(product.badge, 60),
     display_title: cleanText(product.displayTitle, 160),
     display_subtitle: cleanText(product.displaySubtitle, 240),
+    product_type: cleanText(product.productType, 120) || "tee",
     product_title: cleanText(product.title, 255),
     product_handle: cleanText(product.handle, 255),
     product_url: cleanText(product.onlineStoreUrl, 1000) || null,

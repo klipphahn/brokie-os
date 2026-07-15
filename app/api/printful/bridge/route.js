@@ -5,6 +5,7 @@ import {
   diagnosePrintful,
   discoverImportedProduct,
   inspectPrintfulProduct,
+  resolveBlankNameForProductType,
   printfulDashboardUrl
 } from "@/lib/printful-bridge";
 import { numericShopifyId } from "@/lib/printful";
@@ -328,14 +329,15 @@ export async function POST(request) {
         await autoConfigurePrintful({
           shopifyProductId:
             product.shopify_product_id,
+          productType: product.product_type,
           frontArtworkUrl,
           backArtworkUrl,
           retailPrice:
             product.retail_price || body.retailPrice,
-          blankName:
-            body.blankName ||
-            process.env.PRINTFUL_DEFAULT_BLANK ||
-            "Comfort Colors 1717",
+          blankName: resolveBlankNameForProductType(
+            product.product_type,
+            body.blankName
+          ),
           defaultColor:
             body.defaultColor ||
             process.env.PRINTFUL_DEFAULT_COLOR ||
@@ -430,7 +432,7 @@ export async function POST(request) {
         action: "printful_sync",
         title: `Printful configured: ${product.title}`,
         detail: configured.verification.ready
-          ? "All imported variants are connected to Comfort Colors 1717 and have artwork."
+          ? `All imported variants are connected to ${configured.blank.name} and have artwork.`
           : `${configured.verification.syncedVariants}/${configured.verification.totalVariants} variants are ready.`,
         status:
           configured.verification.ready

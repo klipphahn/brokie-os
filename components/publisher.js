@@ -14,10 +14,29 @@ import {
   Store,
   TriangleAlert
 } from "lucide-react";
+import { productTypes } from "@/lib/foundry-options";
+import {
+  buildListingDefaults,
+  defaultPrintfulBlankForProductType,
+  defaultProductTypeLabel,
+  productTypeFamily
+} from "@/lib/product-types";
 
 function normalize(item) {
   const concept = item.concept || {};
   const product = item.product || {};
+  const defaults = buildListingDefaults({
+    productType:
+      product.product_type ||
+      item.design.product_type ||
+      concept.productType ||
+      "Heavyweight Tee",
+    customTitle:
+      product.title ||
+      concept.title ||
+      item.design.name ||
+      ""
+  });
 
   return {
     ...item,
@@ -30,11 +49,14 @@ function normalize(item) {
       description:
         product.description ||
         concept.description ||
-        "",
+        defaults.description,
       productType:
-        product.product_type ||
-        concept.productType ||
-        "Apparel",
+        defaultProductTypeLabel(
+          product.product_type ||
+            item.design.product_type ||
+            concept.productType ||
+            "Heavyweight Tee"
+        ) || "Heavyweight Tee",
       price: String(
         product.retail_price ||
         concept.price ||
@@ -48,16 +70,28 @@ function normalize(item) {
       seoTitle:
         product.seo_title ||
         concept.seoTitle ||
-        concept.title ||
-        item.design.name ||
-        "",
+        defaults.seoTitle,
       metaDescription:
         product.meta_description ||
         concept.metaDescription ||
-        concept.description ||
-        ""
+        defaults.metaDescription
     }
   };
+}
+
+function defaultBlankForProductType(productType) {
+  return (
+    defaultPrintfulBlankForProductType(productType) ||
+    "Comfort Colors 1717"
+  );
+}
+
+function defaultsForProductType(productType, customTitle = "") {
+  return buildListingDefaults({
+    productType,
+    customTitle,
+    collectionName: "Foundry"
+  });
 }
 
 export default function Publisher() {
@@ -135,15 +169,29 @@ export default function Publisher() {
     }
   }
 
-  async function loadCatalog() {
+  function currentProductType() {
+    return (
+      current?.product?.product_type ||
+      current?.design?.product_type ||
+      current?.form?.productType ||
+      ""
+    );
+  }
+
+  async function loadCatalog(productType = "") {
+    const resolvedProductType =
+      typeof productType === "string"
+        ? productType
+        : currentProductType();
+
     setCatalogWorking(true);
     setError("");
 
     try {
       const response = await fetch(
-        `/api/printful/catalog?blankName=${encodeURIComponent(
-          printfulForm.blankName
-        )}`,
+        `/api/printful/catalog?productType=${encodeURIComponent(
+          resolvedProductType
+        )}&useProductTypeDefaults=1`,
         { cache: "no-store" }
       );
       const data = await response.json();
@@ -180,7 +228,6 @@ export default function Publisher() {
   useEffect(() => {
     load();
     checkPublication();
-    loadCatalog();
   }, []);
 
   function toggleMerchOption(type, value) {
@@ -198,6 +245,20 @@ export default function Publisher() {
   const selectedVariantOptions = useMemo(() => {
     if (!catalog?.colors?.length) return [];
 
+    const family = productTypeFamily(currentProductType());
+
+    if (family === "headwear") {
+      return catalog.colors
+        .filter((color) =>
+          merchOptions.colors.includes(color.name)
+        )
+        .map((color) => ({ color: color.name }));
+    }
+
+    if (family === "sticker") {
+      return [{ style: "Standard" }];
+    }
+
     return catalog.colors
       .filter((color) =>
         merchOptions.colors.includes(color.name)
@@ -208,6 +269,15 @@ export default function Publisher() {
           .map((size) => ({ color: color.name, size }))
       );
   }, [catalog, merchOptions]);
+
+  const currentFamily = productTypeFamily(currentProductType());
+  const currentBlankLabel = defaultBlankForProductType(currentProductType());
+  const familyLabel =
+    currentFamily === "headwear"
+      ? "headwear"
+      : currentFamily === "sticker"
+        ? "sticker"
+        : "apparel";
 
   async function loadPrintful(item) {
     setPrintful(null);
@@ -281,6 +351,16 @@ export default function Publisher() {
     setMessage("");
     setError("");
 
+    const resolvedBlankName =
+      printfulForm.blankName &&
+      printfulForm.blankName !== "Comfort Colors 1717"
+        ? printfulForm.blankName
+        : defaultBlankForProductType(
+            current?.product?.product_type ||
+              current?.form?.productType ||
+              ""
+          );
+
     try {
       const response = await fetch(
         "/api/printful/bridge",
@@ -299,7 +379,8 @@ export default function Publisher() {
             backArtworkUrl:
               current.design.back_artwork_url || null,
             retailPrice: current.form.price,
-            ...printfulForm
+            ...printfulForm,
+            blankName: resolvedBlankName
           })
         }
       );
@@ -331,12 +412,32 @@ export default function Publisher() {
   }
 
   useEffect(() => {
+    const nextBlank = defaultBlankForProductType(
+      current?.product?.product_type ||
+        current?.form?.productType ||
+        ""
+    );
+
+    setPrintfulForm((value) => ({
+      ...value,
+      blankName: nextBlank
+    }));
     setMerchOptions({
       colors: ["Black", "Pepper", "Graphite", "True Navy"],
       sizes: ["S", "M", "L", "XL", "2XL", "3XL", "4XL"]
     });
     loadPrintful(current);
-  }, [selected, current?.product?.id]);
+    loadCatalog(
+      current?.product?.product_type ||
+        current?.form?.productType ||
+        ""
+    );
+  }, [
+    selected,
+    current?.product?.id,
+    current?.product?.product_type,
+    current?.form?.productType
+  ]);
 
   function patch(key, value) {
     setItems((values) =>
@@ -352,6 +453,38 @@ export default function Publisher() {
           : item
       )
     );
+  }
+
+  function patchProductType(nextProductType) {
+    const nextDefaults = defaultsForProductType(
+      nextProductType,
+      current?.form?.title || ""
+    );
+
+    setItems((values) =>
+      values.map((item, index) =>
+        index === selected
+          ? {
+              ...item,
+              form: {
+                ...item.form,
+                productType: nextProductType,
+                title: nextDefaults.title,
+                description: nextDefaults.description,
+                tags: nextDefaults.tags.join(", "),
+                seoTitle: nextDefaults.seoTitle,
+                metaDescription: nextDefaults.metaDescription
+              }
+            }
+          : item
+      )
+    );
+
+    setPrintfulForm((value) => ({
+      ...value,
+      blankName: defaultBlankForProductType(nextProductType)
+    }));
+    loadCatalog(nextProductType);
   }
 
   async function act(action, extra = {}) {
@@ -453,6 +586,50 @@ export default function Publisher() {
       ) &&
     Boolean(publication);
 
+  const launchWorkflow = useMemo(() => {
+    if (!current) return null;
+
+    const total = steps.length;
+    const completed = steps.filter(([, done]) => done).length;
+    const nextPending = steps.find(([, done]) => !done)?.[0] || null;
+
+    let status = "In progress";
+    let nextAction = "Keep moving down the checklist.";
+
+    if (!current.product?.shopify_product_id) {
+      status = "Draft";
+      nextAction = "Create the Shopify product first.";
+    } else if (current.product?.status === "live") {
+      status = "Live";
+      nextAction = "This drop is already live in the store.";
+    } else if (!publication) {
+      status = "Waiting on store";
+      nextAction = "Confirm the Online Store publication channel.";
+    } else if (current.product?.printful_status !== "configured") {
+      status = "Waiting on Printful";
+      nextAction = "Finish the Printful bridge and verify the variants.";
+    } else if (
+      Number(current.product?.printful_variant_count || 0) > 0 &&
+      Number(current.product?.printful_synced_variant_count || 0) !==
+        Number(current.product?.printful_variant_count || 0)
+    ) {
+      status = "Syncing";
+      nextAction = "Finish syncing every sellable variant in Printful.";
+    } else if (completed === total) {
+      status = "Ready";
+      nextAction = "You can launch this product now.";
+    }
+
+    return {
+      status,
+      total,
+      completed,
+      nextPending,
+      nextAction,
+      ready: canLaunch
+    };
+  }, [canLaunch, current, publication, steps]);
+
   return (
     <section
       className="panel publisherPanel"
@@ -483,12 +660,54 @@ export default function Publisher() {
         <TriangleAlert size={18} />
         <span>
           Brokie OS now detects the Shopify listing imported
-          into Printful, maps its variants to Comfort Colors 1717,
-          attaches the artwork, and verifies fulfillment through
-          Printful's Ecommerce Platform Sync API. Store Launch stays
-          locked until every sellable variant passes verification.
+          into Printful, maps its variants to the matching Printful
+          blank for that product type, attaches the artwork, and
+          verifies fulfillment through Printful's Ecommerce Platform
+          Sync API. Store Launch stays locked until every sellable
+          variant passes verification.
         </span>
       </div>
+
+      {launchWorkflow && (
+        <div className="launchWorkflow">
+          <div className="launchWorkflowHead">
+            <div>
+              <span className="eyebrow">LAUNCH WORKFLOW</span>
+              <h3>{current?.form?.title || "Current product"}</h3>
+              <p>{launchWorkflow.nextAction}</p>
+            </div>
+            <div className={`launchWorkflowBadge ${launchWorkflow.ready ? "ready" : ""}`}>
+              {launchWorkflow.status}
+            </div>
+          </div>
+          <div className="launchWorkflowStats">
+            <article>
+              <strong>{launchWorkflow.completed}/{launchWorkflow.total}</strong>
+              <span>steps complete</span>
+            </article>
+            <article>
+              <strong>{current?.product?.status || current?.design?.status || "draft"}</strong>
+              <span>product state</span>
+            </article>
+            <article>
+              <strong>{current?.product?.printful_status || "not configured"}</strong>
+              <span>printful state</span>
+            </article>
+          </div>
+          <div className="launchWorkflowChecks">
+            {steps.map(([label, done]) => (
+              <span key={label} className={done ? "done" : ""}>
+                {done ? "✓" : "•"} {label}
+              </span>
+            ))}
+          </div>
+          {!launchWorkflow.ready && launchWorkflow.nextPending ? (
+            <div className="launchWorkflowNext">
+              Next up: <strong>{launchWorkflow.nextPending}</strong>
+            </div>
+          ) : null}
+        </div>
+      )}
 
       {publication ? (
         <div className="publicationReady">
@@ -648,15 +867,18 @@ export default function Publisher() {
 
                 <label>
                   Product type
-                  <input
+                  <select
                     value={current.form.productType}
                     onChange={(event) =>
-                      patch(
-                        "productType",
-                        event.target.value
-                      )
+                      patchProductType(event.target.value)
                     }
-                  />
+                  >
+                    {productTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
                 </label>
 
                 <label className="fullField">
@@ -727,7 +949,7 @@ export default function Publisher() {
                 </label>
               </div>
 
-              <div className="printfulBridgePanel">
+                <div className="printfulBridgePanel">
                 <div className="printfulBridgeHead">
                   <div>
                     <PackageCheck size={20} />
@@ -735,8 +957,7 @@ export default function Publisher() {
                       <strong>
                         Printful Fulfillment Bridge
                       </strong>
-                      Imported Shopify product · Comfort Colors
-                      1717 · API-verified fulfillment
+                      Imported Shopify product · {currentBlankLabel} · {familyLabel} bridge
                     </span>
                   </div>
 
@@ -806,16 +1027,17 @@ export default function Publisher() {
                 </div>
 
                 <div className="merchOptionBuilder">
-                  <div className="merchOptionHead">
+                <div className="merchOptionHead">
                     <span>
-                      <strong>Shirt colors and sizes</strong>
+                      <strong>Product options</strong>
                       <small>
                         Pulled live from the selected Printful blank
                       </small>
                     </span>
                     <button
+                      type="button"
                       className="secondary"
-                      onClick={loadCatalog}
+                      onClick={() => loadCatalog(currentProductType())}
                       disabled={catalogWorking}
                     >
                       <RefreshCw
@@ -980,11 +1202,12 @@ export default function Publisher() {
                   >
                     <ShoppingBag size={16} />
                     {working === "set_apparel_variants"
-                      ? "Adding sizes…"
-                      : `Apply ${selectedVariantOptions.length} color/size options`}
+                      ? "Applying options…"
+                      : `Apply ${selectedVariantOptions.length} product option${selectedVariantOptions.length === 1 ? "" : "s"}`}
                   </button>
 
                   <button
+                    type="button"
                     className="secondary"
                     onClick={() =>
                       printfulAction("detect")
@@ -1007,6 +1230,7 @@ export default function Publisher() {
                   </button>
 
                   <button
+                    type="button"
                     onClick={() =>
                       printfulAction("configure")
                     }
@@ -1023,6 +1247,7 @@ export default function Publisher() {
                   </button>
 
                   <button
+                    type="button"
                     className="secondary"
                     onClick={() =>
                       printfulAction("verify")
@@ -1059,9 +1284,10 @@ export default function Publisher() {
                   Imported products can take a few seconds to
                   several hours to appear in Printful after
                   Shopify creates or updates them. Variant names
-                  are matched automatically; a single “Default
-                  Title” variant uses the default color and size
-                  above.
+                  are matched automatically, and the bridge uses
+                  front-only artwork for headwear and stickers.
+                  A single “Default Title” variant uses the
+                  default color and size above.
                 </p>
               </div>
 
