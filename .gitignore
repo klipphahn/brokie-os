@@ -7,5 +7,4 @@ node_modules/
 npm-debug.log*
 .vercel/
 supabase/.temp/
-.vercel
 .env*

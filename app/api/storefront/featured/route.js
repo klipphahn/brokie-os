@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { tryCreateSupabaseAdminClient } from "@/lib/supabase/admin";
 import { loadStorefrontFeed } from "@/lib/storefront-feed";
 
 const PUBLIC_HEADERS = {
@@ -16,7 +16,7 @@ export async function OPTIONS() {
 
 export async function GET() {
   try {
-    const supabase = createSupabaseAdminClient();
+    const supabase = tryCreateSupabaseAdminClient();
     const { storefront, products, brain, launch } = await loadStorefrontFeed(supabase);
 
     return NextResponse.json(

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import {
   daysAgo,
   dateKey,
@@ -11,18 +10,10 @@ import {
   fetchShopifyOrdersSince,
   normalizeOrder
 } from "@/lib/shopify-orders";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 function db() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !key) {
-    throw new Error("Supabase server credentials are missing.");
-  }
-
-  return createClient(url, key, {
-    auth: { persistSession: false }
-  });
+  return createSupabaseAdminClient();
 }
 
 async function createRun(supabase, windowStart) {
@@ -37,10 +28,16 @@ async function createRun(supabase, windowStart) {
     .single();
 
   if (error) throw error;
-  return data;
+  return data || {
+    id: "noop-analytics-run",
+    provider: "shopify",
+    status: "running",
+    window_start: windowStart
+  };
 }
 
 async function finishRun(supabase, id, values) {
+  if (!id || id === "noop-analytics-run") return;
   await supabase
     .from("analytics_sync_runs")
     .update({

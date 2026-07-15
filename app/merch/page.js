@@ -1,10 +1,10 @@
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { tryCreateSupabaseAdminClient } from "@/lib/supabase/admin";
 import { loadStorefrontFeed } from "@/lib/storefront-feed";
 
 export const dynamic = "force-dynamic";
 
 async function loadMerch() {
-  const supabase = createSupabaseAdminClient();
+  const supabase = tryCreateSupabaseAdminClient();
   return loadStorefrontFeed(supabase);
 }
 

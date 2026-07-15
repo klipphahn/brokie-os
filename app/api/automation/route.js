@@ -1,26 +1,31 @@
 import { NextResponse } from "next/server";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { tryCreateSupabaseAdminClient } from "@/lib/supabase/admin";
 import { loadStorefrontFeed } from "@/lib/storefront-feed";
 import { runAutomationCycle } from "@/lib/automation";
 
 export async function GET() {
   try {
-    const supabase = createSupabaseAdminClient();
-    const [feed, { data: latestRun }, { data: activities }] = await Promise.all([
-      loadStorefrontFeed(supabase),
-      supabase
-        .from("analytics_sync_runs")
-        .select("*")
-        .eq("provider", "shopify")
-        .order("started_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      supabase
-        .from("activity_logs")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(8)
-    ]);
+    const supabase = tryCreateSupabaseAdminClient();
+    const feed = await loadStorefrontFeed(supabase);
+
+    const [latestRunResult, activitiesResult] = supabase
+      ? await Promise.all([
+          supabase
+            .from("analytics_sync_runs")
+            .select("*")
+            .eq("provider", "shopify")
+            .order("started_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          supabase
+            .from("activity_logs")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(8)
+        ])
+      : [{ data: null }, { data: [] }];
+    const { data: latestRun } = latestRunResult;
+    const { data: activities } = activitiesResult;
 
     return NextResponse.json({
       ok: true,
