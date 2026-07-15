@@ -50,6 +50,7 @@ export default function StorefrontManager() {
   const [settings, setSettings] = useState(EMPTY);
   const [products, setProducts] = useState([]);
   const [selected, setSelected] = useState([]);
+  const [brain, setBrain] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -63,16 +64,20 @@ export default function StorefrontManager() {
     setLoading(true);
     setNotice(null);
     try {
+      const feedRequest = fetch(feedUrl, { cache: "no-store" }).catch(() => null);
       const [stateResponse, productsResponse] = await Promise.all([
         fetch("/api/storefront/settings", { cache: "no-store" }),
         fetch("/api/shopify/products?limit=100", { cache: "no-store" })
       ]);
+      const feedResponse = await feedRequest;
       const state = await stateResponse.json();
       const shopify = await productsResponse.json();
+      const feed = feedResponse ? await feedResponse.json() : null;
       if (!stateResponse.ok || !state.ok) throw new Error(state.error || "Could not load storefront settings.");
       if (!productsResponse.ok || !shopify.ok) throw new Error(shopify.error || "Could not load Shopify products.");
       setSettings({ ...EMPTY, ...state.settings });
       setProducts(shopify.products || []);
+      setBrain(feed?.brain || null);
       setSelected((state.featured || []).map((item) => ({
         id: item.shopify_product_id,
         badge: item.badge || featuredDefaultsFor(item).badge,
@@ -220,6 +225,14 @@ export default function StorefrontManager() {
           </div>
 
             <div className="storefrontPreview">
+              {brain && (
+                <div className="merchBrainCard storefrontBrainCard">
+                  <span className="eyebrow">MERCH BRAIN</span>
+                  <h2>{brain.headline}</h2>
+                  <p>{brain.summary}</p>
+                  <small>{brain.nextAction}</small>
+                </div>
+              )}
               <span className="storefrontAnnouncement">{settings.announcement_text}</span>
               <small>{settings.hero_eyebrow}</small>
               <h3>{settings.hero_headline}</h3>

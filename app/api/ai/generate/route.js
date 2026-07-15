@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import sharp from "sharp";
 import { getProductTypeTemplate } from "@/lib/product-types";
+
+async function getSharp() {
+  return (await import("sharp")).default;
+}
 
 const BRAND_RULES = `
 Brand: The Brokie.
@@ -178,6 +181,7 @@ async function requestImage(apiKey, model, prompt, nativeTransparency) {
 }
 
 async function removeBlackBackground(base64) {
+  const sharp = await getSharp();
   const input = Buffer.from(base64, "base64");
   const { data, info } = await sharp(input)
     .ensureAlpha()
@@ -384,6 +388,7 @@ function buildMockupSvg(productKey, isFront) {
 }
 
 async function createProductMockup(artworkBase64, side, productType) {
+  const sharp = await getSharp();
   const productKey = normalizeProductType(productType);
   const isFront = side === "front";
   const mockup = Buffer.from(buildMockupSvg(productKey, isFront));

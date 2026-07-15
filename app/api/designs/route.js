@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import sharp from "sharp";
 import { extractDesignDna, searchableText } from "@/lib/design-dna";
 import { getProductTypeTemplate } from "@/lib/product-types";
+
+async function getSharp() {
+  return (await import("sharp")).default;
+}
 
 function slugify(value) {
   return String(value || "brokie-design")
@@ -36,6 +39,7 @@ async function downloadImage(url) {
 }
 
 async function createGarmentMockup(artwork, side, productType) {
+  const sharp = await getSharp();
   const width = 1200;
   const height = 1400;
   const isFront = side === "front";

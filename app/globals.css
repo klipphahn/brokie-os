@@ -1156,6 +1156,86 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
   min-height:100vh;
   padding:0 0 72px;
 }
+.merchCurrentDrop {
+  display:grid;
+  grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);
+  gap:20px;
+  align-items:stretch;
+  padding:28px max(20px,5vw) 0;
+  max-width:1540px;
+  margin:0 auto;
+}
+.merchCurrentDropCopy,
+.merchCurrentDropMedia {
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:18px;
+  overflow:hidden;
+  background:linear-gradient(145deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+}
+.merchCurrentDropCopy {
+  padding:28px;
+  background:radial-gradient(circle at 90% 15%, color-mix(in oklab, var(--mp-orange) 18%, transparent), transparent 44%), linear-gradient(145deg, #111, #17120e);
+}
+.merchStatusStrip {
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  padding:12px 14px;
+  border-radius:14px;
+  margin-bottom:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.03);
+}
+.merchStatusStrip strong {
+  font-size:12px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+.merchStatusStrip span {
+  color:var(--mp-muted, #aaa);
+  line-height:1.45;
+  font-size:13px;
+}
+.merchStatusStrip--good {
+  border-color:rgba(56, 189, 110, .35);
+  background:rgba(56, 189, 110, .08);
+}
+.merchStatusStrip--good strong {
+  color:#9af0b8;
+}
+.merchStatusStrip--warn {
+  border-color:rgba(255, 193, 7, .3);
+  background:rgba(255, 193, 7, .08);
+}
+.merchStatusStrip--warn strong {
+  color:var(--mp-gold, #ffc107);
+}
+.merchStatusStrip--muted strong {
+  color:var(--mp-orange, #ff4f00);
+}
+.merchCurrentDropCopy h1 {
+  margin:12px 0;
+  font-size:clamp(40px,6vw,82px);
+  line-height:.92;
+  letter-spacing:-.04em;
+  text-transform:uppercase;
+}
+.merchCurrentDropCopy p {
+  max-width:680px;
+  margin:0;
+  color:var(--mp-muted, #aaa);
+  line-height:1.6;
+}
+.merchCurrentDropMedia {
+  display:block;
+  aspect-ratio:1;
+  background:#111;
+}
+.merchCurrentDropMedia img {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
 .merchHero {
   display:grid;
   grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);
@@ -1254,6 +1334,82 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
   max-width:1540px;
   margin:0 auto;
   padding:28px;
+}
+.merchBrain {
+  display:grid;
+  grid-template-columns:minmax(0,1.3fr) minmax(280px,.7fr);
+  gap:14px;
+  max-width:1540px;
+  margin:0 auto;
+  padding:0 max(20px,5vw);
+}
+.merchBrainCard,
+.merchBrainNext {
+  padding:24px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.12);
+  background:linear-gradient(145deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+}
+.merchBrainCard h2 {
+  margin:10px 0 10px;
+  font-size:clamp(30px,4vw,52px);
+  line-height:.96;
+  text-transform:uppercase;
+}
+.merchBrainCard > p,
+.merchBrainNext p {
+  margin:0;
+  max-width:820px;
+  color:var(--mp-muted, #aaa);
+  line-height:1.6;
+}
+.merchBrainMeta {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin-top:18px;
+}
+.merchBrainMeta div,
+.merchBrainLaunch {
+  padding:14px;
+  border-radius:14px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.08);
+}
+.merchBrainMeta span,
+.merchBrainLaunch span {
+  display:block;
+  color:var(--mp-orange, #ff4f00);
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  margin-bottom:8px;
+}
+.merchBrainMeta strong,
+.merchBrainLaunch strong {
+  display:block;
+  color:var(--mp-text, #fff);
+  line-height:1.35;
+  text-transform:uppercase;
+}
+.merchBrainNext {
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  gap:16px;
+  background:linear-gradient(160deg, rgba(255,79,0,.14), rgba(255,255,255,.02));
+}
+.merchBrainNext strong {
+  display:block;
+  font-size:clamp(28px,4vw,48px);
+  line-height:.96;
+  text-transform:uppercase;
+}
+.merchBrainNext small {
+  display:block;
+  color:#cfcfcf;
+  line-height:1.5;
 }
 .merchSectionHead {
   display:flex;
@@ -1526,6 +1682,268 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
   color:var(--mp-muted, #aaa);
   line-height:1.6;
 }
+.commandShell {
+  min-height:100vh;
+  background:linear-gradient(180deg, #050505 0%, #0e0e0e 100%);
+  color:#fff;
+  padding:18px 16px 96px;
+  max-width:760px;
+  margin:0 auto;
+}
+.commandHeader {
+  display:grid;
+  gap:14px;
+  margin-bottom:16px;
+}
+.commandHeaderTop {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+}
+.commandHeader h1 {
+  margin:6px 0 8px;
+  font-size:clamp(30px,7vw,52px);
+  line-height:.96;
+  text-transform:uppercase;
+}
+.commandHeader p {
+  margin:0;
+  color:#aaa;
+  line-height:1.5;
+}
+.commandEyebrow {
+  display:inline-block;
+  color:var(--orange);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+.commandRefresh,
+.commandQuickActions button,
+.commandQuickActions a {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  min-height:42px;
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.04);
+  color:#fff;
+  text-decoration:none;
+  font-weight:900;
+  letter-spacing:.03em;
+}
+.commandQuickActions {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.commandNotice {
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  padding:12px 14px;
+  border-radius:14px;
+  font-size:13px;
+  line-height:1.5;
+}
+.commandNotice.success {
+  background:rgba(56, 189, 110, .08);
+  border:1px solid rgba(56, 189, 110, .3);
+  color:#c9f9dc;
+}
+.commandNotice.error {
+  background:rgba(239, 68, 68, .08);
+  border:1px solid rgba(239, 68, 68, .28);
+  color:#ffd0d0;
+}
+.commandPanelStack {
+  display:grid;
+  gap:12px;
+}
+.commandHeroCard,
+.commandLaunchSummary,
+.commandCurrentDrop,
+.commandAlertsHeader {
+  padding:18px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.12);
+  background:linear-gradient(145deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+}
+.commandState {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:30px;
+  padding:0 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.commandState--good {
+  background:rgba(56, 189, 110, .12);
+  color:#9af0b8;
+}
+.commandState--warn {
+  background:rgba(255, 193, 7, .12);
+  color:#ffe08a;
+}
+.commandState--muted {
+  background:rgba(255,255,255,.06);
+  color:#ff9f66;
+}
+.commandHeroCard h2,
+.commandLaunchSummary h2,
+.commandCurrentDrop h2,
+.commandAlertsHeader h2 {
+  margin:10px 0 8px;
+  font-size:clamp(24px,6vw,40px);
+  line-height:.96;
+  text-transform:uppercase;
+}
+.commandHeroCard p,
+.commandLaunchSummary p,
+.commandCurrentDrop p,
+.commandAlertsHeader p {
+  margin:0;
+  color:#a8a8a8;
+  line-height:1.55;
+}
+.commandMetaRow,
+.commandLaunchGrid,
+.commandStats {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+.commandMetaRow,
+.commandLaunchGrid {
+  margin-top:14px;
+}
+.commandMetaRow div,
+.commandLaunchGrid div,
+.commandStats article {
+  padding:12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.03);
+}
+.commandMetaRow span,
+.commandLaunchGrid span,
+.commandStats span {
+  display:block;
+  color:#999;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  margin-bottom:6px;
+}
+.commandMetaRow strong,
+.commandLaunchGrid strong,
+.commandStats strong {
+  display:block;
+  font-size:14px;
+  line-height:1.3;
+}
+.commandList,
+.commandAlerts {
+  display:grid;
+  gap:8px;
+}
+.commandList article,
+.commandAlerts article {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+  padding:14px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.03);
+}
+.commandList strong,
+.commandAlerts strong {
+  display:block;
+  margin-bottom:4px;
+}
+.commandList p,
+.commandAlerts p {
+  margin:0;
+  color:#9d9d9d;
+  font-size:13px;
+  line-height:1.45;
+}
+.commandList span,
+.commandAlerts span {
+  color:var(--orange);
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.commandCurrentDrop {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+}
+.commandTabBar {
+  position:fixed;
+  left:50%;
+  bottom:12px;
+  transform:translateX(-50%);
+  width:min(760px, calc(100vw - 24px));
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  padding:8px;
+  border-radius:22px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(5,5,5,.84);
+  backdrop-filter:blur(16px);
+  box-shadow:0 20px 55px rgba(0,0,0,.4);
+}
+.commandTabBar button {
+  display:grid;
+  justify-items:center;
+  gap:4px;
+  padding:10px 6px;
+  border-radius:16px;
+  border:none;
+  background:transparent;
+  color:#9a9a9a;
+  font-weight:900;
+  letter-spacing:.01em;
+}
+.commandTabBar button.active {
+  background:rgba(255,79,0,.14);
+  color:#fff;
+}
+.commandTabBar span {
+  font-size:11px;
+}
+@media(max-width:620px) {
+  .commandQuickActions,
+  .commandMetaRow,
+  .commandLaunchGrid,
+  .commandStats {
+    grid-template-columns:1fr;
+  }
+  .commandHeaderTop,
+  .commandCurrentDrop {
+    grid-template-columns:1fr;
+    align-items:stretch;
+  }
+  .commandTabBar {
+    width:calc(100vw - 16px);
+  }
+}
 .merchEmpty {
   grid-column:1/-1;
   padding:40px;
@@ -1535,9 +1953,11 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
   border-radius:14px;
 }
 @media(max-width:1050px) {
+  .merchCurrentDrop,
   .merchHighlights,
   .merchSpotlight,
   .merchHero,
+  .merchBrain,
   .merchGrid,
   .merchPolicies {
     grid-template-columns:1fr 1fr;
@@ -1550,13 +1970,24 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
   .merchStory {
     grid-template-columns:1fr;
   }
+  .merchCurrentDrop {
+    grid-template-columns:1fr;
+  }
   .merchHero {
+    grid-template-columns:1fr;
+  }
+  .merchBrain {
+    grid-template-columns:1fr;
+  }
+  .merchBrainMeta {
     grid-template-columns:1fr;
   }
 }
 @media(max-width:700px) {
+  .merchCurrentDrop,
   .merchHighlights,
   .merchSpotlight,
+  .merchBrain,
   .merchGrid,
   .merchPolicies,
   .merchStory {

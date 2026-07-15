@@ -17,10 +17,10 @@ export async function OPTIONS() {
 export async function GET() {
   try {
     const supabase = createSupabaseAdminClient();
-    const { storefront, products } = await loadStorefrontFeed(supabase);
+    const { storefront, products, brain, launch } = await loadStorefrontFeed(supabase);
 
     return NextResponse.json(
-      { ok: true, schemaVersion: "1.0", storefront, products },
+      { ok: true, schemaVersion: "1.0", storefront, products, brain, launch },
       { headers: PUBLIC_HEADERS }
     );
   } catch (error) {

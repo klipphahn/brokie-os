@@ -12,7 +12,8 @@ import {
   RefreshCw,
   RotateCcw,
   ShoppingCart,
-  TrendingUp
+  TrendingUp,
+  Workflow
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -89,6 +90,7 @@ export default function AnalyticsDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [automating, setAutomating] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -159,6 +161,37 @@ export default function AnalyticsDashboard() {
     }
   }
 
+  async function runAutomation() {
+    setAutomating(true);
+    setMessage("");
+    setError("");
+
+    try {
+      const response = await fetch("/api/automation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ full: false })
+      });
+      const payload = await response.json();
+
+      if (!response.ok || !payload.ok) {
+        throw new Error(
+          payload.error || "Automation cycle failed."
+        );
+      }
+
+      setMessage(payload.message || "Automation cycle completed.");
+      await load();
+      window.dispatchEvent(new Event("brokie-analytics-sync"));
+    } catch (automationError) {
+      setError(automationError.message);
+    } finally {
+      setAutomating(false);
+    }
+  }
+
   useEffect(() => {
     load();
   }, [days]);
@@ -200,7 +233,7 @@ export default function AnalyticsDashboard() {
           <button
             className="secondary"
             onClick={() => sync(false)}
-            disabled={syncing}
+            disabled={syncing || automating}
           >
             {syncing ? (
               <LoaderCircle className="spin" size={16} />
@@ -208,6 +241,19 @@ export default function AnalyticsDashboard() {
               <RefreshCw size={16} />
             )}
             {syncing ? "Syncing…" : "Sync Shopify"}
+          </button>
+
+          <button
+            className="secondary"
+            onClick={runAutomation}
+            disabled={syncing || automating}
+          >
+            {automating ? (
+              <LoaderCircle className="spin" size={16} />
+            ) : (
+              <Workflow size={16} />
+            )}
+            {automating ? "Running…" : "Run automation"}
           </button>
         </div>
       </div>
