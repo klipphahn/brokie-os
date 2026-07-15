@@ -191,7 +191,7 @@ function currentDropStatus(product = {}) {
 }
 
 export default async function MerchPage() {
-  const { storefront, products, brain, launch } = await loadMerch();
+  const { storefront, products, brain, launch, activity } = await loadMerch();
   const highlights = uniqueHighlights(products, brain?.familyOrder);
   const sections = familySections(products, brain?.familyOrder);
   const spotlight = spotlightFor(products, brain);
@@ -203,6 +203,29 @@ export default async function MerchPage() {
     ? `${brain.focusLabel} Collection`
     : storefront.collection.title;
   const collectionDescription = brain?.nextAction || storefront.collection.description;
+  const controlLoop = [
+    {
+      label: "North star",
+      value: brain?.northStar || storefront.manifesto.headline,
+      detail: "The message everything else has to match."
+    },
+    {
+      label: "Next move",
+      value: brain?.nextAction || "Keep the queue moving.",
+      detail: "The next action Brokie OS wants you to approve."
+    },
+    {
+      label: "Launch queue",
+      value: `${launch?.ready || 0} ready · ${launch?.blocked || 0} blocked`,
+      detail: `${launch?.live || 0} live items already on the storefront.`
+    },
+    {
+      label: "Cadence",
+      value: "Daily sales sync · Weekly approval pass",
+      detail: "The operations loop stays current without manual chasing."
+    }
+  ];
+  const recentActivity = Array.isArray(activity) ? activity.slice(0, 3) : [];
 
   return (
     <main
@@ -294,6 +317,55 @@ export default async function MerchPage() {
           <p>{brain?.nextAction || storefront.manifesto.body}</p>
           <small>{brain?.brandRule || storefront.policies.note}</small>
         </article>
+      </section>
+
+      <section className="merchAssurance">
+        <div className="merchAssuranceCopy">
+          <span className="merchEyebrow">BROKIE OS CONTROL LOOP</span>
+          <h2>Brokie OS runs the storefront behind the scenes.</h2>
+          <p>
+            Products, policies, featured drops, and launch timing all flow from
+            the same feed, so the merch page stays current without manual edits
+            in Shopify.
+          </p>
+        </div>
+        <div className="merchAssuranceGrid">
+          {controlLoop.map((item) => (
+            <article key={item.label}>
+              <span>{item.label}</span>
+              <p>{item.value}</p>
+              <small>{item.detail}</small>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="merchAssurance">
+        <div className="merchAssuranceCopy">
+          <span className="merchEyebrow">RECENT ACTIVITY</span>
+          <h2>What Brokie OS handled last.</h2>
+          <p>
+            The storefront stays aligned because the feed follows the latest
+            automation, launch, and merchandising activity.
+          </p>
+        </div>
+        <div className="merchAssuranceGrid">
+          {recentActivity.length ? (
+            recentActivity.map((item) => (
+              <article key={item.id}>
+                <span>{item.status || item.action || "activity"}</span>
+                <p>{item.title}</p>
+                <small>{item.detail}</small>
+              </article>
+            ))
+          ) : (
+            <article>
+              <span>Activity</span>
+              <p>No recent activity yet.</p>
+              <small>Once Brokie OS runs a sync or approval, it appears here.</small>
+            </article>
+          )}
+        </div>
       </section>
 
       <section className="merchAssurance">

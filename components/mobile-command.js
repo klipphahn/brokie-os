@@ -71,6 +71,15 @@ export default function MobileCommand() {
   const [publisher, setPublisher] = useState(null);
   const [activities, setActivities] = useState([]);
   const [approval, setApproval] = useState(null);
+  const [autopilot, setAutopilot] = useState(null);
+  const statusTime = useMemo(
+    () =>
+      new Date().toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit"
+      }),
+    []
+  );
 
   async function load() {
     setLoading(true);
@@ -113,6 +122,8 @@ export default function MobileCommand() {
       setPublisher(publisherData);
       setActivities(activityData.activities || []);
       setApproval(automationData.approval || null);
+      setAutopilot(automationData.autopilot || null);
+      setAutopilot(automationData.autopilot || null);
     } catch (loadError) {
       setError(loadError.message);
     } finally {
@@ -209,8 +220,16 @@ export default function MobileCommand() {
 
   return (
     <main className="commandShell">
+      <div className="commandStatusBar">
+        <span>{statusTime}</span>
+        <div>
+          <span>5G</span>
+          <span>100%</span>
+        </div>
+      </div>
+
       <section className="commandHeader">
-        <div className="commandHeaderTop">
+        <div className="commandHeaderTop commandAppBar">
           <div>
             <span className="commandEyebrow">BROKIE COMMAND</span>
             <h1>The Brokie control room</h1>
@@ -292,6 +311,90 @@ export default function MobileCommand() {
               <strong>{compact(launchSummary.ready)}</strong>
             </article>
           </div>
+
+          <article className="commandApprovalCard">
+            <div className="commandApprovalHead">
+              <div>
+                <span className="commandEyebrow">BROKIE OS LOOP</span>
+                <h2>What runs automatically</h2>
+              </div>
+              <Sparkles size={18} />
+            </div>
+            {autopilot ? (
+              <>
+                <p>{autopilot.summary}</p>
+                <div className="commandApprovalList">
+                  {(autopilot.alwaysOn || []).map((item) => (
+                    <div key={item.label} className="commandApprovalItem ready">
+                      <strong>{item.label}</strong>
+                      <span>{item.detail}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="commandApprovalList">
+                  <div className="commandApprovalItem needs_attention">
+                    <strong>{autopilot.nextMove?.label || "Next move"}</strong>
+                    <span>{autopilot.nextMove?.detail || "Keep the queue moving."}</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="analyticsEmptyRow">Loading Brokie OS loop…</div>
+            )}
+          </article>
+
+          <article className="commandApprovalCard">
+            <div className="commandApprovalHead">
+              <div>
+                <span className="commandEyebrow">RECENT ACTIVITY</span>
+                <h2>What Brokie OS handled last</h2>
+              </div>
+              <Bell size={18} />
+            </div>
+            <div className="commandApprovalList">
+              {(activities || []).slice(0, 3).length ? (
+                (activities || []).slice(0, 3).map((activity) => (
+                  <div key={activity.id} className="commandApprovalItem ready">
+                    <strong>{activity.title}</strong>
+                    <span>{activity.detail}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="analyticsEmptyRow">No recent activity yet.</div>
+              )}
+            </div>
+          </article>
+
+          <article className="commandApprovalCard">
+            <div className="commandApprovalHead">
+              <div>
+                <span className="commandEyebrow">AUTOPILOT</span>
+                <h2>What runs automatically</h2>
+              </div>
+              <Sparkles size={18} />
+            </div>
+            {autopilot ? (
+              <>
+                <p>{autopilot.summary}</p>
+                <div className="commandApprovalList">
+                  {autopilot.alwaysOn?.map((item) => (
+                    <div key={item.label} className="commandApprovalItem ready">
+                      <strong>{item.label}</strong>
+                      <span>{item.detail}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="commandApprovalList">
+                  <div className="commandApprovalItem ready">
+                    <strong>{autopilot.nextMove?.label || "Next move"}</strong>
+                    <span>{autopilot.nextMove?.detail || "Keep the queue moving."}</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="analyticsEmptyRow">Loading business autopilot…</div>
+            )}
+          </article>
 
           <article className="commandApprovalCard">
             <div className="commandApprovalHead">

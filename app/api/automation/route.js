@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { tryCreateSupabaseAdminClient } from "@/lib/supabase/admin";
 import { loadStorefrontFeed } from "@/lib/storefront-feed";
-import { buildApprovalPlan, runAutomationCycle } from "@/lib/automation";
+import {
+  buildApprovalPlan,
+  buildBusinessAutopilot,
+  runAutomationCycle
+} from "@/lib/automation";
 
 export async function GET() {
   try {
@@ -30,6 +34,11 @@ export async function GET() {
     return NextResponse.json({
       ok: true,
       approval: buildApprovalPlan({
+        feed,
+        launch: feed.launch,
+        brain: feed.brain
+      }),
+      autopilot: buildBusinessAutopilot({
         feed,
         launch: feed.launch,
         brain: feed.brain
@@ -64,6 +73,11 @@ export async function POST(request) {
         ok: true,
         approved: false,
         approval: buildApprovalPlan({
+          feed,
+          launch: feed.launch,
+          brain: feed.brain
+        }),
+        autopilot: buildBusinessAutopilot({
           feed,
           launch: feed.launch,
           brain: feed.brain

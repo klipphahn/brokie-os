@@ -1787,6 +1787,29 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
   max-width:480px;
   margin:0 auto;
 }
+.commandStatusBar {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:10px;
+  padding:0 4px;
+  color:#d8d8d8;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.04em;
+}
+.commandStatusBar div {
+  display:flex;
+  gap:10px;
+}
+.commandAppBar {
+  padding:14px 16px 16px;
+  border-radius:26px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.10);
+  backdrop-filter:blur(18px);
+  box-shadow:0 24px 60px rgba(0,0,0,.22);
+}
 .commandHeader {
   display:grid;
   gap:14px;
@@ -1853,6 +1876,11 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
   text-decoration:none;
   font-weight:900;
   letter-spacing:.03em;
+}
+.commandRefresh {
+  align-self:flex-start;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.10);
 }
 .commandQuickActions {
   display:grid;
@@ -2103,11 +2131,22 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
   backdrop-filter:blur(20px);
   box-shadow:0 24px 65px rgba(0,0,0,.5);
 }
+.commandTabBar::before {
+  content:"";
+  position:absolute;
+  top:6px;
+  left:50%;
+  width:42px;
+  height:4px;
+  border-radius:999px;
+  background:rgba(255,255,255,.16);
+  transform:translateX(-50%);
+}
 .commandTabBar button {
   display:grid;
   justify-items:center;
   gap:4px;
-  padding:11px 6px;
+  padding:16px 6px 10px;
   border-radius:18px;
   border:none;
   background:transparent;
@@ -2136,6 +2175,9 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
   }
   .commandApprovalHead {
     flex-direction:column;
+  }
+  .commandAppBar {
+    border-radius:22px;
   }
   .commandTabBar {
     width:calc(100vw - 12px);

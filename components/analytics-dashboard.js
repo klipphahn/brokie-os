@@ -89,6 +89,7 @@ export default function AnalyticsDashboard() {
     nextBlocked: null
   });
   const [approval, setApproval] = useState(null);
+  const [autopilot, setAutopilot] = useState(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [automating, setAutomating] = useState(false);
@@ -135,6 +136,7 @@ export default function AnalyticsDashboard() {
       setData(payload);
       setLaunch(summarizeLaunchQueue(publisher.items || []));
       setApproval(automation.approval || null);
+      setAutopilot(automation.autopilot || null);
     } catch (loadError) {
       setError(loadError.message);
     } finally {
@@ -443,6 +445,38 @@ export default function AnalyticsDashboard() {
           </div>
 
           <div className="analyticsGrid lowerAnalyticsGrid">
+            <article className="syncStatusCard">
+              <div className="analyticsSectionHead">
+                <div>
+                  <span className="eyebrow">AUTOPILOT</span>
+                  <h3>Business loop</h3>
+                </div>
+                <Workflow />
+              </div>
+
+              {autopilot ? (
+                <div className="approvalQueue">
+                  <p className="approvalSummary">{autopilot.summary}</p>
+                  <div className="approvalItems">
+                    {(autopilot.alwaysOn || []).map((item) => (
+                      <div key={item.label} className="approvalItem ready">
+                        <strong>{item.label}</strong>
+                        <p>{item.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="approvalItems">
+                    <div className="approvalItem needs_attention">
+                      <strong>{autopilot.nextMove?.label || "Next move"}</strong>
+                      <p>{autopilot.nextMove?.detail || "Keep the queue moving."}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="analyticsEmptyRow">Loading autopilot plan…</div>
+              )}
+            </article>
+
             <article className="syncStatusCard">
               <div className="analyticsSectionHead">
                 <div>

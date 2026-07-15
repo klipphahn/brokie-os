@@ -1,0 +1,20 @@
+{
+  "brokie_feed": {
+    "os_loop": {
+      "eyebrow": "BROKIE OS CONTROL LOOP",
+      "title": "Brokie OS runs the storefront behind the scenes.",
+      "body": "Products, policies, featured drops, and launch timing all flow from the same feed, so the merch page stays current without manual edits in Shopify.",
+      "north_star": "North star",
+      "next_move": "Next move",
+      "launch_queue": "Launch queue",
+      "cadence": "Cadence"
+    },
+    "activity": {
+      "eyebrow": "RECENT ACTIVITY",
+      "title": "What Brokie OS handled last.",
+      "body": "The storefront stays aligned because the feed follows the latest automation, launch, and merchandising activity.",
+      "empty_title": "No recent activity yet.",
+      "empty_body": "Once Brokie OS runs a sync or approval, it appears here."
+    }
+  }
+}

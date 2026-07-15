@@ -61,6 +61,44 @@
   #brokie-feed-{{ section.id }} .brokie-feed__policies {
     display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:28px;
   }
+  #brokie-feed-{{ section.id }} .brokie-feed__control {
+    margin-top:28px;
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__control-grid {
+    display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:14px;
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__control-card {
+    background:var(--bb-panel); border:1px solid #303030; padding:16px;
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__control-card span {
+    display:block; margin-bottom:8px; color:var(--bb-orange); font-size:10px; font-weight:900;
+    letter-spacing:.16em; text-transform:uppercase;
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__control-card strong {
+    display:block; color:var(--bb-text); font-size:18px; line-height:1.2;
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__control-card p {
+    margin:8px 0 0; color:var(--bb-muted); font-size:13px; line-height:1.55;
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__activity {
+    margin-top:28px;
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__activity-grid {
+    display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:14px;
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__activity-card {
+    background:var(--bb-panel); border:1px solid #303030; padding:16px;
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__activity-card span {
+    display:block; margin-bottom:8px; color:var(--bb-orange); font-size:10px; font-weight:900;
+    letter-spacing:.16em; text-transform:uppercase;
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__activity-card strong {
+    display:block; color:var(--bb-text); font-size:16px; line-height:1.3;
+  }
+  #brokie-feed-{{ section.id }} .brokie-feed__activity-card p {
+    margin:8px 0 0; color:var(--bb-muted); font-size:13px; line-height:1.55;
+  }
   #brokie-feed-{{ section.id }} .brokie-feed__policy-head {
     margin-top:28px;
     padding:0 2px;
@@ -116,6 +154,18 @@
     node.href = url; return node;
   };
   const money = (value, currency) => value == null ? '' : new Intl.NumberFormat(undefined, { style:'currency', currency:currency || 'USD' }).format(value);
+  const osLabel = {{ 'brokie_feed.os_loop.eyebrow' | t | json }};
+  const osTitle = {{ 'brokie_feed.os_loop.title' | t | json }};
+  const osBody = {{ 'brokie_feed.os_loop.body' | t | json }};
+  const northStarLabel = {{ 'brokie_feed.os_loop.north_star' | t | json }};
+  const nextMoveLabel = {{ 'brokie_feed.os_loop.next_move' | t | json }};
+  const launchQueueLabel = {{ 'brokie_feed.os_loop.launch_queue' | t | json }};
+  const cadenceLabel = {{ 'brokie_feed.os_loop.cadence' | t | json }};
+  const activityLabel = {{ 'brokie_feed.activity.eyebrow' | t | json }};
+  const activityTitle = {{ 'brokie_feed.activity.title' | t | json }};
+  const activityBody = {{ 'brokie_feed.activity.body' | t | json }};
+  const activityEmptyTitle = {{ 'brokie_feed.activity.empty_title' | t | json }};
+  const activityEmptyBody = {{ 'brokie_feed.activity.empty_body' | t | json }};
 
   fetch(root.dataset.feedUrl, {
     cache: 'no-store',
@@ -181,6 +231,80 @@
         policies.append(shipping, returns, fulfillment);
         root.appendChild(policies);
       }
+
+      const control = element('section', 'brokie-feed__control');
+      control.append(
+        element('span', 'brokie-feed__section-label', osLabel),
+        element('h3', '', osTitle),
+        element('p', '', osBody)
+      );
+      const controlGrid = element('div', 'brokie-feed__control-grid');
+      const launchReady = Number(data.launch?.ready || 0);
+      const launchBlocked = Number(data.launch?.blocked || 0);
+      const launchLive = Number(data.launch?.live || 0);
+      const controlCards = [
+        {
+          label: northStarLabel,
+          value: store.manifesto?.headline || data.brain?.northStar || '',
+          detail: data.brain?.summary || ''
+        },
+        {
+          label: nextMoveLabel,
+          value: data.brain?.nextAction || store.manifesto?.body || '',
+          detail: data.brain?.brandRule || ''
+        },
+        {
+          label: launchQueueLabel,
+          value: `${launchReady} ready · ${launchBlocked} blocked`,
+          detail: `${launchLive} live items already on the storefront.`
+        },
+        {
+          label: cadenceLabel,
+          value: 'Daily sales sync · Weekly approval pass',
+          detail: 'Brokie OS keeps the feed current without manual Shopify edits.'
+        }
+      ];
+      controlCards.forEach((item) => {
+        const card = element('article', 'brokie-feed__control-card');
+        card.append(
+          element('span', '', item.label),
+          element('strong', '', item.value),
+          element('p', '', item.detail)
+        );
+        controlGrid.appendChild(card);
+      });
+      control.appendChild(controlGrid);
+      root.appendChild(control);
+
+      const activityItems = Array.isArray(data.activity) ? data.activity.slice(0, 3) : [];
+      const activity = element('section', 'brokie-feed__activity');
+      activity.append(
+        element('span', 'brokie-feed__section-label', activityLabel),
+        element('h3', '', activityTitle),
+        element('p', '', activityBody)
+      );
+      const activityGrid = element('div', 'brokie-feed__activity-grid');
+      if (activityItems.length) {
+        activityItems.forEach((item) => {
+          const card = element('article', 'brokie-feed__activity-card');
+          card.append(
+            element('span', '', item.status || item.action || 'activity'),
+            element('strong', '', item.title || ''),
+            element('p', '', item.detail || '')
+          );
+          activityGrid.appendChild(card);
+        });
+      } else {
+        const card = element('article', 'brokie-feed__activity-card');
+        card.append(
+          element('span', '', 'activity'),
+          element('strong', '', activityEmptyTitle),
+          element('p', '', activityEmptyBody)
+        );
+        activityGrid.appendChild(card);
+      }
+      activity.appendChild(activityGrid);
+      root.appendChild(activity);
 
       const manifesto = element('div','brokie-feed__manifesto');
       manifesto.append(element('h2','',store.manifesto.headline),element('p','',store.manifesto.body));
