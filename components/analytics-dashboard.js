@@ -88,6 +88,7 @@ export default function AnalyticsDashboard() {
     live: 0,
     nextBlocked: null
   });
+  const [approval, setApproval] = useState(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [automating, setAutomating] = useState(false);
@@ -99,14 +100,17 @@ export default function AnalyticsDashboard() {
     setError("");
 
     try {
-      const [response, publisherResponse] = await Promise.all([
+      const [response, publisherResponse, automationResponse] = await Promise.all([
         fetch(`/api/analytics?days=${days}`, {
           cache: "no-store"
         }),
         fetch("/api/publisher", { cache: "no-store" })
+        ,
+        fetch("/api/automation", { cache: "no-store" })
       ]);
       const payload = await response.json();
       const publisher = await publisherResponse.json();
+      const automation = await automationResponse.json();
 
       if (!response.ok || !payload.ok) {
         throw new Error(
@@ -121,8 +125,16 @@ export default function AnalyticsDashboard() {
         );
       }
 
+      if (!automationResponse.ok || !automation.ok) {
+        throw new Error(
+          automation.error ||
+            "Approval queue could not be loaded."
+        );
+      }
+
       setData(payload);
       setLaunch(summarizeLaunchQueue(publisher.items || []));
+      setApproval(automation.approval || null);
     } catch (loadError) {
       setError(loadError.message);
     } finally {
@@ -172,7 +184,7 @@ export default function AnalyticsDashboard() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ full: false })
+        body: JSON.stringify({ full: false, approved: true })
       });
       const payload = await response.json();
 
@@ -431,6 +443,42 @@ export default function AnalyticsDashboard() {
           </div>
 
           <div className="analyticsGrid lowerAnalyticsGrid">
+            <article className="syncStatusCard">
+              <div className="analyticsSectionHead">
+                <div>
+                  <span className="eyebrow">APPROVAL CENTER</span>
+                  <h3>Major approvals only</h3>
+                </div>
+                <Workflow />
+              </div>
+
+              {approval ? (
+                <div className="approvalQueue">
+                  <p className="approvalSummary">{approval.summary}</p>
+                  <div className="approvalItems">
+                    {(approval.actions || []).map((item) => (
+                      <div key={item.id} className={`approvalItem ${item.status}`}>
+                        <strong>{item.label}</strong>
+                        <p>{item.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    className="secondary fullSyncButton"
+                    onClick={runAutomation}
+                    disabled={syncing || automating}
+                  >
+                    <Workflow size={15} />
+                    {automating ? "Running…" : approval.approveLabel || "Approve & run"}
+                  </button>
+                </div>
+              ) : (
+                <div className="analyticsEmptyRow">
+                  Loading approval queue…
+                </div>
+              )}
+            </article>
+
             <article className="syncStatusCard">
               <div className="analyticsSectionHead">
                 <div>

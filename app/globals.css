@@ -737,6 +737,46 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
 .fullSyncButton {
   width:100%; justify-content:center; margin-top:14px;
 }
+.approvalQueue {
+  display:grid;
+  gap:12px;
+}
+.approvalSummary {
+  margin:0;
+  color:#bbb;
+  line-height:1.5;
+}
+.approvalItems {
+  display:grid;
+  gap:10px;
+}
+.approvalItem {
+  padding:12px;
+  border-radius:11px;
+  border:1px solid #2f2f2f;
+  background:#151515;
+}
+.approvalItem.ready {
+  border-color:#235a34;
+  background:#122018;
+}
+.approvalItem.needs_attention {
+  border-color:#5f3810;
+  background:#21170c;
+}
+.approvalItem strong {
+  display:block;
+  margin-bottom:5px;
+  color:#fff;
+  font-size:12px;
+  text-transform:uppercase;
+}
+.approvalItem p {
+  margin:0;
+  color:#8f8f8f;
+  font-size:11px;
+  line-height:1.45;
+}
 .lowerAnalyticsGrid {
   grid-template-columns:minmax(0,1.35fr) minmax(300px,.85fr);
 }

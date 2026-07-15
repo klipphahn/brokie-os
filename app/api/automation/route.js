@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { tryCreateSupabaseAdminClient } from "@/lib/supabase/admin";
 import { loadStorefrontFeed } from "@/lib/storefront-feed";
-import { runAutomationCycle } from "@/lib/automation";
+import { buildApprovalPlan, runAutomationCycle } from "@/lib/automation";
 
 export async function GET() {
   try {
@@ -29,6 +29,11 @@ export async function GET() {
 
     return NextResponse.json({
       ok: true,
+      approval: buildApprovalPlan({
+        feed,
+        launch: feed.launch,
+        brain: feed.brain
+      }),
       automation: {
         lastSync: latestRun || null,
         readyCount: feed.launch?.ready || 0,
@@ -52,6 +57,21 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));
+    if (!body.approved) {
+      const supabase = tryCreateSupabaseAdminClient();
+      const feed = await loadStorefrontFeed(supabase);
+      return NextResponse.json({
+        ok: true,
+        approved: false,
+        approval: buildApprovalPlan({
+          feed,
+          launch: feed.launch,
+          brain: feed.brain
+        }),
+        message:
+          "Review the major approvals and send the request again with approval enabled."
+      });
+    }
     const payload = await runAutomationCycle({
       full: Boolean(body.full)
     });
