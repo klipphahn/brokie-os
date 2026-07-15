@@ -70,24 +70,27 @@ export default function MobileCommand() {
   const [merch, setMerch] = useState(null);
   const [publisher, setPublisher] = useState(null);
   const [activities, setActivities] = useState([]);
+  const [approval, setApproval] = useState(null);
 
   async function load() {
     setLoading(true);
     setError("");
 
     try {
-      const [analyticsResponse, merchResponse, publisherResponse, activityResponse] =
+      const [analyticsResponse, merchResponse, publisherResponse, activityResponse, automationResponse] =
         await Promise.all([
           fetch("/api/analytics?days=30", { cache: "no-store" }),
           fetch("/api/storefront/featured", { cache: "no-store" }),
           fetch("/api/publisher", { cache: "no-store" }),
-          fetch("/api/activity", { cache: "no-store" })
+          fetch("/api/activity", { cache: "no-store" }),
+          fetch("/api/automation", { cache: "no-store" })
         ]);
 
       const analyticsData = await analyticsResponse.json();
       const merchData = await merchResponse.json();
       const publisherData = await publisherResponse.json();
       const activityData = await activityResponse.json();
+      const automationData = await automationResponse.json();
 
       if (!analyticsResponse.ok || !analyticsData.ok) {
         throw new Error(analyticsData.error || "Could not load analytics.");
@@ -101,11 +104,15 @@ export default function MobileCommand() {
       if (!activityResponse.ok || !activityData.ok) {
         throw new Error(activityData.error || "Could not load alerts.");
       }
+      if (!automationResponse.ok || !automationData.ok) {
+        throw new Error(automationData.error || "Could not load approvals.");
+      }
 
       setAnalytics(analyticsData);
       setMerch(merchData);
       setPublisher(publisherData);
       setActivities(activityData.activities || []);
+      setApproval(automationData.approval || null);
     } catch (loadError) {
       setError(loadError.message);
     } finally {
@@ -168,7 +175,7 @@ export default function MobileCommand() {
       const response = await fetch("/api/automation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ full: false })
+        body: JSON.stringify({ full: false, approved: true })
       });
       const payload = await response.json();
 
@@ -280,6 +287,39 @@ export default function MobileCommand() {
               <strong>{compact(launchSummary.ready)}</strong>
             </article>
           </div>
+
+          <article className="commandApprovalCard">
+            <div className="commandApprovalHead">
+              <div>
+                <span className="commandEyebrow">APPROVALS</span>
+                <h2>Major approvals only</h2>
+              </div>
+              <Workflow size={18} />
+            </div>
+            {approval ? (
+              <>
+                <p>{approval.summary}</p>
+                <div className="commandApprovalList">
+                  {(approval.actions || []).map((item) => (
+                    <div key={item.id} className={`commandApprovalItem ${item.status}`}>
+                      <strong>{item.label}</strong>
+                      <span>{item.detail}</span>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  className="commandApprovalButton"
+                  onClick={runAutomation}
+                  disabled={syncing || automating}
+                >
+                  {automating ? <LoaderCircle className="spin" size={16} /> : <Workflow size={16} />}
+                  {approval.approveLabel || "Approve & run"}
+                </button>
+              </>
+            ) : (
+              <div className="analyticsEmptyRow">Loading approvals…</div>
+            )}
+          </article>
         </section>
       )}
 
@@ -315,7 +355,7 @@ export default function MobileCommand() {
                   <strong>{item.concept?.headline || item.design?.name || "Queued design"}</strong>
                   <p>{item.product?.printful_status || "not configured"}</p>
                 </div>
-                <span>{item.product?.status || item.design?.status || "queued"}</span>
+              <span>{item.product?.status || item.design?.status || "queued"}</span>
               </article>
             ))}
           </div>
