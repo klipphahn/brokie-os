@@ -215,6 +215,11 @@ export default function MobileCommand() {
             <span className="commandEyebrow">BROKIE COMMAND</span>
             <h1>The Brokie control room</h1>
             <p>Quick access to the merch brain, launches, and alerts from your phone.</p>
+            <div className="commandHeroPills">
+              <span>Major approvals only</span>
+              <span>{approval?.readyCount ?? 0} ready</span>
+              <span>{approval?.attentionCount ?? 0} need attention</span>
+            </div>
           </div>
           <button className="commandRefresh" onClick={load} disabled={loading}>
             {loading ? <LoaderCircle className="spin" size={16} /> : <RefreshCw size={16} />}
@@ -235,7 +240,7 @@ export default function MobileCommand() {
             <Package size={16} />
             Sync merch
           </button>
-          <a href="/merch" target="_blank" rel="noreferrer">
+          <a href="/merch" target="_blank" rel="noreferrer" className="commandQuickActionWide">
             Open merch
             <ExternalLink size={15} />
           </a>
