@@ -8,3 +8,4 @@ npm-debug.log*
 .vercel/
 supabase/.temp/
 .env*
+work/

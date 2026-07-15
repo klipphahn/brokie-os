@@ -296,6 +296,32 @@ export default async function MerchPage() {
         </article>
       </section>
 
+      <section className="merchAssurance">
+        <div className="merchAssuranceCopy">
+          <span className="merchEyebrow">STORE POLICY</span>
+          <h2>Clear shipping, return, and fulfillment details.</h2>
+          <p>
+            We keep the buying experience simple: every item is made to order,
+            tracking goes out automatically, and any issue with production gets
+            handled fast.
+          </p>
+        </div>
+        <div className="merchAssuranceGrid">
+          <article>
+            <span>{storefront.policies.shipping.title}</span>
+            <p>{storefront.policies.shipping.body}</p>
+          </article>
+          <article>
+            <span>{storefront.policies.returns.title}</span>
+            <p>{storefront.policies.returns.body}</p>
+          </article>
+          <article>
+            <span>Fulfillment</span>
+            <p>{storefront.policies.note}</p>
+          </article>
+        </div>
+      </section>
+
       <section className="merchSection">
         <div className="merchSectionHead">
           <div>
