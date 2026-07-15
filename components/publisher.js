@@ -270,6 +270,15 @@ export default function Publisher() {
       );
   }, [catalog, merchOptions]);
 
+  const currentFamily = productTypeFamily(currentProductType());
+  const currentBlankLabel = defaultBlankForProductType(currentProductType());
+  const familyLabel =
+    currentFamily === "headwear"
+      ? "headwear"
+      : currentFamily === "sticker"
+        ? "sticker"
+        : "apparel";
+
   async function loadPrintful(item) {
     setPrintful(null);
 
@@ -940,7 +949,7 @@ export default function Publisher() {
                 </label>
               </div>
 
-              <div className="printfulBridgePanel">
+                <div className="printfulBridgePanel">
                 <div className="printfulBridgeHead">
                   <div>
                     <PackageCheck size={20} />
@@ -948,8 +957,7 @@ export default function Publisher() {
                       <strong>
                         Printful Fulfillment Bridge
                       </strong>
-                      Imported Shopify product · Comfort Colors
-                      1717 · API-verified fulfillment
+                      Imported Shopify product · {currentBlankLabel} · {familyLabel} bridge
                     </span>
                   </div>
 
@@ -1276,9 +1284,10 @@ export default function Publisher() {
                   Imported products can take a few seconds to
                   several hours to appear in Printful after
                   Shopify creates or updates them. Variant names
-                  are matched automatically; a single “Default
-                  Title” variant uses the default color and size
-                  above.
+                  are matched automatically, and the bridge uses
+                  front-only artwork for headwear and stickers.
+                  A single “Default Title” variant uses the
+                  default color and size above.
                 </p>
               </div>
 

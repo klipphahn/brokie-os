@@ -398,21 +398,6 @@ export default async function MerchPage() {
           )}
       </section>
 
-      <section className="merchPolicies">
-        <article>
-          <span>{storefront.policies.shipping.title}</span>
-          <p>{storefront.policies.shipping.body}</p>
-        </article>
-        <article>
-          <span>{storefront.policies.returns.title}</span>
-          <p>{storefront.policies.returns.body}</p>
-        </article>
-        <article>
-          <span>Fulfillment</span>
-          <p>{storefront.policies.note}</p>
-        </article>
-      </section>
-
       <section className="merchStory">
         <article>
           <span>BUILT FOR</span>
