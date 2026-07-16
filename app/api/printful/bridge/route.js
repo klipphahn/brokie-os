@@ -192,7 +192,8 @@ export async function GET(request) {
 
     const inspection = await inspectPrintfulProduct({
       shopifyProductId:
-        product.shopify_product_id
+        product.shopify_product_id,
+      productType: product.product_type
     });
 
     const saved = await saveInspection(
@@ -286,7 +287,8 @@ export async function POST(request) {
           shopifyProductId:
             product.shopify_product_id,
           syncProductId:
-            discovered.syncProduct?.id
+            discovered.syncProduct?.id,
+          productType: product.product_type
         });
 
       const saved = await saveInspection(
@@ -319,11 +321,17 @@ export async function POST(request) {
       const frontArtworkUrl =
         body.artworkUrl ||
         product.designs?.front_artwork_url ||
-        product.designs?.thumbnail_url;
+        null;
       const backArtworkUrl =
         body.backArtworkUrl ||
         product.designs?.back_artwork_url ||
         null;
+
+      if (!frontArtworkUrl) {
+        throw new Error(
+          "Print-ready front artwork is missing. Upload the transparent print file before configuring Printful."
+        );
+      }
 
       const configured =
         await autoConfigurePrintful({
@@ -345,7 +353,8 @@ export async function POST(request) {
           defaultSize:
             body.defaultSize ||
             process.env.PRINTFUL_DEFAULT_SIZE ||
-            "M"
+            "M",
+          force: body.force !== false
         });
 
       const failures = configured.results.filter(
@@ -468,7 +477,8 @@ export async function POST(request) {
       const inspection =
         await inspectPrintfulProduct({
           shopifyProductId:
-            product.shopify_product_id
+            product.shopify_product_id,
+          productType: product.product_type
         });
 
       const saved = await saveInspection(

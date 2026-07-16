@@ -410,11 +410,10 @@ function buildMockupSvg(productKey, isFront) {
     tee: shirtBody,
     "crop-top": `
       <path filter="url(#shadow)" fill="url(#fabric)" stroke="#343434" stroke-width="3"
-        d="M410 220 Q470 135 600 135 Q730 135 790 220
-           L930 275 L1090 470 L975 595 L885 520
-           L885 930 Q600 1000 315 930 L315 520
-           L225 595 L110 470 L270 275 Z"/>
-      <path d="M505 228 Q600 302 695 228" fill="#111" stroke="#3a3a3a" stroke-width="12"/>`,
+        d="M470 190 Q520 145 555 135 Q600 165 645 135 Q680 145 730 190
+           L820 300 Q760 420 730 520 L790 930
+           Q600 1000 410 930 L470 520 Q440 420 380 300 Z"/>
+      <path d="M510 190 Q600 275 690 190" fill="#111" stroke="#3a3a3a" stroke-width="12"/>`,
     hoodie: hoodieBody,
     "long-sleeve": longSleeveBody,
     hat: hatBody,
@@ -506,19 +505,22 @@ async function saveArtwork(assets, concept, direction, variationIndex) {
     return { path, publicUrl: data.publicUrl };
   }
 
-  const [frontArtwork, backArtwork, frontMockup, backMockup] =
-    await Promise.all([
-      upload("front-print", Buffer.from(assets.front.base64, "base64")),
-      upload("back-print", Buffer.from(assets.back.base64, "base64")),
-      upload("front-mockup", assets.frontMockup),
-      upload("back-mockup", assets.backMockup)
-    ]);
+  const [frontArtwork, frontMockup] = await Promise.all([
+    upload("front-print", Buffer.from(assets.front.base64, "base64")),
+    upload("front-mockup", assets.frontMockup)
+  ]);
+  const [backArtwork, backMockup] = assets.back && assets.backMockup
+    ? await Promise.all([
+        upload("back-print", Buffer.from(assets.back.base64, "base64")),
+        upload("back-mockup", assets.backMockup)
+      ])
+    : [null, null];
 
   const urls = {
     frontArtwork: frontArtwork.publicUrl,
-    backArtwork: backArtwork.publicUrl,
+    backArtwork: backArtwork?.publicUrl || null,
     frontMockup: frontMockup.publicUrl,
-    backMockup: backMockup.publicUrl
+    backMockup: backMockup?.publicUrl || null
   };
 
   const metadata = {
@@ -538,7 +540,7 @@ async function saveArtwork(assets, concept, direction, variationIndex) {
         name: concept.concept_name,
         front_artwork_url: urls.frontArtwork,
         back_artwork_url: urls.backArtwork,
-        thumbnail_url: urls.backMockup,
+        thumbnail_url: urls.backMockup || urls.frontMockup,
         status: "generated",
         prompt: direction.prompt,
         product_type: direction.productType,
@@ -576,9 +578,9 @@ async function saveArtwork(assets, concept, direction, variationIndex) {
     urls,
     paths: {
       frontArtwork: frontArtwork.path,
-      backArtwork: backArtwork.path,
+      backArtwork: backArtwork?.path || null,
       frontMockup: frontMockup.path,
-      backMockup: backMockup.path
+      backMockup: backMockup?.path || null
     },
     designId: insertedDesign?.id || null
   };
@@ -658,12 +660,20 @@ export async function POST(request) {
         ]);
       } else {
         front = await createArtwork(apiKey, concept, direction, "front");
-        back = { ...front };
+        back = null;
       }
-      const [frontMockup, backMockup] = await Promise.all([
-        createProductMockup(front.base64, "front", direction.productType),
-        createProductMockup(back.base64, "back", direction.productType)
-      ]);
+      const frontMockup = await createProductMockup(
+        front.base64,
+        "front",
+        direction.productType
+      );
+      const backMockup = back
+        ? await createProductMockup(
+            back.base64,
+            "back",
+            direction.productType
+          )
+        : null;
       const saved = await saveArtwork(
         { front, back, frontMockup, backMockup },
         concept,
@@ -672,7 +682,9 @@ export async function POST(request) {
       );
 
       const frontMockupDataUrl = `data:image/png;base64,${frontMockup.toString("base64")}`;
-      const backMockupDataUrl = `data:image/png;base64,${backMockup.toString("base64")}`;
+      const backMockupDataUrl = backMockup
+        ? `data:image/png;base64,${backMockup.toString("base64")}`
+        : null;
 
       results.push({
         concept,
@@ -682,29 +694,38 @@ export async function POST(request) {
             publicUrl: saved.urls?.frontArtwork || null,
             transparencyMode: front.transparencyMode
           },
-          back: {
-            dataUrl: `data:image/png;base64,${back.base64}`,
-            publicUrl: saved.urls?.backArtwork || null,
-            transparencyMode: back.transparencyMode
-          }
+          back: back
+            ? {
+                dataUrl: `data:image/png;base64,${back.base64}`,
+                publicUrl: saved.urls?.backArtwork || null,
+                transparencyMode: back.transparencyMode
+              }
+            : null
         },
         mockups: {
           front: {
             dataUrl: frontMockupDataUrl,
             publicUrl: saved.urls?.frontMockup || null
           },
-          back: {
-            dataUrl: backMockupDataUrl,
-            publicUrl: saved.urls?.backMockup || null
-          }
+          back: backMockupDataUrl
+            ? {
+                dataUrl: backMockupDataUrl,
+                publicUrl: saved.urls?.backMockup || null
+              }
+            : null
         },
         // Backwards-compatible primary image for older Factory clients.
         image: {
-          dataUrl: backMockupDataUrl,
-          publicUrl: saved.urls?.backMockup || saved.urls?.backArtwork || null,
+          dataUrl: backMockupDataUrl || frontMockupDataUrl,
+          publicUrl:
+            saved.urls?.backMockup ||
+            saved.urls?.backArtwork ||
+            saved.urls?.frontMockup ||
+            saved.urls?.frontArtwork ||
+            null,
           savedToSupabase: saved.saved,
           designId: saved.designId,
-          transparencyMode: back.transparencyMode
+          transparencyMode: back?.transparencyMode || front.transparencyMode
         }
       });
     }
