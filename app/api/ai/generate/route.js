@@ -295,6 +295,13 @@ Do not use black inside the foreground artwork.`,
 
 function normalizeProductType(productType) {
   const value = String(productType || "").toLowerCase();
+  if (
+    value.includes("crop top") ||
+    value.includes("crop-top") ||
+    value.includes("baby tee")
+  ) {
+    return "crop-top";
+  }
   if (value.includes("zip hoodie") || value.includes("zip-up")) {
     return "hoodie";
   }
@@ -356,6 +363,13 @@ function buildMockupSvg(productKey, isFront) {
 
   const shapes = {
     tee: shirtBody,
+    "crop-top": `
+      <path filter="url(#shadow)" fill="url(#fabric)" stroke="#343434" stroke-width="3"
+        d="M410 220 Q470 135 600 135 Q730 135 790 220
+           L930 275 L1090 470 L975 595 L885 520
+           L885 930 Q600 1000 315 930 L315 520
+           L225 595 L110 470 L270 275 Z"/>
+      <path d="M505 228 Q600 302 695 228" fill="#111" stroke="#3a3a3a" stroke-width="12"/>`,
     hoodie: hoodieBody,
     "long-sleeve": longSleeveBody,
     hat: hatBody,

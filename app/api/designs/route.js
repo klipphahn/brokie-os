@@ -17,6 +17,9 @@ function slugify(value) {
 
 function normalizeProductType(productType) {
   const value = String(productType || "").toLowerCase();
+  if (value.includes("crop top") || value.includes("crop-top") || value.includes("baby tee")) {
+    return "crop-top";
+  }
   if (value.includes("zip hoodie") || value.includes("zip-up")) {
     return "hoodie";
   }
@@ -51,6 +54,11 @@ async function createGarmentMockup(artwork, side, productType) {
        ${isFront
          ? '<path d="M500 215 Q600 330 700 215" fill="#111" stroke="#3a3a3a" stroke-width="12"/>'
          : '<path d="M505 220 Q600 285 695 220" fill="none" stroke="#3a3a3a" stroke-width="10"/>'}`,
+    "crop-top": `<path filter="url(#shadow)" fill="url(#shirt)" stroke="#343434" stroke-width="3"
+        d="M420 245 Q470 135 600 135 Q730 135 780 245 L930 300 L1085 500 L970 610 L880 530 L880 945 Q600 1015 320 945 L320 530 L230 610 L115 500 L270 300 Z"/>
+       ${isFront
+         ? '<path d="M510 250 Q600 320 690 250" fill="#111" stroke="#3a3a3a" stroke-width="12"/>'
+         : '<path d="M515 255 Q600 300 685 255" fill="none" stroke="#3a3a3a" stroke-width="10"/>'}`,
     hoodie: `<path filter="url(#shadow)" fill="url(#shirt)" stroke="#343434" stroke-width="3"
         d="M410 245 Q455 110 600 95 Q745 110 790 245 L960 300 L1120 560 L930 670 L850 515 L850 1250 Q600 1325 350 1250 L350 515 L270 670 L80 560 L240 300 Z"/>
        <path d="M455 250 Q600 390 745 250 Q700 155 600 145 Q500 155 455 250" fill="#111" stroke="#3a3a3a" stroke-width="10"/>`,
@@ -107,6 +115,10 @@ async function createGarmentMockup(artwork, side, productType) {
       ? 470
       : productKey === "sticker"
         ? 360
+        : productKey === "crop-top"
+        ? isFront
+          ? 430
+          : 390
         : productKey === "hoodie"
         ? isFront
           ? 470
