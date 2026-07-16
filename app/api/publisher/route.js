@@ -56,9 +56,8 @@ function conceptFromDesign(design) {
       back: raw.mockups?.back || design.thumbnail_url || null
     },
     artworkUrl:
-      raw.mockups?.front ||
-      design.thumbnail_url ||
-      design.front_artwork_url
+      design.front_artwork_url ||
+      null
   };
 }
 

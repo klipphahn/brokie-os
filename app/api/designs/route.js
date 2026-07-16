@@ -17,7 +17,12 @@ function slugify(value) {
 
 function normalizeProductType(productType) {
   const value = String(productType || "").toLowerCase();
-  if (value.includes("crop top") || value.includes("crop-top") || value.includes("baby tee")) {
+  if (
+    value.includes("crop top") ||
+    value.includes("crop-top") ||
+    value.includes("crop tank") ||
+    value.includes("baby tee")
+  ) {
     return "crop-top";
   }
   if (value.includes("zip hoodie") || value.includes("zip-up")) {

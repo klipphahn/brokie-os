@@ -79,6 +79,35 @@ function slugify(value) {
     .slice(0, 60);
 }
 
+function productLayoutRules(productType) {
+  const template = getProductTypeTemplate(productType);
+
+  if (template.family === "headwear") {
+    return `Create one front-only headwear concept. The artwork must be a compact,
+embroidery-friendly emblem with bold shapes, limited fine detail, and no large
+back composition. Populate the required back-direction fields with a note that
+the product is front-only and should reuse the same visual system.`;
+  }
+
+  if (template.family === "sticker") {
+    return `Create one front-only die-cut sticker concept. The artwork must be a
+self-contained silhouette with a strong outer contour, readable lettering, and
+no garment placement language. Populate the required back-direction fields with
+a note that this product has one printable side.`;
+  }
+
+  return `Design it as a coordinated two-sided garment. The front must be a restrained
+left-chest mark. The back must be the primary graphic and may use the exact
+headline. The two sides must share symbols, texture, palette, and visual DNA.`;
+}
+
+function defaultPlacement(productType) {
+  const family = getProductTypeTemplate(productType).family;
+  if (family === "headwear") return "Front embroidery";
+  if (family === "sticker") return "Single die-cut front";
+  return "Small left chest + large back";
+}
+
 async function createConcept(apiKey, direction, variationIndex, priorNames) {
   const model = process.env.OPENAI_TEXT_MODEL || "gpt-5.4-mini";
   const uniqueness = priorNames.length
@@ -101,9 +130,7 @@ async function createConcept(apiKey, direction, variationIndex, priorNames) {
               type: "input_text",
               text: `${BRAND_RULES}
 Create one commercially usable merch concept.
-Design it as a coordinated two-sided garment. The front must be a restrained
-left-chest mark. The back must be the primary graphic and may use the exact
-headline. The two sides must share symbols, texture, palette, and visual DNA.
+${productLayoutRules(direction.productType)}
 This is variation ${variationIndex + 1}. It must feel meaningfully different from the other variations.
 ${uniqueness}`
             }
@@ -218,6 +245,9 @@ async function removeBlackBackground(base64) {
 async function createArtwork(apiKey, concept, direction, side) {
   const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
   const isFront = side === "front";
+  const template = getProductTypeTemplate(direction.productType);
+  const isHeadwear = template.family === "headwear";
+  const isSticker = template.family === "sticker";
   const sideDirection = isFront
     ? concept.front_art_direction
     : concept.back_art_direction;
@@ -225,21 +255,35 @@ async function createArtwork(apiKey, concept, direction, side) {
     ? concept.front_image_prompt
     : concept.back_image_prompt;
   const commonPrompt = `${BRAND_RULES}
-Create print-ready apparel artwork only—not a shirt mockup or presentation sheet.
+Create print-ready merchandise artwork only—not a product mockup or presentation sheet.
 Product: ${direction.productType}
 Audience: ${direction.audience}
 Visual style: ${direction.style}
 Mood: ${direction.mood}
 Placement intent: ${direction.placement}
 Approved palette: ${direction.colors.join(", ")}
-Garment side: ${isFront ? "FRONT LEFT-CHEST PRINT" : "BACK LARGE PRINT"}
+Printable side: ${
+    isHeadwear
+      ? "FRONT EMBROIDERY"
+      : isSticker
+        ? "SINGLE DIE-CUT FRONT"
+        : isFront
+          ? "FRONT LEFT-CHEST PRINT"
+          : "BACK LARGE PRINT"
+  }
 Concept headline: ${concept.headline}
 Overall art direction: ${concept.art_direction}
 Side-specific direction: ${sideDirection}
 Detailed request: ${sidePrompt}
-${isFront
-  ? "Create a compact emblem suitable for a 3.5 inch left-chest print. Do not create the large back composition on this side."
-  : "Create the main large back graphic. Use the headline exactly if text is requested. Do not add a garment, model, room, or product mockup."}
+${
+    isHeadwear
+      ? "Create one compact embroidery-friendly front emblem with bold closed shapes and limited fine detail. Do not add a hat or model."
+      : isSticker
+        ? "Create one self-contained die-cut sticker graphic with a strong outer contour. Do not add a sticker sheet, surface, product, or room."
+        : isFront
+          ? "Create a compact emblem suitable for a 3.5 inch left-chest print. Do not create the large back composition on this side."
+          : "Create the main large back graphic. Use the headline exactly if text is requested. Do not add a garment, model, room, or product mockup."
+  }
 Center the isolated artwork with generous clear space. Keep wording exact and minimal. High contrast and screen-print friendly.`;
 
   let { response, payload } = await requestImage(
@@ -298,6 +342,7 @@ function normalizeProductType(productType) {
   if (
     value.includes("crop top") ||
     value.includes("crop-top") ||
+    value.includes("crop tank") ||
     value.includes("baby tee")
   ) {
     return "crop-top";
@@ -555,15 +600,20 @@ export async function POST(request) {
 
     const body = await request.json();
 
+    const productType = String(body.productType || "Heavyweight Tee").trim();
+    const productTemplate = getProductTypeTemplate(productType);
+    const requestedPlacement = String(body.placement || "").trim();
+
     const direction = {
       prompt: String(body.prompt || "").trim(),
-      productType: String(body.productType || "Heavyweight Tee").trim(),
+      productType,
       audience: String(body.audience || "Blue-collar builders").trim(),
       style: String(body.style || "Premium graffiti").trim(),
       mood: String(body.mood || "Relentless").trim(),
-      placement: String(
-        body.placement || "Small left chest + large back"
-      ).trim(),
+      placement:
+        productTemplate.family === "apparel"
+          ? requestedPlacement || defaultPlacement(productType)
+          : defaultPlacement(productType),
       palette: String(body.palette || "brokie-core").trim(),
       colors: Array.isArray(body.colors)
         ? body.colors.slice(0, 6).map(String)
@@ -598,10 +648,18 @@ export async function POST(request) {
 
       priorNames.push(concept.concept_name);
 
-      const [front, back] = await Promise.all([
-        createArtwork(apiKey, concept, direction, "front"),
-        createArtwork(apiKey, concept, direction, "back")
-      ]);
+      let front;
+      let back;
+
+      if (productTemplate.printfulSides.includes("back")) {
+        [front, back] = await Promise.all([
+          createArtwork(apiKey, concept, direction, "front"),
+          createArtwork(apiKey, concept, direction, "back")
+        ]);
+      } else {
+        front = await createArtwork(apiKey, concept, direction, "front");
+        back = { ...front };
+      }
       const [frontMockup, backMockup] = await Promise.all([
         createProductMockup(front.base64, "front", direction.productType),
         createProductMockup(back.base64, "back", direction.productType)

@@ -13,3 +13,4 @@ set
   returns_policy_body = coalesce(nullif(returns_policy_body, ''), 'Because each item is made to order, returns are limited to damaged, misprinted, or incorrect items. Reach out quickly if something arrives wrong so we can help fix it.'),
   fulfillment_note = coalesce(nullif(fulfillment_note, ''), 'Printed on demand. Fulfilled by Printful. Built for the people still building.')
 where key = 'primary';
+

@@ -25,9 +25,6 @@ const links = [
   ["Storefront", ShoppingBag, "#storefront"],
   ["Analytics", LineChart, "#analytics"],
   ["Command", Smartphone, "/command"],
-  ["Collection Builder", PackagePlus, "#builder"],
-  ["Publish Center", Send, "#publish"],
-  ["Products", ShoppingBag, "#products"],
   ["Activity", PlugZap, "#activity"],
   ["Integrations", PlugZap, "#integrations"]
 ];

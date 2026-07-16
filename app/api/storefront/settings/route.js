@@ -4,6 +4,7 @@ import {
   DEFAULT_STOREFRONT_SETTINGS,
   STOREFRONT_KEY
 } from "@/lib/storefront";
+import { productTypeFamily } from "@/lib/product-types";
 
 const EDITABLE_FIELDS = [
   "site_name", "shop_domain", "announcement_text", "hero_eyebrow",
@@ -40,13 +41,16 @@ function cleanProduct(product, position) {
   if (!product?.id || !product?.title || !product?.handle) {
     throw new Error("Every featured item needs a Shopify product ID, title, and handle.");
   }
+  const productType = cleanText(product.productType, 120) || "tee";
+
   return {
     shopify_product_id: cleanText(product.id, 200),
     position,
     badge: cleanText(product.badge, 60),
     display_title: cleanText(product.displayTitle, 160),
     display_subtitle: cleanText(product.displaySubtitle, 240),
-    product_type: cleanText(product.productType, 120) || "tee",
+    product_type: productType,
+    family: productTypeFamily(productType),
     product_title: cleanText(product.title, 255),
     product_handle: cleanText(product.handle, 255),
     product_url: cleanText(product.onlineStoreUrl, 1000) || null,

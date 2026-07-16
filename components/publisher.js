@@ -373,9 +373,9 @@ export default function Publisher() {
             action,
             productId: current.product.id,
             artworkUrl:
-              current.concept.artworkUrl ||
               current.design.front_artwork_url ||
-              current.design.thumbnail_url,
+              current.concept.artworkUrl ||
+              null,
             backArtworkUrl:
               current.design.back_artwork_url || null,
             retailPrice: current.form.price,
