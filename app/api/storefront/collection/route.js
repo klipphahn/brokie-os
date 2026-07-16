@@ -64,8 +64,18 @@ export async function POST() {
       ]);
     if (settingsError) throw settingsError;
     if (featuredError) throw featuredError;
-    const productIds = (featured || []).map((item) => item.shopify_product_id);
-    if (!productIds.length) throw new Error("Choose at least one featured Shopify product first.");
+    let productIds = (featured || []).map((item) => item.shopify_product_id).filter(Boolean);
+    if (!productIds.length) {
+      const { data: liveProducts, error: liveProductsError } = await supabase
+        .from("products")
+        .select("shopify_product_id")
+        .eq("status", "live")
+        .order("launched_at", { ascending: false })
+        .limit(8);
+      if (liveProductsError) throw liveProductsError;
+      productIds = (liveProducts || []).map((item) => item.shopify_product_id).filter(Boolean);
+    }
+    if (!productIds.length) throw new Error("Publish at least one Brokie product before syncing the collection.");
 
     let collection;
     let changes = { added: productIds.length, removed: 0 };
