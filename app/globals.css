@@ -919,6 +919,123 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
   border:1px solid #6f2d2d; border-radius:8px;
   font-size:11px;
 }
+
+.profitGuardrail {
+  margin-top:15px;
+  padding:15px;
+  border:1px solid #414141;
+  border-radius:12px;
+  background:linear-gradient(145deg,#111,#0b0b0b);
+}
+.profitGuardrail.ready { border-color:#27623a; }
+.profitGuardrail.warning { border-color:#735220; }
+.profitGuardrail.blocked,
+.profitGuardrail.needs_cost { border-color:#783434; }
+.profitGuardrailHead {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+}
+.profitGuardrailHead > div {
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+}
+.profitGuardrailHead svg { color:var(--orange); }
+.profitGuardrailHead strong,
+.profitGuardrailHead small { display:block; }
+.profitGuardrailHead small {
+  margin-top:3px;
+  color:#858585;
+  font-size:10px;
+}
+.profitGuardrailStatus {
+  padding:6px 9px;
+  border-radius:999px;
+  background:#2d2d2d;
+  color:#bbb;
+  font-size:9px;
+  font-weight:900;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+.profitGuardrailStatus.ready { background:#14351f; color:#8ce3a4; }
+.profitGuardrailStatus.warning { background:#3b250d; color:#ffc079; }
+.profitGuardrailStatus.blocked,
+.profitGuardrailStatus.needs_cost { background:#411818; color:#ff9f9f; }
+.profitGuardrailMetrics {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin:13px 0;
+}
+.profitGuardrailMetrics article {
+  padding:11px;
+  border:1px solid #303030;
+  border-radius:9px;
+  background:#171717;
+}
+.profitGuardrailMetrics span,
+.profitGuardrailMetrics strong { display:block; }
+.profitGuardrailMetrics span {
+  color:#777;
+  font-size:9px;
+  text-transform:uppercase;
+}
+.profitGuardrailMetrics strong { margin-top:5px; font-size:15px; }
+.profitGuardrailRecommendation {
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  padding:12px;
+  border:1px solid rgba(255,79,0,.3);
+  border-radius:9px;
+  background:rgba(255,79,0,.08);
+}
+.profitGuardrailRecommendation svg { color:var(--orange); flex:0 0 auto; }
+.profitGuardrailRecommendation strong,
+.profitGuardrailRecommendation span { display:block; }
+.profitGuardrailRecommendation span {
+  margin-top:4px;
+  color:#999;
+  font-size:10px;
+  line-height:1.45;
+}
+.profitGuardrailEmpty,
+.profitGuardrailNote {
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin:13px 0;
+  color:#999;
+  font-size:11px;
+}
+.profitApproval {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:12px;
+  align-items:center;
+  margin-top:12px;
+  padding:12px;
+  border:1px solid #72501e;
+  border-radius:9px;
+  background:#281b0b;
+}
+.profitApproval span,
+.profitApproval p { display:block; margin-top:4px; color:#c8a77b; font-size:10px; }
+.profitApprovalActions,
+.profitGuardrailActions {
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.profitGuardrailActions { margin-top:12px; }
+.profitGuardrailActions > span { color:#6e6e6e; font-size:10px; }
+.profitGuardrailMessage { margin:10px 0 0; font-size:11px; }
+.profitGuardrailMessage.success { color:#8ce3a4; }
+.profitGuardrailMessage.error { color:#ff9f9f; }
 @media(max-width:760px) {
   .printfulSettings {
     grid-template-columns:1fr;
@@ -926,6 +1043,8 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
   .printfulVerification {
     grid-template-columns:1fr 1fr;
   }
+  .profitGuardrailMetrics { grid-template-columns:1fr 1fr; }
+  .profitApproval { grid-template-columns:1fr; }
 }
 
 
@@ -2072,6 +2191,27 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
   font-weight:900;
   letter-spacing:.04em;
   text-transform:uppercase;
+}
+.commandPriceApprovals { display:grid; gap:9px; }
+.commandPriceApproval {
+  padding:13px;
+  border-radius:14px;
+  border:1px solid rgba(255,193,7,.3);
+  background:rgba(255,193,7,.08);
+}
+.commandPriceApproval > div:first-child {
+  display:flex;
+  gap:9px;
+  align-items:flex-start;
+}
+.commandPriceApproval > div:first-child svg { color:#ffc107; }
+.commandPriceApproval strong,
+.commandPriceApproval small { display:block; }
+.commandPriceApproval small { margin-top:3px; color:#d7b980; }
+.commandPriceApproval p { margin:9px 0; font-size:12px; }
+.commandPriceApproval > div:last-child {
+  display:flex;
+  gap:8px;
 }
 .commandList,
 .commandAlerts {

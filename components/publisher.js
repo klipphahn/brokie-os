@@ -15,6 +15,7 @@ import {
   TriangleAlert
 } from "lucide-react";
 import { productTypes } from "@/lib/foundry-options";
+import ProfitGuardrailPanel from "@/components/profit-guardrail-panel";
 import {
   buildListingDefaults,
   defaultPrintfulBlankForProductType,
@@ -119,6 +120,9 @@ export default function Publisher() {
   const [publication, setPublication] = useState(null);
   const [publicationError, setPublicationError] =
     useState("");
+  const [guardrail, setGuardrail] = useState(null);
+  const [guardrailRefreshToken, setGuardrailRefreshToken] =
+    useState(0);
 
   const current = items[selected];
 
@@ -397,6 +401,7 @@ export default function Publisher() {
       setPrintful(data);
       setMessage(data.message);
       await load();
+      setGuardrailRefreshToken((value) => value + 1);
 
       if (data.inspection?.ready) {
         await loadPrintful({
@@ -522,6 +527,7 @@ export default function Publisher() {
 
       setMessage(data.message);
       await load();
+      setGuardrailRefreshToken((value) => value + 1);
 
       if (
         action === "launch_store" ||
@@ -567,12 +573,16 @@ export default function Publisher() {
         product.printful_status === "configured"
       ],
       [
+        "Profit guardrail",
+        Boolean(guardrail?.readyToLaunch)
+      ],
+      [
         "Online Store",
         Boolean(product.online_store_published)
       ],
       ["Live", product.status === "live"]
     ];
-  }, [current]);
+  }, [current, guardrail]);
 
   const canLaunch =
     Boolean(current?.product?.shopify_product_id) &&
@@ -584,6 +594,7 @@ export default function Publisher() {
       Number(
         current?.product?.printful_variant_count || 0
       ) &&
+    Boolean(guardrail?.readyToLaunch) &&
     Boolean(publication);
 
   const launchWorkflow = useMemo(() => {
@@ -615,6 +626,17 @@ export default function Publisher() {
     ) {
       status = "Syncing";
       nextAction = "Finish syncing every sellable variant in Printful.";
+    } else if (!guardrail?.profitability) {
+      status = "Profit check needed";
+      nextAction = "Run the profit check before launch.";
+    } else if (guardrail.hardBlocked) {
+      status = "Margin blocked";
+      nextAction = `Approve the recommended $${Number(
+        guardrail.profitability.recommended_retail_price || 0
+      ).toFixed(2)} price before launch.`;
+    } else if (guardrail.profitability.status === "warning") {
+      status = "Margin warning";
+      nextAction = "This clears the hard floor, but the target price is still recommended.";
     } else if (completed === total) {
       status = "Ready";
       nextAction = "You can launch this product now.";
@@ -628,7 +650,7 @@ export default function Publisher() {
       nextAction,
       ready: canLaunch
     };
-  }, [canLaunch, current, publication, steps]);
+  }, [canLaunch, current, guardrail, publication, steps]);
 
   return (
     <section
@@ -1291,6 +1313,14 @@ export default function Publisher() {
                 </p>
               </div>
 
+              <ProfitGuardrailPanel
+                productId={current.product?.id || null}
+                retailPrice={current.form.price}
+                refreshToken={guardrailRefreshToken}
+                onStateChange={setGuardrail}
+                onUpdated={() => load()}
+              />
+
               <div className="publisherActions">
                 <button
                   className="secondary"
@@ -1325,7 +1355,7 @@ export default function Publisher() {
                   title={
                     canLaunch
                       ? "Activate and publish to the Online Store"
-                      : "Create the Shopify product, confirm Printful, and enable publication scopes first"
+                      : "Create the Shopify product, confirm Printful, pass the profit guardrail, and enable publication scopes first"
                   }
                 >
                   <Rocket size={17} />

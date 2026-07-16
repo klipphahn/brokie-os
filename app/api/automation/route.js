@@ -6,6 +6,7 @@ import {
   buildBusinessAutopilot,
   runAutomationCycle
 } from "@/lib/automation";
+import { loadGuardrailOverview } from "@/lib/profit-guardrails-server";
 
 export async function GET() {
   try {
@@ -30,18 +31,23 @@ export async function GET() {
       : [{ data: null }, { data: [] }];
     const { data: latestRun } = latestRunResult;
     const { data: activities } = activitiesResult;
+    const guardrails = supabase
+      ? await loadGuardrailOverview(supabase)
+      : null;
 
     return NextResponse.json({
       ok: true,
       approval: buildApprovalPlan({
         feed,
         launch: feed.launch,
-        brain: feed.brain
+        brain: feed.brain,
+        guardrails
       }),
       autopilot: buildBusinessAutopilot({
         feed,
         launch: feed.launch,
-        brain: feed.brain
+        brain: feed.brain,
+        guardrails
       }),
       automation: {
         lastSync: latestRun || null,
@@ -53,6 +59,7 @@ export async function GET() {
       products: feed.products,
       brain: feed.brain,
       launch: feed.launch,
+      guardrails,
       activities: activities || []
     });
   } catch (error) {
@@ -69,18 +76,23 @@ export async function POST(request) {
     if (!body.approved) {
       const supabase = tryCreateSupabaseAdminClient();
       const feed = await loadStorefrontFeed(supabase);
+      const guardrails = supabase
+        ? await loadGuardrailOverview(supabase)
+        : null;
       return NextResponse.json({
         ok: true,
         approved: false,
         approval: buildApprovalPlan({
           feed,
           launch: feed.launch,
-          brain: feed.brain
+          brain: feed.brain,
+          guardrails
         }),
         autopilot: buildBusinessAutopilot({
           feed,
           launch: feed.launch,
-          brain: feed.brain
+          brain: feed.brain,
+          guardrails
         }),
         message:
           "Review the major approvals and send the request again with approval enabled."

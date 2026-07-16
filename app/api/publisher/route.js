@@ -15,6 +15,8 @@ import {
   defaultProductTypeLabel,
   merchListingCopy
 } from "@/lib/product-types";
+import { refreshProductProfitability } from "@/lib/profit-guardrails-server";
+import { requireAdminApiUser } from "@/lib/admin-api-auth";
 
 function db() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -249,6 +251,46 @@ function ensureNoErrors(payload, key) {
   }
 }
 
+async function readShopifyVariants(productId) {
+  const data = await shopifyGraphQL(READ_PRODUCT_VARIANTS, {
+    id: productId
+  });
+  const variants = data.product?.variants?.nodes || [];
+  if (!variants.length) {
+    throw new Error("Shopify returned no product variants.");
+  }
+  return variants;
+}
+
+async function syncShopifyVariantPrices(productId, price) {
+  const variants = await readShopifyVariants(productId);
+  const expectedPrice = Number(price).toFixed(2);
+  const updateData = await shopifyGraphQL(UPDATE_VARIANTS, {
+    productId,
+    variants: variants.map((variant) => ({
+      id: variant.id,
+      price: expectedPrice
+    }))
+  });
+  ensureNoErrors(updateData, "productVariantsBulkUpdate");
+  return updateData.productVariantsBulkUpdate?.productVariants || [];
+}
+
+async function assertShopifyVariantPrices(productId, price) {
+  const expectedPrice = Number(price);
+  const variants = await readShopifyVariants(productId);
+  const mismatched = variants.filter(
+    (variant) =>
+      Math.abs(Number(variant.price || 0) - expectedPrice) > 0.001
+  );
+
+  if (mismatched.length) {
+    throw new Error(
+      `${mismatched.length} Shopify variant price${mismatched.length === 1 ? " does" : "s do"} not match the reviewed $${expectedPrice.toFixed(2)} price. Update the Shopify draft before launch.`
+    );
+  }
+}
+
 async function upsertProduct(supabase, design, review) {
   const existing = await supabase
     .from("products")
@@ -329,6 +371,10 @@ async function createOrUpdateShopifyDraft(
     });
 
     ensureNoErrors(updateData, "productUpdate");
+    await syncShopifyVariantPrices(
+      productRecord.shopify_product_id,
+      review.price
+    );
 
     const saved = await supabase
       .from("products")
@@ -539,6 +585,24 @@ async function setShopifyProductVariants(
 
   if (staleLinks.error) throw staleLinks.error;
 
+  const staleProfitability = await supabase
+    .from("product_profitability")
+    .delete()
+    .eq("product_id", productRecord.id);
+  if (staleProfitability.error) throw staleProfitability.error;
+
+  const staleApprovals = await supabase
+    .from("approval_requests")
+    .update({
+      status: "superseded",
+      summary: "Product options changed; run a new profit check.",
+      updated_at: new Date().toISOString()
+    })
+    .eq("product_id", productRecord.id)
+    .eq("request_type", "price_change")
+    .eq("status", "pending");
+  if (staleApprovals.error) throw staleApprovals.error;
+
   await recordRun(
     supabase,
     productRecord.id,
@@ -642,6 +706,57 @@ async function launchProduct(supabase, productRecord, review) {
   ) {
     throw new Error(
       "Printful fulfillment has not passed API verification. Open the Printful panel, configure the imported product, and verify every variant before launching."
+    );
+  }
+
+  await assertShopifyVariantPrices(
+    productRecord.shopify_product_id,
+    productRecord.retail_price
+  );
+
+  const guardrail = await refreshProductProfitability(
+    supabase,
+    productRecord.id
+  );
+
+  if (guardrail.hardBlocked) {
+    const profitability = guardrail.profitability;
+    const recommendation = Number(
+      profitability?.recommended_retail_price || 0
+    );
+    throw new Error(
+      profitability?.status === "needs_cost"
+        ? "Profit check could not verify Printful production cost. Run the guardrail check before launching."
+        : `Launch blocked: estimated margin is ${Number(
+            profitability?.margin_percent || 0
+          ).toFixed(1)}%, below the ${Number(
+            guardrail.policy.minimumMarginPercent || 30
+          ).toFixed(0)}% floor.${
+            recommendation > 0
+              ? ` Approve the recommended $${recommendation.toFixed(2)} price first.`
+              : ""
+          }`
+    );
+  }
+
+  if (guardrail.profitability?.status === "warning") {
+    await logActivity(
+      supabase,
+      "margin_warning",
+      `Margin warning: ${review.title}`,
+      `Launch approved at an estimated ${Number(
+        guardrail.profitability.margin_percent || 0
+      ).toFixed(1)}% margin, below the target but above the hard floor.`,
+      "warning",
+      {
+        productId: productRecord.id,
+        marginPercent: Number(
+          guardrail.profitability.margin_percent || 0
+        ),
+        recommendedRetailPrice: Number(
+          guardrail.profitability.recommended_retail_price || 0
+        )
+      }
     );
   }
 
@@ -770,6 +885,7 @@ async function launchProduct(supabase, productRecord, review) {
 
 export async function GET() {
   try {
+    await requireAdminApiUser();
     const supabase = db();
 
     const { data: designs, error } = await supabase
@@ -817,16 +933,18 @@ export async function GET() {
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error.message },
-      { status: 400 }
+      { status: error?.status || 400 }
     );
   }
 }
 
 export async function POST(request) {
-  const supabase = db();
+  let supabase = null;
   let productRecord = null;
 
   try {
+    await requireAdminApiUser();
+    supabase = db();
     const body = await request.json();
     const action = String(body.action || "");
     const designId = String(body.designId || "");
@@ -1050,7 +1168,7 @@ export async function POST(request) {
 
     throw new Error("Unknown publisher action.");
   } catch (error) {
-    if (productRecord?.id) {
+    if (supabase && productRecord?.id) {
       await supabase
         .from("products")
         .update({
@@ -1077,7 +1195,7 @@ export async function POST(request) {
           ? error.message
           : String(error)
       },
-      { status: 400 }
+      { status: error?.status || 400 }
     );
   }
 }

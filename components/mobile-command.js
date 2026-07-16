@@ -5,6 +5,7 @@ import {
   AlertCircle,
   ArrowRight,
   BarChart3,
+  BadgeDollarSign,
   Bell,
   Boxes,
   CheckCircle2,
@@ -72,6 +73,7 @@ export default function MobileCommand() {
   const [activities, setActivities] = useState([]);
   const [approval, setApproval] = useState(null);
   const [autopilot, setAutopilot] = useState(null);
+  const [guardrails, setGuardrails] = useState(null);
   const statusTime = useMemo(
     () =>
       new Date().toLocaleTimeString("en-US", {
@@ -123,7 +125,7 @@ export default function MobileCommand() {
       setActivities(activityData.activities || []);
       setApproval(automationData.approval || null);
       setAutopilot(automationData.autopilot || null);
-      setAutopilot(automationData.autopilot || null);
+      setGuardrails(automationData.guardrails || null);
     } catch (loadError) {
       setError(loadError.message);
     } finally {
@@ -198,6 +200,30 @@ export default function MobileCommand() {
       await load();
     } catch (automationError) {
       setError(automationError.message);
+    } finally {
+      setAutomating(false);
+    }
+  }
+
+  async function decidePrice(action, approvalId) {
+    setAutomating(true);
+    setMessage("");
+    setError("");
+
+    try {
+      const response = await fetch("/api/guardrails", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, approvalId })
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error || "Price approval failed.");
+      }
+      setMessage(payload.message || "Price decision saved.");
+      await load();
+    } catch (approvalError) {
+      setError(approvalError.message);
     } finally {
       setAutomating(false);
     }
@@ -407,6 +433,41 @@ export default function MobileCommand() {
             {approval ? (
               <>
                 <p>{approval.summary}</p>
+                {(guardrails?.approvals || []).length > 0 && (
+                  <div className="commandPriceApprovals">
+                    {(guardrails.approvals || []).map((item) => (
+                      <div key={item.id} className="commandPriceApproval">
+                        <div>
+                          <BadgeDollarSign size={17} />
+                          <span>
+                            <strong>{item.title}</strong>
+                            <small>
+                              {currency(item.current_price)} → {currency(item.proposed_price)}
+                            </small>
+                          </span>
+                        </div>
+                        <p>{item.summary}</p>
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => decidePrice("approve_price", item.id)}
+                            disabled={automating}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            className="secondary"
+                            onClick={() => decidePrice("reject_price", item.id)}
+                            disabled={automating}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className="commandApprovalList">
                   {(approval.actions || []).map((item) => (
                     <div key={item.id} className={`commandApprovalItem ${item.status}`}>

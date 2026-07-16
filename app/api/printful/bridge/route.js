@@ -9,6 +9,8 @@ import {
   printfulDashboardUrl
 } from "@/lib/printful-bridge";
 import { numericShopifyId } from "@/lib/printful";
+import { refreshProductProfitability } from "@/lib/profit-guardrails-server";
+import { requireAdminApiUser } from "@/lib/admin-api-auth";
 
 function db() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -151,6 +153,7 @@ async function saveInspection(
 
 export async function GET(request) {
   try {
+    await requireAdminApiUser();
     const url = new URL(request.url);
     const productId =
       url.searchParams.get("productId");
@@ -225,10 +228,12 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const supabase = db();
+  let supabase = null;
   let product = null;
 
   try {
+    await requireAdminApiUser();
+    supabase = db();
     const body = await request.json();
     const action = String(body.action || "");
     const productId = String(body.productId || "");
@@ -456,6 +461,24 @@ export async function POST(request) {
         }
       });
 
+      let guardrail = null;
+      if (configured.verification.ready) {
+        try {
+          guardrail = await refreshProductProfitability(
+            supabase,
+            product.id
+          );
+        } catch (guardrailError) {
+          await supabase.from("activity_logs").insert({
+            action: "profit_guardrail",
+            title: `Profit check needs attention: ${product.title}`,
+            detail: guardrailError.message,
+            status: "warning",
+            metadata: { productId: product.id }
+          });
+        }
+      }
+
       return NextResponse.json({
         ok: configured.verification.ready,
         message: configured.verification.ready
@@ -464,6 +487,7 @@ export async function POST(request) {
         product: saved,
         configured,
         inspection: configured.verification,
+        guardrail,
         dashboardUrl: printfulDashboardUrl()
       }, {
         status:
@@ -487,6 +511,24 @@ export async function POST(request) {
         inspection
       );
 
+      let guardrail = null;
+      if (inspection.ready) {
+        try {
+          guardrail = await refreshProductProfitability(
+            supabase,
+            product.id
+          );
+        } catch (guardrailError) {
+          await supabase.from("activity_logs").insert({
+            action: "profit_guardrail",
+            title: `Profit check needs attention: ${product.title}`,
+            detail: guardrailError.message,
+            status: "warning",
+            metadata: { productId: product.id }
+          });
+        }
+      }
+
       await recordRun(
         supabase,
         product.id,
@@ -504,6 +546,7 @@ export async function POST(request) {
           : `${inspection.syncedVariants}/${inspection.totalVariants} variants are synced and ${inspection.artworkReadyVariants}/${inspection.totalVariants} have artwork.`,
         product: saved,
         inspection,
+        guardrail,
         dashboardUrl: printfulDashboardUrl()
       });
     }
@@ -512,7 +555,7 @@ export async function POST(request) {
       "Unknown Printful bridge action."
     );
   } catch (error) {
-    if (product?.id) {
+    if (supabase && product?.id) {
       await supabase
         .from("products")
         .update({
