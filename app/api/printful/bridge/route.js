@@ -153,7 +153,7 @@ async function saveInspection(
 
 export async function GET(request) {
   try {
-    await requireAdminApiUser();
+    await requireAdminApiUser(request);
     const url = new URL(request.url);
     const productId =
       url.searchParams.get("productId");
@@ -232,7 +232,7 @@ export async function POST(request) {
   let product = null;
 
   try {
-    await requireAdminApiUser();
+    await requireAdminApiUser(request);
     supabase = db();
     const body = await request.json();
     const action = String(body.action || "");

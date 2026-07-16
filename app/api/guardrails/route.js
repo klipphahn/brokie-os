@@ -157,7 +157,7 @@ async function updatePrintfulRetailPrices(supabase, product, price) {
 
 export async function GET(request) {
   try {
-    await requireAdminApiUser();
+    await requireAdminApiUser(request);
     const supabase = createSupabaseAdminClient();
     const url = new URL(request.url);
     const productId = url.searchParams.get("productId");
@@ -179,7 +179,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const user = await requireAdminApiUser();
+    const user = await requireAdminApiUser(request);
     const supabase = createSupabaseAdminClient();
     const body = await request.json().catch(() => ({}));
     const action = String(body.action || "");

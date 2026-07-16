@@ -883,9 +883,9 @@ async function launchProduct(supabase, productRecord, review) {
   return updated.data;
 }
 
-export async function GET() {
+export async function GET(request) {
   try {
-    await requireAdminApiUser();
+    await requireAdminApiUser(request);
     const supabase = db();
 
     const { data: designs, error } = await supabase
@@ -943,7 +943,7 @@ export async function POST(request) {
   let productRecord = null;
 
   try {
-    await requireAdminApiUser();
+    await requireAdminApiUser(request);
     supabase = db();
     const body = await request.json();
     const action = String(body.action || "");
