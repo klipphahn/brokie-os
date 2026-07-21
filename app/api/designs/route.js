@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { extractDesignDna, searchableText } from "@/lib/design-dna";
-import { getProductTypeTemplate } from "@/lib/product-types";
+import {
+  getProductTypeTemplate,
+  mockupCompositePosition
+} from "@/lib/product-types";
 import { requireAdminApiUser } from "@/lib/admin-api-auth";
 
 async function getSharp() {
@@ -112,28 +115,7 @@ async function createGarmentMockup(artwork, side, productType) {
     .png()
     .toBuffer();
   const meta = await sharp(art).metadata();
-  const left =
-    productKey === "hat" || productKey === "sticker"
-      ? Math.round((width - (meta.width || target.width)) / 2)
-      : isFront
-        ? Math.round(690 - (meta.width || target.width) / 2)
-        : Math.round((width - (meta.width || target.width)) / 2);
-  const top =
-    productKey === "hat"
-      ? 470
-      : productKey === "sticker"
-        ? 360
-        : productKey === "crop-top"
-        ? isFront
-          ? 430
-          : 390
-        : productKey === "hoodie"
-        ? isFront
-          ? 470
-          : 430
-        : isFront
-          ? 430
-          : 380;
+  const { left, top } = mockupCompositePosition(target, meta);
 
   return sharp(garment)
     .composite([{ input: art, left, top }])
@@ -553,6 +535,7 @@ export async function PATCH(request) {
 
 export async function POST(request) {
   try {
+    await requireAdminApiUser(request);
     const body = await request.json();
     const action = String(body.action || "");
     const id = String(body.id || "");
@@ -577,6 +560,75 @@ export async function POST(request) {
         .single();
 
     if (originalError) throw originalError;
+
+    if (action === "rebuild_mockups") {
+      const frontSource = original.front_artwork_url || original.back_artwork_url;
+      const backSource = original.back_artwork_url || original.front_artwork_url;
+      if (!frontSource || !backSource) {
+        throw new Error("Artwork is required before rebuilding mockups.");
+      }
+
+      const [frontArtwork, backArtwork] = await Promise.all([
+        downloadImage(frontSource),
+        downloadImage(backSource)
+      ]);
+      const [frontMockup, backMockup] = await Promise.all([
+        createGarmentMockup(frontArtwork, "front", original.product_type),
+        createGarmentMockup(backArtwork, "back", original.product_type)
+      ]);
+      const stem = `repairs/${Date.now()}-${slugify(original.name)}`;
+
+      async function uploadMockup(side, bytes) {
+        const path = `${stem}-${side}-mockup.png`;
+        const uploaded = await supabase.storage
+          .from("artwork")
+          .upload(path, bytes, {
+            contentType: "image/png",
+            cacheControl: "3600",
+            upsert: false
+          });
+        if (uploaded.error) throw uploaded.error;
+        return supabase.storage.from("artwork").getPublicUrl(path).data.publicUrl;
+      }
+
+      const [frontMockupUrl, backMockupUrl] = await Promise.all([
+        uploadMockup("front", frontMockup),
+        uploadMockup("back", backMockup)
+      ]);
+      const mockups = { front: frontMockupUrl, back: backMockupUrl };
+      const rebuiltAt = new Date().toISOString();
+      const { data: rebuilt, error: rebuildError } = await supabase
+        .from("designs")
+        .update({
+          thumbnail_url: backMockupUrl,
+          concept: { ...(original.concept || {}), mockups },
+          design_dna: {
+            ...(original.design_dna || {}),
+            mockups,
+            mockupRepair: { rebuiltAt, reason: "centered-placement" }
+          },
+          updated_at: rebuiltAt
+        })
+        .eq("id", id)
+        .select()
+        .single();
+      if (rebuildError) throw rebuildError;
+
+      await activity(
+        supabase,
+        "design_mockups_rebuilt",
+        `Rebuilt mockups for ${original.name}`,
+        "Front and back mockups were regenerated with centered artwork placement.",
+        "success",
+        { designId: id, mockups }
+      );
+
+      return NextResponse.json({
+        ok: true,
+        message: "Mockups rebuilt with centered artwork.",
+        design: rebuilt
+      });
+    }
 
     if (action === "duplicate") {
       const newName = `${original.name} Copy`;
