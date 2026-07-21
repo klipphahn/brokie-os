@@ -60,7 +60,7 @@ function uniqueHighlights(products, familyOrder = []) {
           familyLabel: "Small-format merch",
           title: "Stickers and extras",
           fitNote: "Little drops that spread the brand everywhere.",
-          story: "For laptops, toolboxes, hard hats, and water bottles.",
+          story: "For laptops, phone cases, notebooks, and water bottles.",
           badge: "STICKER"
         }
       ];

@@ -18,18 +18,36 @@ export default function HomePage() {
       <main className="main">
         <header className="hero" id="dashboard">
           <div>
-            <span className="eyebrow">THE BROKIE OPERATING SYSTEM</span>
-            <h1>Build the brand.</h1>
+            <span className="eyebrow">THE BROKIE MERCH CENTER</span>
+            <h1>Control the brand.</h1>
             <p>
-              One command center for artwork, collections, Printful products,
-              Shopify drafts, and thebrokie.com/merch.
+              Create, review, feature, archive, and remove merchandise across
+              Brokie OS, Printful, Shopify, and thebrokie.com/merch.
             </p>
           </div>
           <div className="heroStatement">
-            <span>WE DON'T NEED MONEY</span>
-            <strong>TO BE DANGEROUS.</strong>
+            <span>THE BROKIE</span>
+            <strong>TOGETHER WE WIN.</strong>
           </div>
         </header>
+
+        <section className="adminControlStrip" aria-label="Merch control guide">
+          <article>
+            <span>REVERSIBLE</span>
+            <strong>Archive</strong>
+            <p>Hide a design or Shopify product without destroying it.</p>
+          </article>
+          <article>
+            <span>STOREFRONT</span>
+            <strong>Remove from featured</strong>
+            <p>Take an item out of the homepage lineup while keeping the product.</p>
+          </article>
+          <article className="dangerControl">
+            <span>PERMANENT</span>
+            <strong>Delete everywhere</strong>
+            <p>Remove the Printful sync, Shopify product, and Brokie OS record.</p>
+          </article>
+        </section>
 
         <BrandDnaPanel />
         <DesignLibrary />

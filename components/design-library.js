@@ -737,6 +737,32 @@ export default function DesignLibrary() {
                     >
                       <Copy size={14} />
                     </button>
+
+                    <button
+                      title={item.archived_at ? "Restore design" : "Archive design"}
+                      aria-label={item.archived_at ? "Restore design" : "Archive design"}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        apiAction({
+                          action: item.archived_at ? "restore" : "archive",
+                          id: item.id
+                        });
+                      }}
+                    >
+                      {item.archived_at ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+                    </button>
+
+                    <button
+                      className="deleteDesignButton"
+                      title="Permanently delete design"
+                      aria-label="Permanently delete design"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        remove(item);
+                      }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
               </article>

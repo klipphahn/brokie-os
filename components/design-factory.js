@@ -12,6 +12,7 @@ import {
   RotateCcw,
   Sparkles,
   Square,
+  Trash2,
   XCircle
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -25,18 +26,18 @@ import {
 } from "@/lib/foundry-options";
 
 const initialForm = {
-  name: "Still Building Collection",
-  theme: "Union electricians",
-  audience: "Union electricians",
+  name: "Together We Win Collection",
+  theme: "Together We Win",
+  audience: "The Brokie community",
   productType: "Heavyweight Tee",
   style: "Premium graffiti",
-  mood: "Relentless",
+  mood: "Defiant",
   placement: "Small left chest + large back",
   palette: "brokie-core",
   count: 5,
   autoPublish: false,
   basePrompt:
-    "Create a cohesive collection for union electricians who take pride in discipline, overtime, skill, loyalty, and building a better life."
+    "Create a cohesive Brokie streetwear collection about shared momentum, self-belief, and winning together. Keep it bold, playful, and unmistakably Brokie."
 };
 
 function statusIcon(status) {
@@ -154,6 +155,29 @@ export default function DesignFactory() {
       await loadRuns();
     } catch (controlError) {
       setError(controlError.message);
+    }
+  }
+
+  async function deleteRun() {
+    if (!run?.id || processing) return;
+    if (!window.confirm(`Delete factory run "${run.name}"? Completed designs will stay in the Design Library.`)) return;
+
+    setError("");
+    try {
+      const response = await fetch("/api/design-factory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", runId: run.id })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || "Factory run could not be deleted.");
+      }
+      setRun(null);
+      setMessage(data.message);
+      await loadRuns();
+    } catch (deleteError) {
+      setError(deleteError.message);
     }
   }
 
@@ -627,6 +651,17 @@ export default function DesignFactory() {
                   >
                     <XCircle size={16} />
                     Cancel
+                  </button>
+                )}
+
+                {run.status !== "running" && (
+                  <button
+                    className="factoryCancel"
+                    onClick={deleteRun}
+                    disabled={processing}
+                  >
+                    <Trash2 size={16} />
+                    Delete run
                   </button>
                 )}
               </div>

@@ -32,14 +32,14 @@ const labels = [
 
 const initialState = {
   productType: "Heavyweight Tee",
-  audience: "Union electricians",
+  audience: "The Brokie community",
   style: "Premium graffiti",
-  mood: "Relentless",
+  mood: "Defiant",
   placement: "Small left chest + large back",
   palette: "brokie-core",
   variations: 2,
   prompt:
-    "Create a product for people who outwork everyone. Use power, current, overtime, and pride in skilled work."
+    "Create a bold Brokie piece about shared momentum and winning together. Keep it confident, playful, and wearable."
 };
 
 export default function AiStudio() {

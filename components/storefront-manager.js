@@ -10,31 +10,32 @@ import {
   LoaderCircle,
   RefreshCw,
   Save,
-  ShoppingBag
+  ShoppingBag,
+  Trash2
 } from "lucide-react";
 import { merchListingCopy } from "@/lib/product-types";
 
 const EMPTY = {
   site_name: "the brokie",
   shop_domain: "shop.thebrokie.com",
-  announcement_text: "FOUNDERS DROP 001 — BUILT FOR THE PEOPLE STILL BUILDING",
+  announcement_text: "THE BROKIE — TOGETHER WE WIN",
   hero_eyebrow: "THE BROKIE GOODS",
   hero_headline: "WE DON'T NEED MONEY TO BE DANGEROUS.",
-  hero_subheadline: "Premium workwear and streetwear for builders, creators, and people earning what comes next.",
+  hero_subheadline: "Independent streetwear for people betting on themselves—and each other.",
   primary_cta_label: "SHOP THE DROP",
   primary_cta_url: "/collections/the-brokie-featured",
   secondary_cta_label: "OUR STORY",
   secondary_cta_url: "https://thebrokie.com",
-  manifesto_headline: "BROKE TODAY. BUILDING FOREVER.",
-  manifesto_body: "We build. We sacrifice. We stay loyal. We keep showing up.",
+  manifesto_headline: "TOGETHER WE WIN.",
+  manifesto_body: "The Brokie is bigger than one person or one path. We move together, celebrate every win, and make our own definition of success.",
   shipping_policy_title: "Shipping",
   shipping_policy_body: "Orders are fulfilled by Printful and usually ship after production is complete. You will get tracking as soon as the order leaves the facility.",
   returns_policy_title: "Returns",
   returns_policy_body: "Because each item is made to order, returns are limited to damaged, misprinted, or incorrect items. Reach out quickly if something arrives wrong so we can help fix it.",
-  fulfillment_note: "Printed on demand. Fulfilled by Printful. Built for the people still building.",
+  fulfillment_note: "Printed on demand. Fulfilled by Printful. Together we win.",
   collection_title: "The Brokie Featured",
   collection_handle: "the-brokie-featured",
-  collection_description: "The latest pieces selected by The Brokie. Built for the people still building."
+  collection_description: "The latest pieces selected by The Brokie. Bold, independent, and made for the whole community."
 };
 
 function featuredDefaultsFor(product) {
@@ -120,6 +121,14 @@ export default function StorefrontManager() {
       if (target < 0 || target >= next.length) return next;
       [next[index], next[target]] = [next[target], next[index]];
       return next;
+    });
+  }
+
+  function removeFeatured(productId) {
+    setSelected((items) => items.filter((item) => item.id !== productId));
+    setNotice({
+      type: "success",
+      text: "Removed from the featured lineup. Save or sync to make it live."
     });
   }
 
@@ -214,6 +223,7 @@ export default function StorefrontManager() {
                   <b>{index + 1}</b><span>{product.displayTitle || product.title}</span>
                   <button onClick={() => move(index, -1)} disabled={index === 0}><ArrowUp size={14} /></button>
                   <button onClick={() => move(index, 1)} disabled={index === selectedProducts.length - 1}><ArrowDown size={14} /></button>
+                  <button className="removeFeaturedButton" onClick={() => removeFeatured(product.id)} title="Remove from featured"><Trash2 size={14} /> Remove</button>
                 </div>)}
               </div>
             </div>
