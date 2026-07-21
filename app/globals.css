@@ -199,9 +199,20 @@ textarea {
 .shopifyProductBody h3{margin:10px 0 6px;font-size:15px}
 .shopifyProductBody p{color:#888;font-size:12px}
 .shopifyProductBody a{display:inline-flex;gap:6px;align-items:center;color:var(--orange);font-size:12px;font-weight:900;text-decoration:none}
+.shopifyProductActions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.shopifyProductActions button{padding:8px 10px;font-size:10px}
+.deleteProductButton,.removeFeaturedButton{background:#2b1111;color:#ff9f9f;border:1px solid #6f2c2c}
 .managerEmpty{min-height:180px;display:grid;place-items:center;align-content:center;gap:9px;color:#777}
 .spin{animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.adminControlStrip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.adminControlStrip article{padding:15px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.adminControlStrip span{display:block;color:var(--orange);font-size:9px;font-weight:900;letter-spacing:.14em;margin-bottom:7px}
+.adminControlStrip strong{font-size:14px}
+.adminControlStrip p{color:#888;font-size:11px;line-height:1.5;margin:6px 0 0}
+.adminControlStrip .dangerControl{border-color:#5e2929;background:#1e1010}
+.adminControlStrip .dangerControl span{color:#ff9292}
+@media(max-width:700px){.adminControlStrip{grid-template-columns:1fr}}
 @media(max-width:1100px){.shopifyProductGrid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:700px){.shopifyStats{grid-template-columns:repeat(2,1fr)}.shopifyProductGrid{grid-template-columns:1fr}}
 select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding:11px;border-radius:8px}
@@ -1271,12 +1282,13 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
 .storefrontPicker small { display:block; color:#777; margin-top:3px; }
 .storefrontOrder { display:grid; gap:5px; margin-top:10px; }
 .storefrontOrder > div {
-  display:grid; grid-template-columns:25px minmax(0,1fr) 34px 34px; gap:5px;
+  display:grid; grid-template-columns:25px minmax(0,1fr) 34px 34px auto; gap:5px;
   align-items:center; padding:7px; background:#151515; border-radius:7px;
 }
 .storefrontOrder b { color:var(--orange); }
 .storefrontOrder span { font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .storefrontOrder button { padding:6px; }
+.storefrontOrder .removeFeaturedButton { display:flex; align-items:center; gap:4px; padding:6px 8px; }
 .storefrontActions { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
 .storefrontPreview {
   min-height:570px; background:linear-gradient(145deg,#080808,#17120e);

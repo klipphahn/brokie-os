@@ -33,10 +33,10 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="brand">
-        <div className="mascot">☹</div>
+        <div className="mascot" aria-label="Brokie neutral mascot">×_×</div>
         <div>
           <strong>the brokie</strong>
-          <span>BROKIE OS</span>
+          <span>MERCH CENTER</span>
         </div>
       </div>
 
@@ -52,8 +52,8 @@ export default function Sidebar() {
       <LogoutButton />
 
       <div className="sideFooter">
-        <strong>WE DON'T NEED MONEY</strong>
-        <span>TO BE DANGEROUS.</span>
+        <strong>TOGETHER</strong>
+        <span>WE WIN.</span>
       </div>
     </aside>
   );

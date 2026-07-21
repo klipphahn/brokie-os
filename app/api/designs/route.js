@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { extractDesignDna, searchableText } from "@/lib/design-dna";
 import { getProductTypeTemplate } from "@/lib/product-types";
+import { requireAdminApiUser } from "@/lib/admin-api-auth";
 
 async function getSharp() {
   return (await import("sharp")).default;
@@ -808,6 +809,7 @@ export async function POST(request) {
 
 export async function DELETE(request) {
   try {
+    await requireAdminApiUser(request);
     const id = new URL(request.url).searchParams.get(
       "id"
     );

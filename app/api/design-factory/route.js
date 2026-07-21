@@ -1,32 +1,33 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { requireAdminApiUser } from "@/lib/admin-api-auth";
 
 const ANGLES = [
-  "discipline over excuses",
-  "overtime and sacrifice",
-  "trade pride and brotherhood",
-  "power, voltage, and current",
-  "built from nothing",
-  "loyalty over luxury",
+  "together we win",
+  "shared momentum",
+  "outsiders moving as one",
+  "confidence without permission",
+  "making something from nothing",
+  "community over status",
   "dangerous without money",
-  "early mornings and late nights",
-  "earned not given",
-  "blue-collar fatherhood",
-  "union strength",
-  "jobsite humor",
+  "playful rebellion",
+  "self-belief with no apology",
+  "friends becoming family",
+  "the crown belongs to everyone",
+  "inside-joke humor",
   "quiet confidence",
-  "relentless consistency",
-  "work ethic as identity",
-  "legacy for the next generation",
-  "grit under pressure",
-  "skill over status",
-  "the people still building",
-  "never clocked out mentally",
-  "scarred hands and clean work",
+  "unmistakable individuality",
+  "identity beyond a paycheck",
+  "winning without selling out",
+  "bold under pressure",
+  "character over status",
+  "the Brokie community",
+  "always in motion",
+  "rough edges and clean design",
   "broke today building forever",
-  "high voltage attitude",
-  "crew loyalty",
-  "no shortcuts"
+  "high-energy attitude",
+  "collective victory",
+  "no permission needed"
 ];
 
 function db() {
@@ -122,6 +123,7 @@ export async function POST(request) {
   const supabase = db();
 
   try {
+    await requireAdminApiUser(request);
     const body = await request.json();
     const action = String(body.action || "");
 
@@ -155,8 +157,8 @@ export async function POST(request) {
       const runValues = {
         collection_id: collection.id,
         name,
-        theme: String(body.theme || "Union electricians"),
-        audience: String(body.audience || "Union electricians"),
+        theme: String(body.theme || "Together We Win"),
+        audience: String(body.audience || "The Brokie community"),
         product_type: String(body.productType || "Heavyweight Tee"),
         visual_style: String(body.style || "Premium graffiti"),
         mood: String(body.mood || "Relentless"),
@@ -476,6 +478,38 @@ Do not reuse the same headline, central symbol, layout, or slogan structure.`,
       return NextResponse.json({
         ok: true,
         run: await hydrateRun(supabase, runId)
+      });
+    }
+
+    if (action === "delete") {
+      const { data: existing, error: existingError } = await supabase
+        .from("factory_runs")
+        .select("id,name,status")
+        .eq("id", runId)
+        .single();
+      if (existingError) throw existingError;
+      if (existing.status === "running") {
+        throw new Error("Stop or cancel this run before deleting it.");
+      }
+
+      const { error: deleteError } = await supabase
+        .from("factory_runs")
+        .delete()
+        .eq("id", runId);
+      if (deleteError) throw deleteError;
+
+      await supabase.from("activity_logs").insert({
+        action: "factory_deleted",
+        title: `Deleted Design Factory run: ${existing.name}`,
+        detail: "The run and its queued jobs were permanently deleted. Completed designs remain in the Design Library.",
+        status: "success",
+        metadata: { runId }
+      });
+
+      return NextResponse.json({
+        ok: true,
+        deleted: runId,
+        message: "Factory run deleted. Completed designs were kept."
       });
     }
 

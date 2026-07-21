@@ -8,11 +8,11 @@ async function getSharp() {
 
 const BRAND_RULES = `
 Brand: The Brokie.
-Mission: For the people still building.
-Voice: confident, gritty, focused, loyal, self-aware; never corny or fake-luxury.
-Visual language: premium streetwear, matte black, spray orange, crown yellow, distressed ink and restrained graffiti texture.
-Approved ideas include: We Don't Need Money To Be Dangerous; Broke Today. Building Forever; Built Different; Backed By Loyalty.
-Mascot: crowned spray-paint face with X eyes and a sad dripping mouth. Never make it happy and never add a nose.
+Mission: Together We Win.
+Voice: confident, defiant, collective, playful, and self-aware; never corny, defeated, or fake-luxury.
+Visual language: independent streetwear, matte black, spray orange, crown yellow, distressed ink, and restrained graffiti texture. Do not default to blue-collar, trade, jobsite, or workwear imagery.
+Approved ideas include: Together We Win; We Don't Need Money To Be Dangerous; Broke Today. Building Forever; Built Different.
+Mascot: crowned spray-paint face with X eyes and either a straight neutral mouth or no mouth. Never use a frown, sad expression, tears, or a dripping mouth. Never add a nose.
 Artwork must read clearly on apparel, avoid photorealistic garment mockups, and avoid tiny illegible text.
 `;
 
@@ -609,7 +609,7 @@ export async function POST(request) {
     const direction = {
       prompt: String(body.prompt || "").trim(),
       productType,
-      audience: String(body.audience || "Blue-collar builders").trim(),
+      audience: String(body.audience || "The Brokie community").trim(),
       style: String(body.style || "Premium graffiti").trim(),
       mood: String(body.mood || "Relentless").trim(),
       placement:

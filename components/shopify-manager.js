@@ -2,18 +2,23 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  Archive,
+  ArchiveRestore,
   ExternalLink,
   LoaderCircle,
   RefreshCw,
   Search,
-  ShoppingBag
+  ShoppingBag,
+  Trash2
 } from "lucide-react";
 
 export default function ShopifyManager() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [query, setQuery] = useState("");
+  const [working, setWorking] = useState("");
 
   async function loadProducts() {
     setLoading(true);
@@ -35,6 +40,37 @@ export default function ShopifyManager() {
       setError(loadError.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function productAction(product, action) {
+    let confirmation = "";
+    if (action === "delete") {
+      confirmation = window.prompt(
+        `Permanently delete "${product.title}" from Printful, Shopify, the featured storefront, and Brokie OS? Type DELETE to continue.`
+      ) || "";
+      if (confirmation !== "DELETE") return;
+    }
+
+    setWorking(`${action}:${product.id}`);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/shopify/products", {
+        method: action === "delete" ? "DELETE" : "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: product.id, action, confirmation })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || "Product action failed.");
+      }
+      setMessage(data.message);
+      await loadProducts();
+    } catch (actionError) {
+      setError(actionError.message);
+    } finally {
+      setWorking("");
     }
   }
 
@@ -109,6 +145,7 @@ export default function ShopifyManager() {
       </div>
 
       {error && <div className="managerNotice error">{error}</div>}
+      {message && <div className="managerNotice success">{message}</div>}
 
       {loading ? (
         <div className="managerEmpty">
@@ -159,6 +196,36 @@ export default function ShopifyManager() {
                 >
                   Open in Shopify <ExternalLink size={14} />
                 </a>
+
+                <div className="shopifyProductActions">
+                  {product.status === "ARCHIVED" ? (
+                    <button
+                      className="secondary"
+                      onClick={() => productAction(product, "restore")}
+                      disabled={!!working}
+                    >
+                      {working === `restore:${product.id}` ? <LoaderCircle className="spin" size={14} /> : <ArchiveRestore size={14} />}
+                      Restore as draft
+                    </button>
+                  ) : (
+                    <button
+                      className="secondary"
+                      onClick={() => productAction(product, "archive")}
+                      disabled={!!working}
+                    >
+                      {working === `archive:${product.id}` ? <LoaderCircle className="spin" size={14} /> : <Archive size={14} />}
+                      Archive
+                    </button>
+                  )}
+                  <button
+                    className="deleteProductButton"
+                    onClick={() => productAction(product, "delete")}
+                    disabled={!!working}
+                  >
+                    {working === `delete:${product.id}` ? <LoaderCircle className="spin" size={14} /> : <Trash2 size={14} />}
+                    Delete everywhere
+                  </button>
+                </div>
               </div>
             </article>
           ))}

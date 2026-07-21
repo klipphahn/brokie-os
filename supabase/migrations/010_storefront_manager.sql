@@ -63,13 +63,13 @@ values (
   'primary',
   'the brokie',
   'shop.thebrokie.com',
-  'FOUNDERS DROP 001 — BUILT FOR THE PEOPLE STILL BUILDING',
+  'THE BROKIE — TOGETHER WE WIN',
   'THE BROKIE GOODS',
   'WE DON''T NEED MONEY TO BE DANGEROUS.',
-  'Premium workwear and streetwear for builders, creators, and people earning what comes next.',
-  'BROKE TODAY. BUILDING FOREVER.',
-  'We build. We sacrifice. We stay loyal. We keep showing up.',
-  'The latest pieces selected by The Brokie. Built for the people still building.',
+  'Independent streetwear for people betting on themselves—and each other.',
+  'TOGETHER WE WIN.',
+  'The Brokie is bigger than one person or one path. We move together, celebrate every win, and make our own definition of success.',
+  'The latest pieces selected by The Brokie. Bold, independent, and made for the whole community.',
   '{"background":"#080808","panel":"#151515","orange":"#ff4f00","gold":"#ffc107","text":"#ffffff","muted":"#9a9a9a"}'::jsonb
 )
 on conflict (key) do nothing;
