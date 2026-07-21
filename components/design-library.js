@@ -966,6 +966,24 @@ export default function DesignLibrary() {
                 Duplicate
               </button>
 
+              <button
+                className="secondary"
+                onClick={() =>
+                  apiAction({
+                    action: "rebuild_mockups",
+                    id: selected.id
+                  })
+                }
+                disabled={!!working}
+              >
+                {working === `rebuild_mockups:${selected.id}` ? (
+                  <LoaderCircle size={16} className="spin" />
+                ) : (
+                  <RefreshCw size={16} />
+                )}
+                Rebuild centered mockups
+              </button>
+
               <a
                 href="#publisher"
                 onClick={() => setSelectedId(null)}

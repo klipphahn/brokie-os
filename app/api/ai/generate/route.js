@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getProductTypeTemplate } from "@/lib/product-types";
+import {
+  getProductTypeTemplate,
+  mockupCompositePosition
+} from "@/lib/product-types";
 
 async function getSharp() {
   return (await import("sharp")).default;
@@ -466,10 +469,7 @@ async function createProductMockup(artworkBase64, side, productType) {
     .toBuffer();
 
   const meta = await sharp(art).metadata();
-  const left = Math.round(
-    placement.left - (meta.width || placement.width) / 2
-  );
-  const top = placement.top;
+  const { left, top } = mockupCompositePosition(placement, meta);
 
   return sharp(mockup)
     .composite([{ input: art, left, top }])
