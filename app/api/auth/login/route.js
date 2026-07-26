@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { isAuthorizedAdminEmail } from "@/lib/admin-email";
 
 export async function POST(request) {
   try {
     const { email, password } = await request.json();
-    const adminEmail = (process.env.ADMIN_EMAIL || "klipphahn@gmail.com").toLowerCase();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -13,7 +13,7 @@ export async function POST(request) {
       );
     }
 
-    if (String(email).toLowerCase() !== adminEmail) {
+    if (!isAuthorizedAdminEmail(email)) {
       return NextResponse.json(
         { ok: false, error: "This email is not authorized for Brokie OS." },
         { status: 403 }
