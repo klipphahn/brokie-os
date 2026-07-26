@@ -364,20 +364,26 @@ export async function POST(request) {
         throw new Error("Use a valid target margin at or above the minimum.");
       }
       const now = new Date().toISOString();
+      const updates = {
+        minimum_margin_percent: minimum,
+        target_margin_percent: target,
+        updated_at: now
+      };
+      if (body.enforceMinimumMargin !== undefined) {
+        updates.enforce_minimum_margin = Boolean(body.enforceMinimumMargin);
+      }
       const { data, error } = await supabase
         .from("profit_guardrail_settings")
-        .update({
-          minimum_margin_percent: minimum,
-          target_margin_percent: target,
-          updated_at: now
-        })
+        .update(updates)
         .eq("id", "primary")
         .select()
         .single();
       if (error) throw error;
       return NextResponse.json({
         ok: true,
-        message: "Profit policy updated.",
+        message: updates.enforce_minimum_margin === false
+          ? "Profit policy updated. Guardrail is now advisory — prices are set manually."
+          : "Profit policy updated.",
         policy: data
       });
     }

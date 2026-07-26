@@ -7,6 +7,7 @@ import {
   LoaderCircle,
   RefreshCw,
   ShieldAlert,
+  SlidersHorizontal,
   ThumbsDown,
   ThumbsUp
 } from "lucide-react";
@@ -37,6 +38,9 @@ export default function ProfitGuardrailPanel({
   const [working, setWorking] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [policyOpen, setPolicyOpen] = useState(false);
+  const [policyForm, setPolicyForm] = useState(null);
+  const [savingPolicy, setSavingPolicy] = useState(false);
 
   async function load() {
     if (!productId) {
@@ -99,6 +103,49 @@ export default function ProfitGuardrailPanel({
     }
   }
 
+  function openPolicyEditor() {
+    const policy = state?.policy || {};
+    setPolicyForm({
+      minimumMarginPercent: Number(policy.minimumMarginPercent ?? 30),
+      targetMarginPercent: Number(policy.targetMarginPercent ?? 35),
+      enforceMinimumMargin: policy.enforceMinimumMargin !== false
+    });
+    setMessage("");
+    setError("");
+    setPolicyOpen(true);
+  }
+
+  async function savePolicy() {
+    if (!policyForm) return;
+    setSavingPolicy(true);
+    setMessage("");
+    setError("");
+    try {
+      const response = await fetch("/api/guardrails", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_policy",
+          minimumMarginPercent: Number(policyForm.minimumMarginPercent),
+          targetMarginPercent: Number(policyForm.targetMarginPercent),
+          enforceMinimumMargin: policyForm.enforceMinimumMargin
+        })
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error || "Could not update the policy.");
+      }
+      setMessage(payload.message || "Profit policy updated.");
+      setPolicyOpen(false);
+      await load();
+      onUpdated?.(payload);
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setSavingPolicy(false);
+    }
+  }
+
   useEffect(() => {
     load();
   }, [productId, refreshToken]);
@@ -121,6 +168,7 @@ export default function ProfitGuardrailPanel({
     Number.isFinite(Number(retailPrice)) &&
     Math.abs(Number(retailPrice) - savedPrice) > 0.001;
   const status = current?.status || "needs_cost";
+  const advisory = state?.policy?.enforceMinimumMargin === false;
 
   return (
     <section className={`profitGuardrail ${status}`}>
@@ -134,15 +182,105 @@ export default function ProfitGuardrailPanel({
           <span>
             <strong>Profit & Launch Guardrail</strong>
             <small>
-              {Number(state?.policy?.minimumMarginPercent || 30).toFixed(0)}% hard floor ·{" "}
-              {Number(state?.policy?.targetMarginPercent || 35).toFixed(0)}% target
+              {advisory
+                ? `Advisory · ${Number(state?.policy?.minimumMarginPercent || 0).toFixed(0)}% target reference · prices set manually`
+                : `${Number(state?.policy?.minimumMarginPercent || 30).toFixed(0)}% hard floor · ${Number(state?.policy?.targetMarginPercent || 35).toFixed(0)}% target`}
             </small>
           </span>
         </div>
-        <span className={`profitGuardrailStatus ${status}`}>
-          {status.replace("_", " ")}
-        </span>
+        <div className="profitGuardrailHeadActions">
+          <span className={`profitGuardrailStatus ${status}`}>
+            {advisory ? "advisory" : status.replace("_", " ")}
+          </span>
+          <button
+            type="button"
+            className="profitGuardrailPolicyToggle"
+            onClick={() => (policyOpen ? setPolicyOpen(false) : openPolicyEditor())}
+          >
+            <SlidersHorizontal size={14} />
+            {policyOpen ? "Close" : "Adjust policy"}
+          </button>
+        </div>
       </div>
+
+      {policyOpen && policyForm && (
+        <div className="profitGuardrailPolicyEditor">
+          <p>
+            Set your own margin targets, or switch the guardrail to advisory so
+            you can price freely like the Printful dashboard. Advisory mode still
+            shows estimated profit but never blocks a launch.
+          </p>
+          <div className="profitGuardrailPolicyFields">
+            <label>
+              Minimum margin %
+              <input
+                type="number"
+                min="0"
+                max="89"
+                step="1"
+                value={policyForm.minimumMarginPercent}
+                onChange={(event) =>
+                  setPolicyForm((value) => ({
+                    ...value,
+                    minimumMarginPercent: event.target.value
+                  }))
+                }
+              />
+            </label>
+            <label>
+              Target margin %
+              <input
+                type="number"
+                min="0"
+                max="89"
+                step="1"
+                value={policyForm.targetMarginPercent}
+                onChange={(event) =>
+                  setPolicyForm((value) => ({
+                    ...value,
+                    targetMarginPercent: event.target.value
+                  }))
+                }
+              />
+            </label>
+          </div>
+          <label className="profitGuardrailPolicyToggleRow">
+            <input
+              type="checkbox"
+              checked={policyForm.enforceMinimumMargin}
+              onChange={(event) =>
+                setPolicyForm((value) => ({
+                  ...value,
+                  enforceMinimumMargin: event.target.checked
+                }))
+              }
+            />
+            <span>
+              Enforce the minimum margin as a hard launch block
+              <small>
+                Uncheck for full manual price control (advisory only).
+              </small>
+            </span>
+          </label>
+          <div className="profitGuardrailPolicyActions">
+            <button
+              type="button"
+              onClick={savePolicy}
+              disabled={savingPolicy}
+            >
+              {savingPolicy ? "Saving…" : "Save policy"}
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => setPolicyOpen(false)}
+              disabled={savingPolicy}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {!productId ? (
         <p className="profitGuardrailEmpty">
@@ -243,7 +381,11 @@ export default function ProfitGuardrailPanel({
           />
           {working === "refresh_product" ? "Checking…" : "Run profit check"}
         </button>
-        <span>Prices only change after your approval.</span>
+        <span>
+          {advisory
+            ? "Advisory mode: set any retail price above; launches are not blocked."
+            : "Prices only change after your approval."}
+        </span>
       </div>
 
       {(message || error) && (
