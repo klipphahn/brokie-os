@@ -1,6 +1,8 @@
-# Brokie OS v2.4
+# Brokie OS
 
-A clean Next.js App Router project for The Brokie brand.
+A clean Next.js App Router project for The Brokie brand. The current release
+version is tracked in `package.json`. Per-version upgrade and Supabase
+migration notes live in [`docs/INSTALL-HISTORY.md`](docs/INSTALL-HISTORY.md).
 
 ## Two-sided apparel generation
 
@@ -34,20 +36,24 @@ because it is limited to Manual Order/API stores.
 
 ## Local setup
 
+This project uses **pnpm** (see `packageManager` in `package.json`) and Node 22
+(see `.nvmrc`).
+
 ```bash
-npm install
+pnpm install
 cp .env.example .env.local
-npm run dev
+pnpm dev
 ```
 
 Open `http://localhost:3000`.
 
-## Production build check
+## Lint and production build check
 
-Always run this before pushing:
+Always run these before pushing (CI also runs them on every pull request):
 
 ```bash
-npm run build
+pnpm lint
+pnpm build
 ```
 
 ## Vercel variables
