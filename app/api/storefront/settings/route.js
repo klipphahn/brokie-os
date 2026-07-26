@@ -5,6 +5,7 @@ import {
   STOREFRONT_KEY
 } from "@/lib/storefront";
 import { productTypeFamily } from "@/lib/product-types";
+import { AdminApiAuthError, requireAdminApiUser } from "@/lib/admin-api-auth";
 
 const EDITABLE_FIELDS = [
   "site_name", "shop_domain", "announcement_text", "hero_eyebrow",
@@ -86,6 +87,7 @@ export async function GET() {
 
 export async function PATCH(request) {
   try {
+    await requireAdminApiUser(request);
     const body = await request.json();
     const products = Array.isArray(body.products) ? body.products.slice(0, 8) : [];
     const unique = new Set(products.map((product) => product.id));
@@ -113,6 +115,9 @@ export async function PATCH(request) {
 
     return NextResponse.json({ ok: true, ...(await readState(supabase)) });
   } catch (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: error.message },
+      { status: error instanceof AdminApiAuthError ? error.status : 400 }
+    );
   }
 }

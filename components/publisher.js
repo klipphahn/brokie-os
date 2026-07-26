@@ -684,7 +684,7 @@ export default function Publisher() {
           Brokie OS now detects the Shopify listing imported
           into Printful, maps its variants to the matching Printful
           blank for that product type, attaches the artwork, and
-          verifies fulfillment through Printful's Ecommerce Platform
+          verifies fulfillment through Printful&apos;s Ecommerce Platform
           Sync API. Store Launch stays locked until every sellable
           variant passes verification.
         </span>

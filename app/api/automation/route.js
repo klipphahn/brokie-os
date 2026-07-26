@@ -7,6 +7,7 @@ import {
   runAutomationCycle
 } from "@/lib/automation";
 import { loadGuardrailOverview } from "@/lib/profit-guardrails-server";
+import { AdminApiAuthError, requireAdminApiUser } from "@/lib/admin-api-auth";
 
 export async function GET() {
   try {
@@ -72,6 +73,7 @@ export async function GET() {
 
 export async function POST(request) {
   try {
+    await requireAdminApiUser(request);
     const body = await request.json().catch(() => ({}));
     if (!body.approved) {
       const supabase = tryCreateSupabaseAdminClient();
@@ -108,7 +110,7 @@ export async function POST(request) {
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error.message || "Automation failed." },
-      { status: 400 }
+      { status: error instanceof AdminApiAuthError ? error.status : 400 }
     );
   }
 }

@@ -4,6 +4,12 @@ import {
   getProductTypeTemplate,
   mockupCompositePosition
 } from "@/lib/product-types";
+import { AdminApiAuthError, requireAdminApiUser } from "@/lib/admin-api-auth";
+
+// Generation runs several sequential OpenAI + sharp calls; give it headroom
+// beyond the short serverless default (valid on all Vercel plans).
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 async function getSharp() {
   return (await import("sharp")).default;
@@ -588,6 +594,8 @@ async function saveArtwork(assets, concept, direction, variationIndex) {
 
 export async function POST(request) {
   try {
+    await requireAdminApiUser(request);
+
     const apiKey = process.env.OPENAI_API_KEY;
 
     if (!apiKey) {
@@ -742,7 +750,7 @@ export async function POST(request) {
         ok: false,
         error: error instanceof Error ? error.message : String(error)
       },
-      { status: 500 }
+      { status: error instanceof AdminApiAuthError ? error.status : 500 }
     );
   }
 }
