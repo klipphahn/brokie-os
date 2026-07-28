@@ -25,8 +25,13 @@ quality gates, and leave a review-ready summary with risks and deployment steps.
 - Lint: `pnpm lint`
 - Build: `pnpm build`
 - Run production build: `pnpm start`
+- Admin smoke (after build): `pnpm exec playwright install chromium` once, then `pnpm smoke`
 
 Use Node 22 and pnpm. Do not switch package managers or commit another lockfile.
+
+Smoke tests start an isolated local production server with no third-party
+credentials. They cover auth fail-closed boundaries, the admin login gate, and
+the public read-only storefront feed. Never point smoke at live write APIs.
 
 ## Coding standards
 
@@ -46,6 +51,7 @@ Use Node 22 and pnpm. Do not switch package managers or commit another lockfile.
 - Never read, print, commit, or rewrite `.env.local`, `.env.production.local`, or
   backup env files.
 - External integrations include Supabase, Shopify, Printful, OpenAI, and Vercel.
-- A pull request must pass lint and build before merge. Database migrations and
-  required Vercel variables must be called out explicitly in the handoff.
+- A pull request must pass lint, build, and admin smoke before merge. Database
+  migrations and required Vercel variables must be called out explicitly in the
+  handoff.
 - Do not deploy or promote production unless the user explicitly asks.

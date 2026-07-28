@@ -47,14 +47,21 @@ pnpm dev
 
 Open `http://localhost:3000`.
 
-## Lint and production build check
+## Lint, production build, and admin smoke
 
 Always run these before pushing (CI also runs them on every pull request):
 
 ```bash
 pnpm lint
 pnpm build
+pnpm exec playwright install chromium   # first time / CI image only
+pnpm smoke
 ```
+
+`pnpm smoke` boots the production build locally with no production credentials
+and checks authentication boundaries, the admin login gate, and the public
+read-only storefront feed. Failures keep Playwright traces, screenshots, and
+HTML reports under `test-results/` and `playwright-report/`.
 
 ## Vercel variables
 
