@@ -386,7 +386,7 @@ export async function POST(request) {
       return NextResponse.json({
         ok: true,
         message: policy.enforceMinimumMargin === false
-          ? "Profit policy updated. Guardrail is now advisory — prices are set manually."
+          ? "Profit policy updated. Margin floor is advisory — below-floor prices can launch; missing cost data still blocks."
           : "Profit policy updated.",
         policy
       });

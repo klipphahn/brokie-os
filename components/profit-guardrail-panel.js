@@ -183,7 +183,7 @@ export default function ProfitGuardrailPanel({
             <strong>Profit & Launch Guardrail</strong>
             <small>
               {advisory
-                ? `Advisory · ${Number(state?.policy?.minimumMarginPercent || 0).toFixed(0)}% floor reference · ${Number(state?.policy?.targetMarginPercent || 35).toFixed(0)}% target · prices set manually`
+                ? `Advisory floor · ${Number(state?.policy?.minimumMarginPercent || 0).toFixed(0)}% reference · ${Number(state?.policy?.targetMarginPercent || 35).toFixed(0)}% target · missing cost still blocks`
                 : `${Number(state?.policy?.minimumMarginPercent || 30).toFixed(0)}% hard floor · ${Number(state?.policy?.targetMarginPercent || 35).toFixed(0)}% target`}
             </small>
           </span>
@@ -206,9 +206,10 @@ export default function ProfitGuardrailPanel({
       {policyOpen && policyForm && (
         <div className="profitGuardrailPolicyEditor">
           <p>
-            Set your own margin targets, or switch the guardrail to advisory so
+            Set your own margin targets, or switch the margin floor to advisory so
             you can price freely like the Printful dashboard. Advisory mode still
-            shows estimated profit but never blocks a launch.
+            shows estimated profit and does not block launches for a below-floor
+            margin, but missing cost data continues to block launch.
           </p>
           <div className="profitGuardrailPolicyFields">
             <label>
@@ -258,7 +259,7 @@ export default function ProfitGuardrailPanel({
             <span>
               Enforce the minimum margin as a hard launch block
               <small>
-                Uncheck for full manual price control (advisory only).
+                Uncheck to make the margin floor advisory (missing cost still blocks).
               </small>
             </span>
           </label>
@@ -383,7 +384,7 @@ export default function ProfitGuardrailPanel({
         </button>
         <span>
           {advisory
-            ? "Advisory mode: set any retail price above; launches are not blocked."
+            ? "Advisory floor: set any retail price above; missing cost data still blocks launch."
             : "Prices only change after your approval."}
         </span>
       </div>
