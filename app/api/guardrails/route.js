@@ -6,6 +6,7 @@ import {
   refreshConfiguredProfitability,
   refreshProductProfitability
 } from "@/lib/profit-guardrails-server";
+import { normalizeProfitPolicy } from "@/lib/profit-guardrails";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   configureSyncVariant,
@@ -364,21 +365,30 @@ export async function POST(request) {
         throw new Error("Use a valid target margin at or above the minimum.");
       }
       const now = new Date().toISOString();
+      const updates = {
+        minimum_margin_percent: minimum,
+        target_margin_percent: target,
+        updated_at: now
+      };
+      if (body.enforceMinimumMargin !== undefined) {
+        updates.enforce_minimum_margin = normalizeProfitPolicy({
+          enforceMinimumMargin: body.enforceMinimumMargin
+        }).enforceMinimumMargin;
+      }
       const { data, error } = await supabase
         .from("profit_guardrail_settings")
-        .update({
-          minimum_margin_percent: minimum,
-          target_margin_percent: target,
-          updated_at: now
-        })
+        .update(updates)
         .eq("id", "primary")
         .select()
         .single();
       if (error) throw error;
+      const policy = normalizeProfitPolicy(data || {});
       return NextResponse.json({
         ok: true,
-        message: "Profit policy updated.",
-        policy: data
+        message: policy.enforceMinimumMargin === false
+          ? "Profit policy updated. Margin floor is advisory — below-floor prices can launch; missing cost data still blocks."
+          : "Profit policy updated.",
+        policy
       });
     }
 
