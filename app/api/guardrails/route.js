@@ -6,6 +6,7 @@ import {
   refreshConfiguredProfitability,
   refreshProductProfitability
 } from "@/lib/profit-guardrails-server";
+import { normalizeProfitPolicy } from "@/lib/profit-guardrails";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   configureSyncVariant,
@@ -370,7 +371,9 @@ export async function POST(request) {
         updated_at: now
       };
       if (body.enforceMinimumMargin !== undefined) {
-        updates.enforce_minimum_margin = Boolean(body.enforceMinimumMargin);
+        updates.enforce_minimum_margin = normalizeProfitPolicy({
+          enforceMinimumMargin: body.enforceMinimumMargin
+        }).enforceMinimumMargin;
       }
       const { data, error } = await supabase
         .from("profit_guardrail_settings")
@@ -379,12 +382,13 @@ export async function POST(request) {
         .select()
         .single();
       if (error) throw error;
+      const policy = normalizeProfitPolicy(data || {});
       return NextResponse.json({
         ok: true,
-        message: updates.enforce_minimum_margin === false
+        message: policy.enforceMinimumMargin === false
           ? "Profit policy updated. Guardrail is now advisory — prices are set manually."
           : "Profit policy updated.",
-        policy: data
+        policy
       });
     }
 

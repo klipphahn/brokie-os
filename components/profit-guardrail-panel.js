@@ -183,7 +183,7 @@ export default function ProfitGuardrailPanel({
             <strong>Profit & Launch Guardrail</strong>
             <small>
               {advisory
-                ? `Advisory · ${Number(state?.policy?.minimumMarginPercent || 0).toFixed(0)}% target reference · prices set manually`
+                ? `Advisory · ${Number(state?.policy?.minimumMarginPercent || 0).toFixed(0)}% floor reference · ${Number(state?.policy?.targetMarginPercent || 35).toFixed(0)}% target · prices set manually`
                 : `${Number(state?.policy?.minimumMarginPercent || 30).toFixed(0)}% hard floor · ${Number(state?.policy?.targetMarginPercent || 35).toFixed(0)}% target`}
             </small>
           </span>
