@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "node --test lib/profit-guardrails.test.js",
+    "test": "node --test lib/profit-guardrails.test.mjs",
     "smoke": "playwright test",
     "smoke:ui": "playwright test --ui"
   },
