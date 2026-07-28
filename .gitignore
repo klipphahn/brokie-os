@@ -9,3 +9,7 @@ npm-debug.log*
 supabase/.temp/
 .env*
 work/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
