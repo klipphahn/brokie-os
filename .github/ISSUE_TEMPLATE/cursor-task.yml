@@ -1,0 +1,43 @@
+name: Cursor implementation task
+description: A scoped coding task ready to hand to Cursor
+title: "[Cursor] "
+labels:
+  - cursor-ready
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: What should be true for the user when this is complete?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and constraints
+      description: Name the allowed areas, exclusions, and important architecture rules.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance checks
+      description: List observable checks that prove the task is complete.
+      placeholder: |
+        - [ ] Check one
+        - [ ] Check two
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification commands
+      description: Commands and manual flows Cursor must run before handoff.
+    validations:
+      required: true
+  - type: textarea
+    id: deployment
+    attributes:
+      label: Deployment notes
+      description: Environment, migration, rollout, or rollback considerations.
+
