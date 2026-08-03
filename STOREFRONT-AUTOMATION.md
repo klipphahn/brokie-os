@@ -7,6 +7,8 @@ This release makes Brokie OS the source of truth for the public merch experience
 - Homepage announcement, hero, calls to action, and manifesto
 - Selection and ordering of up to eight real Shopify products
 - Public, cacheable product feed for `thebrokie.com` and Shopify Flora
+- Automatic discovery of the latest active products published to Shopify by Printful
+- Live Shopify titles, product types, images, prices, and product links on every feed refresh
 - Creation and updating of a Shopify featured collection
 - Publication of that collection to Shopify's Online Store
 - Live product images, prices, titles, and links in Flora
@@ -35,11 +37,11 @@ Preview desktop and mobile, then publish the duplicate theme when approved.
 
 1. Open **Storefront** in Brokie OS.
 2. Edit the hero and brand message.
-3. Choose and order featured Shopify products.
+3. Optionally choose and order featured Shopify products. Newly published Shopify products are added to the public feed automatically.
 4. Click **Save feed**.
 5. Click **Sync Shopify collection** when the collection membership changes.
 
-Flora and any `thebrokie.com` merch block using the public feed update automatically. Direct theme-file writes are intentionally not required for routine updates.
+Flora and any `thebrokie.com` merch block using the public feed update automatically. Direct theme-file writes are intentionally not required for routine updates. The customer-facing shop buttons use Shopify's `/collections/all` catalog so a new active product does not depend on a manual featured-collection sync.
 
 ## Connect the existing thebrokie.com merch page
 
