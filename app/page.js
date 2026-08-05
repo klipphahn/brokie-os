@@ -9,6 +9,7 @@ import ActivityLog from "@/components/activity-log";
 import ShopifyManager from "@/components/shopify-manager";
 import StorefrontManager from "@/components/storefront-manager";
 import AnalyticsDashboard from "@/components/analytics-dashboard";
+import CommunityDiscordPanel from "@/components/community-discord-panel";
 
 export default function HomePage() {
   return (
@@ -56,6 +57,7 @@ export default function HomePage() {
         <Publisher />
         <ShopifyManager />
         <StorefrontManager />
+        <CommunityDiscordPanel />
         <AnalyticsDashboard />
         <ActivityLog />
 

@@ -2,6 +2,7 @@
 
 import {
   BrainCircuit,
+  MessagesSquare,
   Fingerprint,
   Gauge,
   Images,
@@ -23,6 +24,7 @@ const links = [
   ["Publisher", Send, "#publisher"],
   ["Shopify Sync", ShoppingBag, "#shopify-manager"],
   ["Storefront", ShoppingBag, "#storefront"],
+  ["Community / Discord", MessagesSquare, "#community-discord"],
   ["Analytics", LineChart, "#analytics"],
   ["Command", Smartphone, "/command"],
   ["Activity", PlugZap, "#activity"],
