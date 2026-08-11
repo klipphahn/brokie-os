@@ -5,6 +5,7 @@ import {
   mockupCompositePosition
 } from "@/lib/product-types";
 import { AdminApiAuthError, requireAdminApiUser } from "@/lib/admin-api-auth";
+import { generateText } from "@/lib/ai-provider";
 
 // Generation runs several sequential OpenAI + sharp calls; give it headroom
 // beyond the short serverless default (valid on all Vercel plans).
@@ -67,19 +68,6 @@ const schema = {
   }
 };
 
-function extractOutputText(payload) {
-  if (typeof payload.output_text === "string") return payload.output_text;
-  const parts = [];
-
-  for (const item of payload.output || []) {
-    for (const content of item.content || []) {
-      if (typeof content.text === "string") parts.push(content.text);
-    }
-  }
-
-  return parts.join("\n");
-}
-
 function slugify(value) {
   return String(value || "brokie-design")
     .toLowerCase()
@@ -117,40 +105,18 @@ function defaultPlacement(productType) {
   return "Small left chest + large back";
 }
 
-async function createConcept(apiKey, direction, variationIndex, priorNames) {
-  const model = process.env.OPENAI_TEXT_MODEL || "gpt-5.4-mini";
+async function createConcept(direction, variationIndex, priorNames) {
   const uniqueness = priorNames.length
     ? `Do not repeat these previous concepts: ${priorNames.join(", ")}.`
     : "";
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model,
-      input: [
-        {
-          role: "system",
-          content: [
-            {
-              type: "input_text",
-              text: `${BRAND_RULES}
+  const system = `${BRAND_RULES}
 Create one commercially usable merch concept.
 ${productLayoutRules(direction.productType)}
 This is variation ${variationIndex + 1}. It must feel meaningfully different from the other variations.
-${uniqueness}`
-            }
-          ]
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: `
+${uniqueness}`;
+
+  const user = `
 Product type: ${direction.productType}
 Audience: ${direction.audience}
 Visual style: ${direction.style}
@@ -158,33 +124,20 @@ Mood: ${direction.mood}
 Print placement: ${direction.placement}
 Approved colors: ${direction.colors.join(", ")}
 Creative direction: ${direction.prompt}
-`
-            }
-          ]
-        }
-      ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "brokie_merch_concept",
-          strict: true,
-          schema
-        }
-      }
-    }),
-    cache: "no-store"
+`;
+
+  // Text/concept generation goes through the hybrid provider (local-first with
+  // OpenAI fallback). Image generation below stays on OpenAI.
+  const { text } = await generateText({
+    messages: [
+      { role: "system", content: system },
+      { role: "user", content: user }
+    ],
+    schema,
+    schemaName: "brokie_merch_concept"
   });
 
-  const payload = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      payload?.error?.message || "OpenAI concept generation failed."
-    );
-  }
-
-  const text = extractOutputText(payload);
-  if (!text) throw new Error("OpenAI returned no concept text.");
+  if (!text) throw new Error("The AI provider returned no concept text.");
   return JSON.parse(text);
 }
 
@@ -650,7 +603,6 @@ export async function POST(request) {
 
     for (let index = 0; index < variations; index += 1) {
       const concept = await createConcept(
-        apiKey,
         direction,
         index,
         priorNames
