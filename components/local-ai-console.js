@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Bot, LoaderCircle, Send, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Bot, Check, LoaderCircle, RefreshCw, Send, Trash2, X } from "lucide-react";
 
 const modes = [
   ["assistant", "Ask Brokie"],
@@ -68,6 +68,24 @@ export default function LocalAiConsole() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [queueing, setQueueing] = useState(false);
+  const [proposals, setProposals] = useState([]);
+  const [proposalLoading, setProposalLoading] = useState(true);
+  const [deciding, setDeciding] = useState("");
+
+  const loadProposals = useCallback(async () => {
+    setProposalLoading(true);
+    try {
+      const response = await fetch("/api/local-ai/proposals", { cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) throw new Error(payload.error || "Proposal refresh failed.");
+      setProposals((payload.jobs || []).filter((job) => job.state === "Proposed"));
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setProposalLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -76,11 +94,13 @@ export default function LocalAiConsole() {
       .then((response) => response.json())
       .then((payload) => active && setStatus(payload.ok ? "online" : "offline"))
       .catch(() => active && setStatus("offline"));
+    const proposalRefresh = window.setTimeout(loadProposals, 0);
 
     return () => {
       active = false;
+      window.clearTimeout(proposalRefresh);
     };
-  }, []);
+  }, [loadProposals]);
 
   const modeLabel =
     modes.find(([value]) => value === mode)?.[1] || "Ask Brokie";
@@ -130,6 +150,58 @@ export default function LocalAiConsole() {
       setStatus("offline");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function queueTask() {
+    const text = prompt.trim();
+    if (!text || queueing) return;
+    setQueueing(true);
+    setError("");
+    try {
+      const response = await fetch("/api/local-ai/queue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text,
+          adapter: "auto",
+          repository: "brokie-os",
+          testProfile: "node-test"
+        })
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) throw new Error(payload.error || "Task queue failed.");
+      setMessages((current) => [...current, {
+        role: "assistant",
+        text: "Task accepted by the local-first automation queue. If it proposes a code change, it will appear below for approval before execution.",
+        meta: `queued · ${payload.requestId}`
+      }]);
+      setPrompt("");
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setQueueing(false);
+    }
+  }
+
+  async function decide(job, action) {
+    const verb = action === "approve" ? "approve and release" : "reject";
+    if (!window.confirm(`${verb} proposal ${job.id}?`)) return;
+    setDeciding(job.id);
+    setError("");
+    try {
+      const response = await fetch(`/api/local-ai/proposals/${encodeURIComponent(job.id)}/decision`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action })
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) throw new Error(payload.error || "Decision failed.");
+      setProposals((current) => current.filter((item) => item.id !== job.id));
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setDeciding("");
     }
   }
 
@@ -202,7 +274,43 @@ export default function LocalAiConsole() {
               <Send size={16} /> Send to local AI
             </button>
           </div>
+          <button type="button" className="localAiQueueButton" onClick={queueTask} disabled={queueing || !prompt.trim()}>
+            {queueing ? <LoaderCircle className="spin" size={16} /> : <Bot size={16} />}
+            Queue approved task
+          </button>
+          <small className="localAiSafety">Queues analysis and proposals only. Code changes still require approval below; deploys and destructive work remain blocked.</small>
         </form>
+      </div>
+
+      <div className="localAiProposalHead">
+        <div>
+          <span className="eyebrow">HUMAN APPROVAL GATE</span>
+          <h3>Code proposals</h3>
+        </div>
+        <button type="button" onClick={loadProposals} disabled={proposalLoading}>
+          <RefreshCw className={proposalLoading ? "spin" : ""} size={15} /> Refresh
+        </button>
+      </div>
+      <div className="localAiProposals" aria-live="polite">
+        {!proposalLoading && proposals.length === 0 ? (
+          <p>No code proposals are waiting for approval.</p>
+        ) : proposals.map((job) => (
+          <article key={job.id}>
+            <div>
+              <small>{job.repository || "repository"} · {job.testProfile || "tests required"}</small>
+              <strong>{job.task}</strong>
+              <span>{job.id}</span>
+            </div>
+            <div className="localAiProposalActions">
+              <button type="button" onClick={() => decide(job, "reject")} disabled={deciding === job.id}>
+                <X size={15} /> Reject
+              </button>
+              <button type="button" className="primary" onClick={() => decide(job, "approve")} disabled={deciding === job.id}>
+                <Check size={15} /> Approve
+              </button>
+            </div>
+          </article>
+        ))}
       </div>
     </section>
   );
