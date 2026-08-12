@@ -2,6 +2,7 @@
 
 import {
   Bot,
+  Activity,
   BrainCircuit,
   Fingerprint,
   Gauge,
@@ -20,6 +21,7 @@ const links = [
   ["Brand DNA", Fingerprint, "#brand-dna"],
   ["Design Library", Images, "#designs"],
   ["Brokie AI", Bot, "#local-ai"],
+  ["Automation", Activity, "#automation-activity"],
   ["Foundry", BrainCircuit, "#ai"],
   ["Design Factory", PackagePlus, "#factory"],
   ["Publisher", Send, "#publisher"],
