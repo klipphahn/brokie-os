@@ -79,6 +79,7 @@ test.describe("admin critical-path smoke", () => {
       "/api/ai/generate",
       "/api/local-ai/ask",
       "/api/local-ai/activity",
+      "/api/local-ai/system",
       "/api/local-ai/queue",
       "/api/local-ai/proposals/example/decision",
       "/api/shopify/products"

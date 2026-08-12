@@ -13,12 +13,14 @@ import {
   PlugZap,
   Send,
   ShoppingBag,
-  Smartphone
+  Smartphone,
+  Server
 } from "lucide-react";
 import LogoutButton from "@/components/logout-button";
 
 const links = [
   ["Dashboard", Gauge, "#dashboard"],
+  ["System Health", Server, "#system-command-center"],
   ["Brand DNA", Fingerprint, "#brand-dna"],
   ["Design Library", Images, "#designs"],
   ["Brokie AI", Bot, "#local-ai"],

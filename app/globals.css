@@ -2623,3 +2623,68 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
 .automationActivityItem dd { overflow:hidden; margin:5px 0 0; color:#ccc; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
 @media(max-width:1000px) { .automationStats { grid-template-columns:repeat(2,minmax(0,1fr)); } .automationActivityItem dl { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:600px) { .automationStats,.automationActivityItem dl { grid-template-columns:1fr; } .automationActivityTop { align-items:flex-start; flex-direction:column; gap:6px; } }
+
+.systemCommandCenter { border-top:3px solid #555; }
+.systemCommandCenter.status-healthy { border-top-color:#54c97a; }
+.systemCommandCenter.status-warning { border-top-color:#e1bb42; }
+.systemCommandCenter.status-critical { border-top-color:#ef6351; }
+.systemCommandHead { align-items:flex-start; }
+.systemCommandHead p { max-width:680px; margin:8px 0 0; color:#888; line-height:1.5; }
+.systemCommandActions { display:flex; align-items:center; gap:10px; }
+.systemOverall { display:inline-flex; align-items:center; gap:7px; padding:9px 12px; border:1px solid #555; border-radius:999px; color:#aaa; font-size:10px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+.systemOverall.status-healthy { border-color:#265b38; background:#15351f; color:#8debab; }
+.systemOverall.status-warning { border-color:#66510c; background:#302607; color:#ffe080; }
+.systemOverall.status-critical { border-color:#732c22; background:#35130f; color:#ff9d80; }
+.systemSnapshotLine { display:flex; align-items:center; gap:7px; margin:-4px 0 16px; color:#777; font-size:11px; }
+.systemSnapshotLine strong { color:#eee; font-size:15px; }
+.systemSnapshotLine span { margin-left:auto; }
+.systemHealthStats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:16px; }
+.systemHealthStats article { display:flex; align-items:center; gap:11px; padding:14px; border:1px solid var(--line); border-radius:11px; background:var(--panel2); }
+.systemHealthStats article.status-healthy svg { color:#54c97a; }
+.systemHealthStats article.status-warning svg { color:#e1bb42; }
+.systemHealthStats article.status-critical svg { color:#ef6351; }
+.systemHealthStats article.status-unknown svg { color:#888; }
+.systemHealthStats strong,.systemHealthStats span { display:block; }
+.systemHealthStats strong { font-size:23px; }
+.systemHealthStats span { margin-top:2px; color:#777; font-size:9px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }
+.systemAlerts { display:grid; gap:8px; margin-bottom:16px; padding:13px; border:1px solid #55441a; border-radius:12px; background:#171408; }
+.systemSectionTitle { display:flex; align-items:center; gap:8px; padding:2px 3px 7px; color:#e7cf73; }
+.systemSectionTitle span { margin-left:auto; min-width:24px; padding:3px 7px; border-radius:999px; background:#3a300d; text-align:center; font-size:10px; }
+.systemAlerts article { display:grid; grid-template-columns:auto 1fr; gap:10px; padding:11px; border:1px solid #403a20; border-radius:9px; background:#10100c; }
+.systemAlerts article.status-critical { border-color:#59271f; background:#1b0e0c; }
+.systemAlerts article.status-critical > svg { color:#ef6351; }
+.systemAlerts article.status-warning > svg { color:#e1bb42; }
+.systemAlerts strong,.systemAlerts p,.systemAlerts small { display:block; }
+.systemAlerts p { margin:4px 0 0; color:#bbb; font-size:12px; }
+.systemAlerts small { margin-top:5px; color:#777; line-height:1.4; }
+.systemAllClear { display:flex; align-items:center; gap:10px; margin-bottom:16px; padding:15px; border:1px solid #265b38; border-radius:11px; background:#15351f; color:#8debab; }
+.systemCategoryTabs { display:flex; gap:8px; overflow-x:auto; padding-bottom:10px; margin-bottom:6px; }
+.systemCategoryTabs button { display:flex; align-items:center; gap:7px; flex:0 0 auto; padding:8px 11px; border:1px solid #3f3f3f; background:#181818; color:#aaa; font-size:10px; }
+.systemCategoryTabs button span { min-width:19px; padding:2px 5px; border-radius:999px; background:#292929; color:#777; font-size:8px; }
+.systemCategoryTabs button.active { border-color:#8d350f; background:#321407; color:#ff9d71; }
+.systemCategoryTabs button.status-critical:not(.active) { border-color:#59271f; }
+.systemCategoryTabs button.status-warning:not(.active) { border-color:#55441a; }
+.systemCategoryGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.systemCategory { min-width:0; padding:15px; border:1px solid var(--line); border-radius:12px; background:#101010; }
+.systemCategory > header { display:grid; grid-template-columns:auto 1fr auto; align-items:start; gap:11px; margin-bottom:12px; }
+.systemCategoryIcon { display:grid; width:38px; height:38px; place-items:center; border-radius:10px; background:#251208; color:var(--orange); }
+.systemCategory h3 { margin:0; font-size:14px; text-transform:uppercase; }
+.systemCategory header p { margin:5px 0 0; color:#777; font-size:10px; line-height:1.45; }
+.systemStatusDot { width:9px; height:9px; margin-top:4px; border-radius:50%; background:#777; box-shadow:0 0 0 4px #252525; }
+.systemStatusDot.status-healthy { background:#54c97a; box-shadow:0 0 0 4px #15351f; }
+.systemStatusDot.status-warning { background:#e1bb42; box-shadow:0 0 0 4px #302607; }
+.systemStatusDot.status-critical { background:#ef6351; box-shadow:0 0 0 4px #35130f; }
+.systemCheckList { display:grid; gap:7px; }
+.systemCheck { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:start; gap:9px; padding:10px; border-radius:9px; background:#090909; }
+.systemCheck > svg { color:#888; margin-top:1px; }
+.systemCheck.status-healthy > svg { color:#54c97a; }
+.systemCheck.status-warning > svg { color:#e1bb42; }
+.systemCheck.status-critical > svg { color:#ef6351; }
+.systemCheck strong,.systemCheck span,.systemCheck small { display:block; }
+.systemCheck strong { color:#ddd; font-size:11px; }
+.systemCheck span { margin-top:3px; color:#999; font-size:10px; line-height:1.35; }
+.systemCheck small { overflow:hidden; margin-top:4px; color:#666; font-size:9px; line-height:1.4; text-overflow:ellipsis; }
+.systemCheck time { color:#555; font-size:8px; white-space:nowrap; }
+.systemViewCategory { width:100%; margin-top:8px; border:1px solid #353535; background:#171717; color:#aaa; }
+@media(max-width:1050px) { .systemCategoryGrid { grid-template-columns:1fr; } }
+@media(max-width:760px) { .systemCommandHead,.systemCommandActions { align-items:stretch; flex-direction:column; } .systemHealthStats { grid-template-columns:repeat(2,minmax(0,1fr)); } .systemSnapshotLine { align-items:flex-start; flex-direction:column; } .systemSnapshotLine span { margin-left:0; } .systemCheck { grid-template-columns:auto minmax(0,1fr); } .systemCheck time { grid-column:2; } }
