@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  Bot,
+  Activity,
   BrainCircuit,
   MessagesSquare,
   Fingerprint,
@@ -19,6 +21,8 @@ const links = [
   ["Dashboard", Gauge, "#dashboard"],
   ["Brand DNA", Fingerprint, "#brand-dna"],
   ["Design Library", Images, "#designs"],
+  ["Brokie AI", Bot, "#local-ai"],
+  ["Automation", Activity, "#automation-activity"],
   ["Foundry", BrainCircuit, "#ai"],
   ["Design Factory", PackagePlus, "#factory"],
   ["Publisher", Send, "#publisher"],

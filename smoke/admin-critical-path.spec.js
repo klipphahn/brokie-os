@@ -77,6 +77,10 @@ test.describe("admin critical-path smoke", () => {
       "/api/printful/bridge",
       "/api/publisher",
       "/api/ai/generate",
+      "/api/local-ai/ask",
+      "/api/local-ai/activity",
+      "/api/local-ai/queue",
+      "/api/local-ai/proposals/example/decision",
       "/api/shopify/products"
     ]) {
       const writeProbe = await request.fetch(path, { method: "POST", data: {} });
