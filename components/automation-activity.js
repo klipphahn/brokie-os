@@ -27,6 +27,13 @@ function matchesFilter(item, filter) {
   return item.status === filter;
 }
 
+function retryLabel(status) {
+  if (status === "scheduled") return "Scheduled";
+  if (status === "exhausted") return "Exhausted";
+  if (status === "not-scheduled") return "Not scheduled";
+  return "Not applicable";
+}
+
 export default function AutomationActivity() {
   const [activity, setActivity] = useState({ counts: {}, items: [], timestampUtc: null });
   const [filter, setFilter] = useState("all");
@@ -119,7 +126,7 @@ export default function AutomationActivity() {
             <dl>
               <div><dt>Model</dt><dd>{item.model || "Not assigned"}</dd></div>
               <div><dt>Target</dt><dd>{item.target || "Not assigned"}</dd></div>
-              <div><dt>Retry</dt><dd>{item.retryStatus === "not-scheduled" ? "Not scheduled" : "Not applicable"}</dd></div>
+              <div><dt>Retry</dt><dd>{retryLabel(item.retryStatus)}</dd></div>
               <div><dt>Task ID</dt><dd>{item.id}</dd></div>
             </dl>
           </article>
