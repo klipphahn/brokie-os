@@ -12,6 +12,7 @@ import {
   PackagePlus,
   PlugZap,
   Send,
+  ShieldCheck,
   ShoppingBag,
   Smartphone,
   Server
@@ -31,6 +32,7 @@ const links = [
   ["Shopify Sync", ShoppingBag, "#shopify-manager"],
   ["Storefront", ShoppingBag, "#storefront"],
   ["Community / Discord", MessagesSquare, "#community-discord"],
+  ["Discord Operations", ShieldCheck, "#discord-operations"],
   ["Analytics", LineChart, "#analytics"],
   ["Command", Smartphone, "/command"],
   ["Activity", PlugZap, "#activity"],

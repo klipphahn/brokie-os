@@ -13,6 +13,7 @@ import ShopifyManager from "@/components/shopify-manager";
 import StorefrontManager from "@/components/storefront-manager";
 import AnalyticsDashboard from "@/components/analytics-dashboard";
 import CommunityDiscordPanel from "@/components/community-discord-panel";
+import DiscordOperationsPanel from "@/components/discord-operations-panel";
 
 export default function HomePage() {
   return (
@@ -64,6 +65,7 @@ export default function HomePage() {
         <ShopifyManager />
         <StorefrontManager />
         <CommunityDiscordPanel />
+        <DiscordOperationsPanel />
         <AnalyticsDashboard />
         <ActivityLog />
 
