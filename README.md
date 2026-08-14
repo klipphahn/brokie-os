@@ -84,6 +84,26 @@ Only Printful is required for the Printful builder. Shopify and Supabase can be 
 
 Run `supabase/schema.sql` in the Supabase SQL Editor.
 
+### Discord community feed
+
+Before deploying the community feed, apply
+`supabase/migrations/20260805025214_discord_community_feed.sql` to the target
+Supabase project. The migration creates one RLS-enabled singleton row that is
+accessible only with `SUPABASE_SERVICE_ROLE_KEY`; no anon or authenticated table
+access is granted.
+
+`GET /api/community/discord` and `OPTIONS /api/community/discord` are public,
+cross-origin, and never cached. Public reads always return schema version `1.0`
+with a safe inactive fallback when Supabase or storefront data is unavailable.
+`POST /api/community/discord` is an admin-only write route and authenticates
+before parsing input even though the proxy allowlist exposes the path for public
+GET requests.
+
+Deployment uses the existing Supabase and Shopify variables listed above; there
+are no Discord credentials or new browser-exposed secrets. Apply the migration
+first, deploy the admin application second, then verify the public GET and an
+unauthenticated POST (which must return HTTP 401).
+
 ## Printful safety workflow
 
 1. Select only the first tee.

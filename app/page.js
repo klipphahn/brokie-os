@@ -3,12 +3,17 @@ import IntegrationCard from "@/components/integration-card";
 import BrandDnaPanel from "@/components/brand-dna-panel";
 import DesignLibrary from "@/components/design-library";
 import AiStudio from "@/components/ai-studio";
+import LocalAiConsole from "@/components/local-ai-console";
+import AutomationActivity from "@/components/automation-activity";
+import SystemCommandCenter from "@/components/system-command-center";
 import DesignFactoryLoader from "@/components/design-factory-loader";
 import Publisher from "@/components/publisher";
 import ActivityLog from "@/components/activity-log";
 import ShopifyManager from "@/components/shopify-manager";
 import StorefrontManager from "@/components/storefront-manager";
 import AnalyticsDashboard from "@/components/analytics-dashboard";
+import CommunityDiscordPanel from "@/components/community-discord-panel";
+import DiscordOperationsPanel from "@/components/discord-operations-panel";
 
 export default function HomePage() {
   return (
@@ -49,13 +54,18 @@ export default function HomePage() {
           </article>
         </section>
 
+        <SystemCommandCenter />
         <BrandDnaPanel />
         <DesignLibrary />
+        <LocalAiConsole />
+        <AutomationActivity />
         <AiStudio />
         <DesignFactoryLoader />
         <Publisher />
         <ShopifyManager />
         <StorefrontManager />
+        <CommunityDiscordPanel />
+        <DiscordOperationsPanel />
         <AnalyticsDashboard />
         <ActivityLog />
 

@@ -77,6 +77,11 @@ test.describe("admin critical-path smoke", () => {
       "/api/printful/bridge",
       "/api/publisher",
       "/api/ai/generate",
+      "/api/local-ai/ask",
+      "/api/local-ai/activity",
+      "/api/local-ai/system",
+      "/api/local-ai/queue",
+      "/api/local-ai/proposals/example/decision",
       "/api/shopify/products"
     ]) {
       const writeProbe = await request.fetch(path, { method: "POST", data: {} });
@@ -85,5 +90,48 @@ test.describe("admin critical-path smoke", () => {
         `${path} must not succeed without auth during smoke`
       ).toBeGreaterThanOrEqual(401);
     }
+  });
+
+  test("public Discord community feed returns an isolated safe fallback", async ({
+    request
+  }) => {
+    const response = await request.get("/api/community/discord");
+    const body = await response.json();
+
+    expect(response.status()).toBe(200);
+    expect(response.headers()["cache-control"]).toContain("no-store");
+    expect(response.headers()["access-control-allow-origin"]).toBe("*");
+    expect(response.headers()["x-content-type-options"]).toBe("nosniff");
+    expect(body).toMatchObject({
+      ok: true,
+      schemaVersion: "1.0",
+      sourceAvailable: false,
+      updatedAt: null,
+      live: { verified: false, isLive: false },
+      announcement: { enabled: false, id: null },
+      drops: [],
+      stats: { verified: false }
+    });
+
+    const options = await request.fetch("/api/community/discord", {
+      method: "OPTIONS"
+    });
+    expect(options.status()).toBe(204);
+    expect(options.headers()["access-control-allow-methods"]).toBe("GET, OPTIONS");
+  });
+
+  test("Discord community writes authenticate before parsing", async ({ request }) => {
+    const response = await request.fetch("/api/community/discord", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      data: "{"
+    });
+    const body = await response.json();
+
+    expect(response.status()).toBe(401);
+    expect(body).toMatchObject({
+      ok: false,
+      error: expect.any(String)
+    });
   });
 });

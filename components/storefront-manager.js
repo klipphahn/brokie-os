@@ -13,7 +13,7 @@ import {
   ShoppingBag,
   Trash2
 } from "lucide-react";
-import { merchListingCopy } from "@/lib/product-types";
+import { merchListingCopyForProduct } from "@/lib/product-types";
 
 const EMPTY = {
   site_name: "the brokie",
@@ -39,10 +39,10 @@ const EMPTY = {
 };
 
 function featuredDefaultsFor(product) {
-  const copy = merchListingCopy(product.productType || product.product_type);
+  const copy = merchListingCopyForProduct(product);
   return {
     badge: copy.badge || "NEW",
-    displayTitle: copy.title || product.title,
+    displayTitle: product.title || copy.title,
     displaySubtitle: copy.subtitle || ""
   };
 }
