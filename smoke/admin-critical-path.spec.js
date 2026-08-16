@@ -45,6 +45,15 @@ test.describe("admin critical-path smoke", () => {
     await expect(page.getByText("Authorized accounts only.")).toBeVisible();
   });
 
+  test("legacy storefront path permanently redirects to merch", async ({
+    request
+  }) => {
+    const response = await request.get("/storefront", { maxRedirects: 0 });
+
+    expect(response.status()).toBe(308);
+    expect(response.headers().location).toBe("/merch");
+  });
+
   test("safe read-only storefront feed API responds without write side effects", async ({
     request
   }) => {
