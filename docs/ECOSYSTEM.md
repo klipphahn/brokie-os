@@ -93,6 +93,30 @@ public feed.
   connection details. Operators should treat `degraded` as an honest outage or
   contract mismatch, not as a missing dashboard.
 
+## Authenticated dashboard
+
+The Brokie Command Center on the admin dashboard (`#system-command-center`)
+renders this contract for signed-in operators. It does not add a separate
+health page.
+
+- On load and refresh, the UI fetches `GET /api/ecosystem/health` and
+  `GET /api/local-ai/system` in parallel. Ecosystem and local Brokie AI/Proxmox
+  snapshots stay independent: one source can fail without clearing the other,
+  and refresh keeps the last good snapshot visible.
+- A prominent ecosystem summary sits above the existing whole-system
+  categories. It shows aggregate status, checked time, total probe latency,
+  healthy/degraded/unconfigured counts, and the six service cards. Ecosystem
+  and local status pills stay independent; the outer command-center frame uses
+  the worse of the two (critical, then degraded/warning, then
+  unknown/unconfigured, then healthy).
+- Each card shows `healthy`, `degraded`, or `unconfigured`, plus latency and
+  HTTP status when present, and the redacted detail text. Missing or malformed
+  payload fields are normalized instead of crashing the view.
+- Unconfigured is not healthy. Discord bot stays unconfigured until Brokie OS
+  defines a bot probe URL. Local bridge stays unconfigured until Brokie AI
+  session credentials are set. The dashboard explains those actions instead of
+  inventing probe targets.
+
 ## Temporary mobile compatibility route
 
 `GET /api/mobile/app` and `POST /api/mobile/app` are the canonical
