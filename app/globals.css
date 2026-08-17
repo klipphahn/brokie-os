@@ -2624,17 +2624,54 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
 @media(max-width:1000px) { .automationStats { grid-template-columns:repeat(2,minmax(0,1fr)); } .automationActivityItem dl { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:600px) { .automationStats,.automationActivityItem dl { grid-template-columns:1fr; } .automationActivityTop { align-items:flex-start; flex-direction:column; gap:6px; } }
 
-.systemCommandCenter { border-top:3px solid #555; }
+.srOnly { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.systemCommandCenter { position:relative; border-top:3px solid #555; }
 .systemCommandCenter.status-healthy { border-top-color:#54c97a; }
-.systemCommandCenter.status-warning { border-top-color:#e1bb42; }
+.systemCommandCenter.status-warning,.systemCommandCenter.status-degraded { border-top-color:#e1bb42; }
 .systemCommandCenter.status-critical { border-top-color:#ef6351; }
+.systemCommandCenter.status-unknown,.systemCommandCenter.status-unconfigured { border-top-color:#777; }
 .systemCommandHead { align-items:flex-start; }
 .systemCommandHead p { max-width:680px; margin:8px 0 0; color:#888; line-height:1.5; }
 .systemCommandActions { display:flex; align-items:center; gap:10px; }
 .systemOverall { display:inline-flex; align-items:center; gap:7px; padding:9px 12px; border:1px solid #555; border-radius:999px; color:#aaa; font-size:10px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
 .systemOverall.status-healthy { border-color:#265b38; background:#15351f; color:#8debab; }
-.systemOverall.status-warning { border-color:#66510c; background:#302607; color:#ffe080; }
+.systemOverall.status-warning,.systemOverall.status-degraded { border-color:#66510c; background:#302607; color:#ffe080; }
 .systemOverall.status-critical { border-color:#732c22; background:#35130f; color:#ff9d80; }
+.systemOverall.status-unconfigured { border-color:#4a4a4a; background:#1c1c1c; color:#bbb; }
+.ecosystemHealth { margin:0 0 22px; padding:18px; border:1px solid #3a2418; border-radius:14px; background:linear-gradient(180deg,#1a120e 0%,#121212 72%); }
+.ecosystemHealthHead { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; margin-bottom:14px; }
+.ecosystemHealthHead h3 { margin:6px 0 0; font-size:18px; text-transform:uppercase; }
+.ecosystemHealthHead p { max-width:640px; margin:6px 0 0; color:#888; font-size:12px; line-height:1.5; }
+.ecosystemMeta { display:flex; flex-wrap:wrap; gap:8px 16px; margin:0 0 14px; color:#888; font-size:11px; }
+.ecosystemCounts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
+.ecosystemCounts article { display:flex; align-items:center; gap:11px; padding:14px; border:1px solid var(--line); border-radius:11px; background:#101010; }
+.ecosystemCounts article.status-healthy svg { color:#54c97a; }
+.ecosystemCounts article.status-degraded svg { color:#e1bb42; }
+.ecosystemCounts article.status-unconfigured svg { color:#888; }
+.ecosystemCounts strong,.ecosystemCounts span { display:block; }
+.ecosystemCounts strong { font-size:23px; }
+.ecosystemCounts span { margin-top:2px; color:#777; font-size:9px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }
+.ecosystemUnconfiguredNote { margin:0 0 14px; padding:13px 14px; border:1px dashed #66510c; border-radius:11px; background:#171408; color:#e7cf73; font-size:12px; line-height:1.55; }
+.ecosystemServiceGrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.ecosystemServiceCard { min-width:0; padding:14px; border:1px solid var(--line); border-left:4px solid #666; border-radius:12px; background:#101010; }
+.ecosystemServiceCard.status-healthy { border-left-color:#54c97a; }
+.ecosystemServiceCard.status-degraded { border-left-color:#e1bb42; }
+.ecosystemServiceCard.status-unconfigured { border-left-color:#777; }
+.ecosystemServiceCard > header { display:grid; grid-template-columns:auto minmax(0,1fr); gap:11px; align-items:start; }
+.ecosystemServiceIcon { display:grid; width:38px; height:38px; place-items:center; border-radius:10px; background:#251208; color:var(--orange); }
+.ecosystemServiceCard h4 { margin:0; font-size:13px; text-transform:uppercase; }
+.ecosystemServiceStatus { display:inline-flex; align-items:center; gap:6px; margin:6px 0 0; color:#aaa; font-size:10px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+.ecosystemServiceStatus.status-healthy { color:#8debab; }
+.ecosystemServiceStatus.status-degraded { color:#ffe080; }
+.ecosystemServiceStatus.status-unconfigured { color:#bbb; }
+.ecosystemServiceCard dl { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:12px 0 0; }
+.ecosystemServiceCard dl div { min-width:0; padding:8px; border-radius:8px; background:#090909; }
+.ecosystemServiceCard dt { color:#666; font-size:8px; font-weight:900; letter-spacing:.11em; text-transform:uppercase; }
+.ecosystemServiceCard dd { margin:5px 0 0; color:#ddd; font-size:12px; }
+.ecosystemServiceCard > p { margin:12px 0 0; color:#999; font-size:12px; line-height:1.5; }
+.systemLocalBlock { padding-top:4px; }
+.systemLocalHead { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; margin-bottom:14px; }
+.systemLocalHead p { max-width:640px; margin:6px 0 0; color:#888; font-size:12px; line-height:1.5; }
 .systemSnapshotLine { display:flex; align-items:center; gap:7px; margin:-4px 0 16px; color:#777; font-size:11px; }
 .systemSnapshotLine strong { color:#eee; font-size:15px; }
 .systemSnapshotLine span { margin-left:auto; }
@@ -2686,8 +2723,9 @@ select{width:100%;background:#0c0c0c;border:1px solid #393939;color:#fff;padding
 .systemCheck small { overflow:hidden; margin-top:4px; color:#666; font-size:9px; line-height:1.4; text-overflow:ellipsis; }
 .systemCheck time { color:#555; font-size:8px; white-space:nowrap; }
 .systemViewCategory { width:100%; margin-top:8px; border:1px solid #353535; background:#171717; color:#aaa; }
-@media(max-width:1050px) { .systemCategoryGrid { grid-template-columns:1fr; } }
-@media(max-width:760px) { .systemCommandHead,.systemCommandActions { align-items:stretch; flex-direction:column; } .systemHealthStats { grid-template-columns:repeat(2,minmax(0,1fr)); } .systemSnapshotLine { align-items:flex-start; flex-direction:column; } .systemSnapshotLine span { margin-left:0; } .systemCheck { grid-template-columns:auto minmax(0,1fr); } .systemCheck time { grid-column:2; } }
+@media(max-width:1050px) { .systemCategoryGrid { grid-template-columns:1fr; } .ecosystemServiceGrid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:760px) { .systemCommandHead,.systemCommandActions,.systemLocalHead,.ecosystemHealthHead { align-items:stretch; flex-direction:column; } .systemHealthStats,.ecosystemCounts,.ecosystemServiceGrid { grid-template-columns:repeat(2,minmax(0,1fr)); } .systemSnapshotLine { align-items:flex-start; flex-direction:column; } .systemSnapshotLine span { margin-left:0; } .systemCheck { grid-template-columns:auto minmax(0,1fr); } .systemCheck time { grid-column:2; } }
+@media(max-width:600px) { .ecosystemCounts,.ecosystemServiceGrid,.ecosystemServiceCard dl { grid-template-columns:1fr; } }
 
 .discordOpsPanel { border-top:3px solid #8d350f; }
 .discordOpsGrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:16px; }

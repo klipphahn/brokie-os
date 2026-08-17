@@ -62,6 +62,61 @@ theme integrations may consume it cross-origin.
 Consumers should branch on `schemaVersion` and `ok`, tolerate documented
 fallbacks, and avoid depending on fields that are not part of these payloads.
 
+## Protected ecosystem health contract
+
+`GET /api/ecosystem/health` is a Brokie OS control-plane read. It is not a
+public feed.
+
+- Authentication uses `requireAdminApiUser`. Unauthenticated calls fail closed
+  with HTTP 401. Unauthorized admin emails fail closed with HTTP 403.
+- Successful responses are JSON with `Cache-Control: private, no-store` and
+  `X-Content-Type-Options: nosniff`. The collector never writes to downstream
+  systems.
+- The payload uses `schemaVersion: "1.0"` and includes aggregate `status`,
+  `checkedAt`, `latencyMs`, and a `checks` array. `ok: true` means the health
+  document itself was produced; ecosystem `status` is `healthy`, `degraded`,
+  or `unconfigured`.
+- Phase 1 probes the public website, storefront feed, community feed, and
+  mobile API reachability in parallel with a bounded timeout. Internal Brokie OS
+  probes use the canonical origin `https://admin.thebrokie.com` and never take
+  a probe target from the request `Host` header. An unauthenticated HTTP 401
+  from `/api/mobile/app` counts as reachable. Public feed probes validate the
+  documented response shapes.
+- Discord bot and local-bridge probes run only when existing server-side
+  configuration can support them. Local bridge uses the existing Brokie AI
+  session credentials (`BROKIE_AI_BASE_URL`, `CF_ACCESS_CLIENT_ID`,
+  `CF_ACCESS_CLIENT_SECRET`, `BROKIE_AI_CONSOLE_KEY`) and the existing
+  `/api/ai/session` read. Brokie OS does not currently define a Discord bot
+  health URL, so that check stays `unconfigured` rather than inventing a
+  secret. Missing optional configuration is `unconfigured`, not `healthy`.
+- Responses must not include credentials, probe target URLs, or other
+  connection details. Operators should treat `degraded` as an honest outage or
+  contract mismatch, not as a missing dashboard.
+
+## Authenticated dashboard
+
+The Brokie Command Center on the admin dashboard (`#system-command-center`)
+renders this contract for signed-in operators. It does not add a separate
+health page.
+
+- On load and refresh, the UI fetches `GET /api/ecosystem/health` and
+  `GET /api/local-ai/system` in parallel. Ecosystem and local Brokie AI/Proxmox
+  snapshots stay independent: one source can fail without clearing the other,
+  and refresh keeps the last good snapshot visible.
+- A prominent ecosystem summary sits above the existing whole-system
+  categories. It shows aggregate status, checked time, total probe latency,
+  healthy/degraded/unconfigured counts, and the six service cards. Ecosystem
+  and local status pills stay independent; the outer command-center frame uses
+  the worse of the two (critical, then degraded/warning, then
+  unknown/unconfigured, then healthy).
+- Each card shows `healthy`, `degraded`, or `unconfigured`, plus latency and
+  HTTP status when present, and the redacted detail text. Missing or malformed
+  payload fields are normalized instead of crashing the view.
+- Unconfigured is not healthy. Discord bot stays unconfigured until Brokie OS
+  defines a bot probe URL. Local bridge stays unconfigured until Brokie AI
+  session credentials are set. The dashboard explains those actions instead of
+  inventing probe targets.
+
 ## Temporary mobile compatibility route
 
 `GET /api/mobile/app` and `POST /api/mobile/app` are the canonical

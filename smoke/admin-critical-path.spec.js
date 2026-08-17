@@ -28,6 +28,14 @@ test.describe("admin critical-path smoke", () => {
       error: expect.any(String)
     });
     expect(String(body.error).length, "error message should be useful").toBeGreaterThan(0);
+
+    const health = await request.get("/api/ecosystem/health");
+    const healthBody = await health.json().catch(() => null);
+    expect(health.status(), "ecosystem health must fail closed").toBe(401);
+    expect(healthBody, "ecosystem health 401 body should be JSON").toMatchObject({
+      ok: false,
+      error: expect.any(String)
+    });
   });
 
   test("admin login (dashboard gate) loads with sign-in controls", async ({
