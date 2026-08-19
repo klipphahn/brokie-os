@@ -82,13 +82,15 @@ public feed.
   a probe target from the request `Host` header. An unauthenticated HTTP 401
   from `/api/mobile/app` counts as reachable. Public feed probes validate the
   documented response shapes.
-- Discord bot and local-bridge probes run only when existing server-side
-  configuration can support them. Local bridge uses the existing Brokie AI
+- Discord bot health uses the existing private `discord_operations_state`
+  heartbeat written by the Proxmox-hosted bot. A heartbeat no more than 15
+  minutes old is healthy; missing, stale, or unavailable heartbeat data is
+  degraded. This keeps the bot's host-local `/health` listener private. Local
+  bridge uses the existing Brokie AI
   session credentials (`BROKIE_AI_BASE_URL`, `CF_ACCESS_CLIENT_ID`,
   `CF_ACCESS_CLIENT_SECRET`, `BROKIE_AI_CONSOLE_KEY`) and the existing
-  `/api/ai/session` read. Brokie OS does not currently define a Discord bot
-  health URL, so that check stays `unconfigured` rather than inventing a
-  secret. Missing optional configuration is `unconfigured`, not `healthy`.
+  `/api/ai/session` read. Missing optional configuration is `unconfigured`,
+  not `healthy`.
 - Responses must not include credentials, probe target URLs, or other
   connection details. Operators should treat `degraded` as an honest outage or
   contract mismatch, not as a missing dashboard.
@@ -112,9 +114,8 @@ health page.
 - Each card shows `healthy`, `degraded`, or `unconfigured`, plus latency and
   HTTP status when present, and the redacted detail text. Missing or malformed
   payload fields are normalized instead of crashing the view.
-- Unconfigured is not healthy. Discord bot stays unconfigured until Brokie OS
-  defines a bot probe URL. Local bridge stays unconfigured until Brokie AI
-  session credentials are set. The dashboard explains those actions instead of
+- Unconfigured is not healthy. Local bridge stays unconfigured until Brokie AI
+  session credentials are set. The dashboard explains that action instead of
   inventing probe targets.
 
 ## Temporary mobile compatibility route
