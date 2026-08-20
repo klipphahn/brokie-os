@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { AdminApiAuthError, requireAdminApiUser } from "@/lib/admin-api-auth";
 import {
-  fetchBrokieAi,
+  fetchBrokieAiAdmin,
   normalizeProposalDecision,
   readBrokieAiResponse
 } from "@/lib/brokie-ai";
@@ -16,7 +16,7 @@ export async function POST(request, { params }) {
       return NextResponse.json({ ok: false, error: "Invalid proposal id." }, { status: 400 });
     }
     const decision = normalizeProposalDecision(await request.json());
-    const response = await fetchBrokieAi(`/api/ai/proposals/${encodeURIComponent(jobId)}/decision`, {
+    const response = await fetchBrokieAiAdmin(`/api/ai/proposals/${encodeURIComponent(jobId)}/decision`, {
       method: "POST",
       body: JSON.stringify(decision)
     });
