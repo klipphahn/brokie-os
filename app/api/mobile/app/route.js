@@ -8,6 +8,7 @@ import {
 import { loadGuardrailOverview } from "@/lib/profit-guardrails-server";
 import { daysAgo, roundMoney } from "@/lib/analytics";
 import { requireAdminApiUser } from "@/lib/admin-api-auth";
+import { loadMobileSystemOverview } from "@/lib/mobile-system";
 import { POST as analyticsPost } from "@/app/api/analytics/route";
 import { POST as storefrontCollectionPost } from "@/app/api/storefront/collection/route";
 import { POST as automationPost } from "@/app/api/automation/route";
@@ -111,7 +112,8 @@ async function loadMobilePayload() {
     activitiesResult,
     runsResult,
     recentProductsResult,
-    analyticsSyncResult
+    analyticsSyncResult,
+    systemOverview
   ] = await Promise.all([
     supabase
       .from("shopify_orders")
@@ -144,7 +146,8 @@ async function loadMobilePayload() {
       .eq("provider", "shopify")
       .order("started_at", { ascending: false })
       .limit(1)
-      .maybeSingle()
+      .maybeSingle(),
+    loadMobileSystemOverview()
   ]);
 
   if (ordersResult.error) throw ordersResult.error;
@@ -220,7 +223,8 @@ async function loadMobilePayload() {
       .map(normalizeOrder),
     activities: (activitiesResult.data || []).map(normalizeActivity),
     factoryRuns: runsResult.data || [],
-    lastAnalyticsSync: analyticsSyncResult.data || null
+    lastAnalyticsSync: analyticsSyncResult.data || null,
+    system: systemOverview
   };
 }
 
