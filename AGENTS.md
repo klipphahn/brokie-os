@@ -55,3 +55,9 @@ the public read-only storefront feed. Never point smoke at live write APIs.
   migrations and required Vercel variables must be called out explicitly in the
   handoff.
 - Do not deploy or promote production unless the user explicitly asks.
+
+<!-- brokie-brain:start -->
+## Shared Brokie Direction
+
+Before coordinated work and each write, read authenticated GET https://brokie-command-center.vercel.app/api/brain/context using the privately configured BRAIN_AGENT_TOKEN. Never commit or print credentials. If the control plane is unavailable, stop coordinated writes and report the blocker. Live context overrides the reference snapshot in docs/BROKIE_DIRECTION.md. Preserve this repository's safety rules. Submit supported work through /api/brain/jobs; destructive actions require current action-specific operator approval. A direction change invalidates earlier write approvals.
+<!-- brokie-brain:end -->
