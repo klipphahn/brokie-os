@@ -8,6 +8,9 @@ on:
 permissions:
   contents: read
 
+# CI may restore existing caches, but must not publish cache entries.
+cache-mode: read
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
