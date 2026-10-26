@@ -50,7 +50,18 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: PUBLIC_HEADERS });
 }
 
+// Route-scoped maintenance while the backend is intentionally paused.
+// Set false in a reviewed release to restore the existing live read path.
+const COMMUNITY_DISCORD_MAINTENANCE = true;
+
 export async function GET() {
+  if (COMMUNITY_DISCORD_MAINTENANCE) {
+    return NextResponse.json(safeCommunityDiscordFeed(), {
+      status: 200,
+      headers: PUBLIC_HEADERS
+    });
+  }
+
   try {
     const supabase = tryCreateSupabaseAdminClient();
     const [row, storefront] = await Promise.all([
